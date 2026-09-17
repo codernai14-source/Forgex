@@ -16,6 +16,11 @@ package com.forgex.sys.controller;
 import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.tenant.UserContext;
 import com.forgex.common.web.R;
+import com.forgex.common.config.ConfigService;
+import com.forgex.common.domain.config.PasswordPolicyConfig;
+import com.forgex.common.security.password.PasswordPolicyValidator;
+import com.forgex.common.audit.OperationLog;
+import com.forgex.common.audit.OperationType;
 import com.forgex.sys.domain.dto.SysUserDTO;
 import com.forgex.sys.service.ISysUserService;
 import lombok.RequiredArgsConstructor;
@@ -49,6 +54,7 @@ import java.util.Map;
 public class ProfileController {
 
     private final ISysUserService userService;
+    private final ConfigService configService;
 
     /**
      * 查询数据详情。
@@ -153,6 +159,7 @@ public class ProfileController {
      * @see CommonPrompt#PASSWORD_INCORRECT
      */
     @PostMapping("/changePassword")
+    @OperationLog(module = "sys", menuPath = "/system/profile", operationType = OperationType.UPDATE, detailTemplateCode = "PROFILE_PASSWORD_CHANGE")
     public R<Void> changePassword(@RequestBody Map<String, String> body) {
         // 1. 从请求体中提取密码参数
         String oldPassword = body.get("oldPassword");
@@ -168,8 +175,8 @@ public class ProfileController {
             return R.fail(CommonPrompt.NEW_PASSWORD_CANNOT_BE_EMPTY);
         }
 
-        // 4. 参数校验：检查新密码长度（至少 6 位）
-        if (newPassword.length() < 6) {
+        PasswordPolicyConfig policy = configService.getJson("security.password.policy", PasswordPolicyConfig.class, null);
+        if (!PasswordPolicyValidator.isValid(newPassword, null, policy)) {
             return R.fail(CommonPrompt.PASSWORD_TOO_SHORT);
         }
 

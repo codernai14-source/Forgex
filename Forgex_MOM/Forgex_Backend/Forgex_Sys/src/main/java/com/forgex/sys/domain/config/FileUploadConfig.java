@@ -36,6 +36,12 @@ public class FileUploadConfig {
      */
     private String providerConfigJson = "";
 
+    /** Allowed file extensions, without the leading dot. */
+    private java.util.Set<String> allowedExtensions = new java.util.LinkedHashSet<>(java.util.Set.of("jpg", "jpeg", "png", "gif", "pdf", "doc", "docx", "xls", "xlsx", "txt", "zip", "md", "mp4"));
+
+    /** Maximum upload size in megabytes. */
+    private long maxSizeMb = 20;
+
     /**
      * 获取默认配置。
      *

@@ -138,6 +138,8 @@ export interface WfTaskNodeEditorDTO {
   canvasX?: number
   canvasY?: number
   defaultBranchNodeKey?: string
+  ccEnabled?: boolean
+  ccTargets?: WfNodeApproverDTO[]
   approvers: WfNodeApproverDTO[]
   ruleConfigs?: WfTaskNodeRuleDTO[]
   branchRules: WfBranchRuleDTO[]

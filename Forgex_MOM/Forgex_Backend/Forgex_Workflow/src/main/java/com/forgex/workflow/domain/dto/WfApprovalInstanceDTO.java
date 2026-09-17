@@ -108,6 +108,27 @@ public class WfApprovalInstanceDTO {
     private LocalDateTime deadlineTime;
 
     /**
+     * 实例创建时间。
+     * <p>
+     * 顺序审批会一次性插入后续审批人且 {@code activated=false}，
+     * 因此不能把该时间当作「当前审批人开始等待」的起点。
+     * </p>
+     */
+    private LocalDateTime createTime;
+
+    /**
+     * 当前审批人等待起点。
+     * <p>
+     * 取该实例当前 pending 的 {@code wf_my_task.create_time}。
+     * 转交、加签、撤回重建待办后，该时间才是「这个人开始等」。
+     * 无对应待办时为空。
+     * </p>
+     *
+     * @see com.forgex.workflow.domain.entity.WfMyTask#createTime
+     */
+    private LocalDateTime waitingSinceTime;
+
+    /**
      * 是否已激活。
      */
     private Boolean activated;

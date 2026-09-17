@@ -122,7 +122,11 @@
 
         <a-divider />
 
-        <WorkflowTracePanel :instances="currentInstances" :action-logs="currentActionLogs" />
+        <WorkflowTracePanel
+          :record="currentRecord"
+          :instances="currentInstances"
+          :action-logs="currentActionLogs"
+        />
       </template>
     </a-drawer>
   </div>

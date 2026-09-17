@@ -45,6 +45,9 @@ import com.forgex.sys.mapper.SysUserMenuOpenCountMapper;
 import com.forgex.sys.mapper.SysUserMapper;
 import com.forgex.sys.mapper.SysUserRoleMapper;
 import com.forgex.sys.service.ISysMenuService;
+import com.forgex.sys.service.PermissionChangeNotifier;
+import com.forgex.common.tenant.TenantContext;
+import com.forgex.common.tenant.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -130,6 +133,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
     private final SysUserMenuFavoriteMapper userMenuFavoriteMapper;
     private final SysUserMenuOpenCountMapper userMenuOpenCountMapper;
     private final I18nLanguageTypeService languageTypeService;
+    private final PermissionChangeNotifier permissionChangeNotifier;
 
     /**
      * 获取用户路由（仅返回当前租户、当前角色显式授权的模块/菜单/按钮）。
@@ -138,7 +142,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
      * </p>
      * <ol>
      *   <li>参数校验：检查账号和租户 ID 是否为空，为空则返回空路由</li>
-     *   <li>用户查询：根据账号查询用户信息</li>
+     *   <li>用户查询：优先按登录上下文 {@code userId} 用 {@code selectById} 取当前用户，避免走带数据权限的 {@code selectList}</li>
      *   <li>角色查询：查询用户在当前租户下的所有角色</li>
      *   <li>角色 ID 提取：从用户角色关系中提取角色 ID 集合（使用 LinkedHashSet 保持顺序）</li>
      *   <li>菜单查询：根据角色 ID 集合查询角色 - 菜单关系</li>
@@ -173,8 +177,9 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
             return createEmptyRoutes();
         }
 
-        SysUser user = userMapper.selectOne(new LambdaQueryWrapper<SysUser>()
-                .eq(SysUser::getAccount, account));
+        // 拉路由是取当前用户自己，不能走带 @DataPermission 的 selectList：
+        // 拦截器会加载数据范围并查询 sys_role_dept，SELF 角色也会被拖进关联表查询。
+        SysUser user = loadCurrentUserForRoutes(account);
         if (user == null) {
             return createEmptyRoutes();
         }
@@ -225,6 +230,29 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
                         .orderByAsc(SysModule::getOrderNum));
 
         return buildUserRoutes(modules, menus);
+    }
+
+    /**
+     * 按登录上下文加载当前用户，避免拉路由时触发数据权限拦截。
+     * <p>
+     * {@link SysUserMapper#selectList} 挂了 {@code @DataPermission}，{@code selectOne} 会复用它。
+     * 已登录场景用 {@code selectById}；无上下文时才按账号回退查询。
+     * </p>
+     *
+     * @param account 请求账号，需与登录用户一致
+     * @return 当前用户；账号不匹配或不存在时返回 {@code null}
+     * @see SysUserMapper#selectList(com.baomidou.mybatisplus.core.conditions.Wrapper)
+     */
+    private SysUser loadCurrentUserForRoutes(String account) {
+        Long currentUserId = UserContext.get();
+        if (currentUserId != null) {
+            SysUser current = userMapper.selectById(currentUserId);
+            if (current != null && account.equals(current.getAccount())) {
+                return current;
+            }
+        }
+        return userMapper.selectOne(new LambdaQueryWrapper<SysUser>()
+                .eq(SysUser::getAccount, account));
     }
 
     /**
@@ -306,6 +334,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         SysMenu menu = new SysMenu();
         BeanUtils.copyProperties(menuDTO, menu);
         menuMapper.insert(menu);
+        permissionChangeNotifier.notifyAfterCommit(resolvePermissionTenantId(menu.getTenantId()), "menu-add");
     }
 
     /**
@@ -319,6 +348,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         SysMenu menu = new SysMenu();
         BeanUtils.copyProperties(menuDTO, menu);
         menuMapper.updateById(menu);
+        permissionChangeNotifier.notifyAfterCommit(resolvePermissionTenantId(menu.getTenantId()), "menu-update");
     }
 
     /**
@@ -329,6 +359,12 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteMenu(Long id) {
+        SysMenu existing = menuMapper.selectById(id);
+        deleteMenuInternal(id);
+        permissionChangeNotifier.notifyAfterCommit(resolvePermissionTenantId(existing == null ? null : existing.getTenantId()), "menu-delete");
+    }
+
+    private void deleteMenuInternal(Long id) {
         menuMapper.deleteById(id);
 
         LambdaQueryWrapper<SysMenu> wrapper = new LambdaQueryWrapper<>();
@@ -344,9 +380,21 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void batchDeleteMenus(List<Long> ids) {
+        Set<Long> tenantIds = new LinkedHashSet<>();
         for (Long id : ids) {
-            deleteMenu(id);
+            SysMenu existing = menuMapper.selectById(id);
+            if (existing != null) {
+                tenantIds.add(resolvePermissionTenantId(existing.getTenantId()));
+            }
+            deleteMenuInternal(id);
         }
+        for (Long tenantId : tenantIds) {
+            permissionChangeNotifier.notifyAfterCommit(tenantId, "menu-batch-delete");
+        }
+    }
+
+    private Long resolvePermissionTenantId(Long tenantId) {
+        return tenantId != null ? tenantId : TenantContext.get();
     }
 
     /**

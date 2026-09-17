@@ -11,7 +11,9 @@
 
 ### 1.1 基类字段约定
 
-所有业务表 Entity 统一继承 `BaseEntity`，公共审计字段由框架自动填充，业务代码不得手动 set：
+普通业务表 Entity 统一继承 `BaseEntity`，公共审计字段由框架自动填充，业务代码不得手动 set。
+
+授权关联表（如 `sys_user_role`、`sys_role_menu`、`sys_role_dept`）以实际表结构为准：表中没有 `update_time` / `deleted` 时不得继承 `BaseEntity`，否则默认查询会选出不存在的列，登录后拉路由会报 `Unknown column 'update_time'`。
 
 | 字段 | 类型 | 说明 | 填充时机 |
 |---|---|---|---|
@@ -87,6 +89,8 @@ public interface SysKmsKeyMapper extends BaseMapper<SysKmsKey> {
 - 自定义查询优先用 `@Select` 注解；动态 SQL 用 XML 或 `@SelectProvider`。
 - `@Param` 注解必须有，参数名与 SQL 占位符一致。
 - 禁止在 Mapper 写业务逻辑，Mapper 只做数据存取。
+- 若为挂载 `@DataPermission` / `@SecurityLabeled` 而重写 `selectList`，必须保留 `@Param(Constants.WRAPPER)`（参数名 `ew`）。漏掉后 `selectOne` 会报 `There is no getter for property named 'ew'`，选租户拉路由即会失败。
+- 查当前登录用户自身（如拉路由）应使用 `selectById`，不要用会复用带数据权限 `selectList` 的 `selectOne`。拦截器会加载数据范围并查询 `sys_role_dept`。
 
 ---
 

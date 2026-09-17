@@ -24,6 +24,8 @@ export interface WfApprovalInstanceDTO {
   comment?: string
   approveTime?: string
   deadlineTime?: string
+  createTime?: string
+  waitingSinceTime?: string
   activated?: boolean
   delegateFromUserId?: WorkflowId
   transferFromUserId?: WorkflowId
@@ -69,9 +71,26 @@ export interface WfExecutionDTO {
   approvalActionLogs?: WfApprovalActionLogDTO[]
   activeInstanceCount?: number
   timeoutFlag?: boolean
+  currentNodeArriveTime?: string
+  currentWaitStartTime?: string
+  currentDeadlineTime?: string
   delegated?: boolean
   transferred?: boolean
   latestActionSummary?: string
+  ccNodeName?: string
+  ccTime?: string
+  ccUnread?: boolean
+}
+
+export interface WfCcRecordDTO {
+  id: WorkflowId
+  executionId: WorkflowId
+  nodeId?: WorkflowId
+  nodeName?: string
+  ccUserId: WorkflowId
+  ccUserName?: string
+  readStatus?: number
+  createTime?: string
 }
 
 export interface WfExecutionStartParam {
@@ -269,6 +288,14 @@ export function pageMyProcessed(params: WfExecutionQueryParam & { pageNum: numbe
 
 export function pageMyCc(params: WfExecutionQueryParam & { pageNum: number; pageSize: number }) {
   return http.post<{ records: WfExecutionDTO[]; total: number }>('/wf/execution/my/cc', params)
+}
+
+export function markReadCc(params: { executionId: WorkflowId }) {
+  return http.post<void>('/wf/execution/cc/mark-read', params)
+}
+
+export function listCcByExecution(params: { executionId: WorkflowId }) {
+  return http.post<WfCcRecordDTO[]>('/wf/execution/cc/list-by-execution', params)
 }
 
 export function pageCompensationCenter(params: WfExecutionQueryParam & { pageNum: number; pageSize: number }) {

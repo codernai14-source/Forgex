@@ -21,6 +21,7 @@ import com.forgex.common.api.feign.IntegrationInternalMaterialFeignClient;
 import com.forgex.common.api.feign.IntegrationInternalSupplierFeignClient;
 import com.forgex.common.api.feign.SysTenantFeignClient;
 import com.forgex.common.api.feign.WorkflowExecutionFeignClient;
+import com.forgex.common.audit.OperationLogFeignClient;
 import com.forgex.common.feign.client.EncodeRuleFeignClient;
 import com.forgex.sys.service.impl.SysModuleServiceImpl;
 import org.mybatis.spring.annotation.MapperScan;
@@ -50,7 +51,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
         WorkflowExecutionFeignClient.class,
         IntegrationInternalEmployeeFeignClient.class,
         IntegrationInternalMaterialFeignClient.class,
-        IntegrationInternalSupplierFeignClient.class
+        IntegrationInternalSupplierFeignClient.class,
+        OperationLogFeignClient.class
 })
 /**
  * 基础资料服务启动类。

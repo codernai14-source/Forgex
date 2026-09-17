@@ -22,6 +22,7 @@ import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.util.CurrentUserUtils;
 import com.forgex.common.web.StatusCode;
 import com.forgex.workflow.common.WorkflowConstants;
+import com.forgex.common.api.service.UserInfoService;
 import com.forgex.common.web.R;
 import com.forgex.workflow.client.SysUserClient;
 import com.forgex.workflow.domain.entity.WfMyTask;
@@ -31,7 +32,9 @@ import com.forgex.workflow.domain.entity.WfTaskConfig;
 import com.forgex.workflow.domain.entity.WfTaskExecution;
 import com.forgex.workflow.domain.entity.WfTaskExecutionApprover;
 import com.forgex.workflow.domain.entity.WfTaskExecutionDetail;
+import com.forgex.workflow.domain.entity.WfTaskCcRecord;
 import com.forgex.workflow.domain.entity.WfTaskNodeApprover;
+import com.forgex.workflow.domain.entity.WfTaskNodeCc;
 import com.forgex.workflow.domain.entity.WfTaskNodeConfig;
 import com.forgex.workflow.domain.entity.WfTaskNodeRule;
 import com.forgex.workflow.domain.dto.WfNodeApproverDTO;
@@ -44,7 +47,9 @@ import com.forgex.workflow.mapper.WfTaskConfigMapper;
 import com.forgex.workflow.mapper.WfTaskExecutionApproverMapper;
 import com.forgex.workflow.mapper.WfTaskExecutionDetailMapper;
 import com.forgex.workflow.mapper.WfTaskExecutionMapper;
+import com.forgex.workflow.mapper.WfTaskCcRecordMapper;
 import com.forgex.workflow.mapper.WfTaskNodeApproverMapper;
+import com.forgex.workflow.mapper.WfTaskNodeCcMapper;
 import com.forgex.workflow.mapper.WfTaskNodeConfigMapper;
 import com.forgex.workflow.mapper.WfTaskNodeRuleMapper;
 import com.forgex.workflow.service.IWfCallbackService;
@@ -116,8 +121,11 @@ public class WfEngineServiceImpl implements IWfEngineService {
     private final WfTaskNodeRuleMapper nodeRuleMapper;
     private final ApprovalInterpreterRegistry interpreterRegistry;
     private final SysUserClient sysUserClient;
+    private final UserInfoService userInfoService;
     private final IWfCallbackService callbackService;
     private final WorkflowNotificationService workflowNotificationService;
+    private final WfTaskNodeCcMapper nodeCcMapper;
+    private final WfTaskCcRecordMapper ccRecordMapper;
 
     /**
      * 初始化审批流程实例。
@@ -512,7 +520,110 @@ public class WfEngineServiceImpl implements IWfEngineService {
         }
 
         workflowNotificationService.notifyPendingApprovers(execution, node, approvers);
+        dispatchNodeCc(execution, node, detail, approvers);
         return true;
+    }
+
+    /**
+     * 审批节点激活后派发独立抄送。
+     * <p>
+     * 开关关闭或解析为空只记日志，不阻断节点激活。
+     * 已是本节点审批人或同明细已有记录的用户跳过。通知失败只更新状态。
+     * </p>
+     *
+     * @param execution      执行单
+     * @param node           当前节点
+     * @param detail         本轮进入的执行明细
+     * @param approverIds    本节点已激活审批人
+     */
+    void dispatchNodeCc(WfTaskExecution execution,
+                        WfTaskNodeConfig node,
+                        WfTaskExecutionDetail detail,
+                        Long[] approverIds) {
+        if (execution == null || node == null || detail == null || !Objects.equals(node.getCcEnabled(), 1)) {
+            return;
+        }
+
+        List<WfTaskNodeCc> targets = nodeCcMapper.selectList(new LambdaQueryWrapper<WfTaskNodeCc>()
+                .eq(WfTaskNodeCc::getNodeConfigId, node.getId())
+                .eq(WfTaskNodeCc::getTenantId, execution.getTenantId())
+                .eq(WfTaskNodeCc::getDeleted, 0)
+                .orderByAsc(WfTaskNodeCc::getId));
+        if (targets.isEmpty()) {
+            log.info("审批节点已启用抄送但未配置对象，跳过派发，executionId={}, nodeId={}",
+                    execution.getId(), node.getId());
+            return;
+        }
+
+        Set<Long> activatedApprovers = new HashSet<>();
+        if (approverIds != null) {
+            for (Long approverId : approverIds) {
+                if (approverId != null) {
+                    activatedApprovers.add(approverId);
+                }
+            }
+        }
+
+        Set<Long> existingUserIds = ccRecordMapper.selectList(new LambdaQueryWrapper<WfTaskCcRecord>()
+                        .eq(WfTaskCcRecord::getExecutionDetailId, detail.getId())
+                        .eq(WfTaskCcRecord::getDeleted, 0)
+                        .select(WfTaskCcRecord::getCcUserId))
+                .stream()
+                .map(WfTaskCcRecord::getCcUserId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(HashSet::new));
+
+        List<WfTaskCcRecord> inserted = new ArrayList<>();
+        for (WfTaskNodeCc target : targets) {
+            List<Long> resolvedUserIds = parseApproverIds(target.getCcType(), target.getCcIds(), execution.getTenantId());
+            if (resolvedUserIds.isEmpty()) {
+                continue;
+            }
+            Map<Long, String> usernameMap = userInfoService.getUsernameMap(resolvedUserIds);
+            for (Long userId : resolvedUserIds) {
+                if (userId == null || activatedApprovers.contains(userId) || !existingUserIds.add(userId)) {
+                    continue;
+                }
+                WfTaskCcRecord record = new WfTaskCcRecord();
+                record.setExecutionId(execution.getId());
+                record.setExecutionDetailId(detail.getId());
+                record.setNodeId(node.getId());
+                record.setNodeName(node.getNodeName());
+                record.setCcUserId(userId);
+                record.setCcUserName(StringUtils.hasText(usernameMap.get(userId))
+                        ? usernameMap.get(userId) : "用户" + userId);
+                record.setCcSourceType(target.getCcType());
+                record.setSourceSnapshot(JSON.toJSONString(Map.of(
+                        "ccType", target.getCcType(),
+                        "ccIds", target.getCcIds() == null ? "[]" : target.getCcIds()
+                )));
+                record.setReadStatus(WorkflowConstants.CcReadStatus.UNREAD);
+                record.setNotifyStatus(WorkflowConstants.CcNotifyStatus.PENDING);
+                record.setTenantId(execution.getTenantId());
+                record.setDeleted(0);
+                ccRecordMapper.insert(record);
+                inserted.add(record);
+            }
+        }
+
+        if (inserted.isEmpty()) {
+            log.info("审批节点抄送解析后无新增用户，executionId={}, nodeId={}", execution.getId(), node.getId());
+            return;
+        }
+
+        Long[] notifyUserIds = inserted.stream()
+                .map(WfTaskCcRecord::getCcUserId)
+                .toArray(Long[]::new);
+        boolean notified = workflowNotificationService.notifyCcUsers(execution, node, notifyUserIds);
+        Integer notifyStatus = notified
+                ? WorkflowConstants.CcNotifyStatus.SUCCESS
+                : WorkflowConstants.CcNotifyStatus.FAILED;
+        for (WfTaskCcRecord record : inserted) {
+            WfTaskCcRecord update = new WfTaskCcRecord();
+            update.setId(record.getId());
+            update.setNotifyStatus(notifyStatus);
+            ccRecordMapper.updateById(update);
+        }
     }
 
     private WfTaskExecutionDetail createExecutionDetail(Long executionId,

@@ -30,8 +30,10 @@ import com.forgex.workflow.domain.dto.WfDashboardUserShareDTO;
 import com.forgex.workflow.domain.dto.WfDashboardWeeklyResultDTO;
 import com.forgex.workflow.domain.dto.WfApprovalActionLogDTO;
 import com.forgex.workflow.domain.dto.WfApprovalInstanceDTO;
+import com.forgex.workflow.domain.dto.WfCcRecordDTO;
 import com.forgex.workflow.domain.dto.WfExecutionDTO;
 import com.forgex.workflow.domain.entity.WfMyTask;
+import com.forgex.workflow.domain.entity.WfTaskCcRecord;
 import com.forgex.workflow.domain.entity.WfTaskApprovalActionLog;
 import com.forgex.workflow.domain.entity.WfTaskApprovalInstance;
 import com.forgex.workflow.domain.entity.WfTaskNodeConfig;
@@ -54,6 +56,7 @@ import com.forgex.workflow.domain.param.WfExecutionStartParam;
 import com.forgex.workflow.domain.param.WfExecutionTransferParam;
 import com.forgex.workflow.enums.WorkflowPromptEnum;
 import com.forgex.workflow.mapper.WfMyTaskMapper;
+import com.forgex.workflow.mapper.WfTaskCcRecordMapper;
 import com.forgex.workflow.mapper.WfTaskApprovalActionLogMapper;
 import com.forgex.workflow.mapper.WfTaskApprovalInstanceMapper;
 import com.forgex.workflow.mapper.WfTaskNodeConfigMapper;
@@ -86,6 +89,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
@@ -147,6 +151,7 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
     private final WfTaskNodeRuleMapper nodeRuleMapper;
     private final WfTaskApprovalInstanceMapper approvalInstanceMapper;
     private final WfTaskApprovalActionLogMapper approvalActionLogMapper;
+    private final WfTaskCcRecordMapper ccRecordMapper;
     private final IWfEngineService engineService;
     private final UserInfoService userInfoService;
     private final ApprovalInterpreterRegistry interpreterRegistry;
@@ -1016,8 +1021,11 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
      */
     @Override
     public List<WfApprovalInstanceDTO> listApprovalInstances(Long executionId) {
-        validateExecutionExists(executionId);
-        return approvalInstanceMapper.selectList(new LambdaQueryWrapper<WfTaskApprovalInstance>()
+        WfTaskExecution execution = executionMapper.selectById(executionId);
+        if (execution == null) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_EXECUTION_NOT_FOUND);
+        }
+        List<WfApprovalInstanceDTO> instances = approvalInstanceMapper.selectList(new LambdaQueryWrapper<WfTaskApprovalInstance>()
                         .eq(WfTaskApprovalInstance::getExecutionId, executionId)
                         .eq(WfTaskApprovalInstance::getDeleted, 0)
                         .orderByAsc(WfTaskApprovalInstance::getCreateTime)
@@ -1025,6 +1033,9 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
                 .stream()
                 .map(this::toApprovalInstanceDTO)
                 .collect(Collectors.toList());
+        // 独立查询实例列表的页面（补偿中心等）不一定带执行单 record，必须在这里补 waitingSinceTime。
+        fillWaitDurationFields(execution, null, instances, null);
+        return instances;
     }
 
     /**
@@ -1205,6 +1216,140 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
     @Override
     public Page<WfExecutionDTO> pageMyCc(WfExecutionQueryParam param) {
         Long currentUserId = requireCurrentUserId();
+        Long tenantId = requireCurrentTenantId();
+
+        // 以运行时抄送表为主，按执行单聚合最近一次抄送时间和未读标记。
+        List<WfTaskCcRecord> records = ccRecordMapper.selectList(new LambdaQueryWrapper<WfTaskCcRecord>()
+                .eq(WfTaskCcRecord::getTenantId, tenantId)
+                .eq(WfTaskCcRecord::getCcUserId, currentUserId)
+                .eq(WfTaskCcRecord::getDeleted, 0)
+                .orderByDesc(WfTaskCcRecord::getCreateTime)
+                .orderByDesc(WfTaskCcRecord::getId)
+                .select(WfTaskCcRecord::getExecutionId,
+                        WfTaskCcRecord::getNodeName,
+                        WfTaskCcRecord::getCreateTime,
+                        WfTaskCcRecord::getReadStatus));
+
+        LinkedHashMap<Long, CcListMeta> metaMap = new LinkedHashMap<>();
+        for (WfTaskCcRecord record : records) {
+            if (record.getExecutionId() == null) {
+                continue;
+            }
+            CcListMeta meta = metaMap.computeIfAbsent(record.getExecutionId(), key -> {
+                CcListMeta created = new CcListMeta();
+                created.ccNodeName = record.getNodeName();
+                created.ccTime = record.getCreateTime();
+                created.unread = false;
+                return created;
+            });
+            if (Objects.equals(record.getReadStatus(), WorkflowConstants.CcReadStatus.UNREAD)) {
+                meta.unread = true;
+            }
+        }
+
+        // 兼容历史 COPY 节点：运行时表没有的执行单并入列表，避免旧数据突然变空。
+        for (Long copyExecutionId : listHistoricalCopyExecutionIds(currentUserId)) {
+            metaMap.putIfAbsent(copyExecutionId, new CcListMeta());
+        }
+
+        List<Long> orderedIds = new ArrayList<>(metaMap.keySet());
+        orderedIds.sort((left, right) -> {
+            CcListMeta leftMeta = metaMap.get(left);
+            CcListMeta rightMeta = metaMap.get(right);
+            boolean leftUnread = leftMeta != null && leftMeta.unread;
+            boolean rightUnread = rightMeta != null && rightMeta.unread;
+            if (leftUnread != rightUnread) {
+                return leftUnread ? -1 : 1;
+            }
+            LocalDateTime leftTime = leftMeta == null ? null : leftMeta.ccTime;
+            LocalDateTime rightTime = rightMeta == null ? null : rightMeta.ccTime;
+            if (leftTime == null && rightTime == null) {
+                return Long.compare(right, left);
+            }
+            if (leftTime == null) {
+                return 1;
+            }
+            if (rightTime == null) {
+                return -1;
+            }
+            int compared = rightTime.compareTo(leftTime);
+            return compared != 0 ? compared : Long.compare(right, left);
+        });
+
+        Page<WfExecutionDTO> page = pageByExecutionIds(orderedIds, param);
+        for (WfExecutionDTO dto : page.getRecords()) {
+            CcListMeta meta = metaMap.get(dto.getId());
+            if (meta == null) {
+                continue;
+            }
+            dto.setCcNodeName(meta.ccNodeName);
+            dto.setCcTime(meta.ccTime);
+            dto.setCcUnread(meta.unread);
+        }
+        return page;
+    }
+
+    /**
+     * 将指定执行单下当前用户未读抄送标为已读。
+     *
+     * @param executionId 执行单 ID
+     */
+    @Override
+    public void markCcRead(Long executionId) {
+        if (executionId == null) {
+            return;
+        }
+        Long currentUserId = requireCurrentUserId();
+        Long tenantId = requireCurrentTenantId();
+        List<WfTaskCcRecord> unreadRecords = ccRecordMapper.selectList(new LambdaQueryWrapper<WfTaskCcRecord>()
+                .eq(WfTaskCcRecord::getTenantId, tenantId)
+                .eq(WfTaskCcRecord::getExecutionId, executionId)
+                .eq(WfTaskCcRecord::getCcUserId, currentUserId)
+                .eq(WfTaskCcRecord::getReadStatus, WorkflowConstants.CcReadStatus.UNREAD)
+                .eq(WfTaskCcRecord::getDeleted, 0));
+        LocalDateTime now = LocalDateTime.now();
+        for (WfTaskCcRecord record : unreadRecords) {
+            WfTaskCcRecord update = new WfTaskCcRecord();
+            update.setId(record.getId());
+            update.setReadStatus(WorkflowConstants.CcReadStatus.READ);
+            update.setReadTime(now);
+            ccRecordMapper.updateById(update);
+        }
+    }
+
+    /**
+     * 查询执行单抄送人，供轨迹只读展示。
+     *
+     * @param executionId 执行单 ID
+     * @return 抄送人列表
+     */
+    @Override
+    public List<WfCcRecordDTO> listCcByExecution(Long executionId) {
+        if (executionId == null) {
+            return Collections.emptyList();
+        }
+        List<WfTaskCcRecord> records = ccRecordMapper.selectList(new LambdaQueryWrapper<WfTaskCcRecord>()
+                .eq(WfTaskCcRecord::getExecutionId, executionId)
+                .eq(WfTaskCcRecord::getDeleted, 0)
+                .orderByAsc(WfTaskCcRecord::getCreateTime)
+                .orderByAsc(WfTaskCcRecord::getId));
+        List<WfCcRecordDTO> result = new ArrayList<>();
+        for (WfTaskCcRecord record : records) {
+            WfCcRecordDTO dto = new WfCcRecordDTO();
+            dto.setId(record.getId());
+            dto.setExecutionId(record.getExecutionId());
+            dto.setNodeId(record.getNodeId());
+            dto.setNodeName(record.getNodeName());
+            dto.setCcUserId(record.getCcUserId());
+            dto.setCcUserName(record.getCcUserName());
+            dto.setReadStatus(record.getReadStatus());
+            dto.setCreateTime(record.getCreateTime());
+            result.add(dto);
+        }
+        return result;
+    }
+
+    private List<Long> listHistoricalCopyExecutionIds(Long currentUserId) {
         List<WfTaskApprovalInstance> currentInstances = approvalInstanceMapper.selectList(
                 new LambdaQueryWrapper<WfTaskApprovalInstance>()
                         .eq(WfTaskApprovalInstance::getApproverId, currentUserId)
@@ -1212,17 +1357,30 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
                         .eq(WfTaskApprovalInstance::getActivated, true)
                         .orderByDesc(WfTaskApprovalInstance::getUpdateTime)
                         .orderByDesc(WfTaskApprovalInstance::getCreateTime)
-                        .orderByDesc(WfTaskApprovalInstance::getId));
+                        .orderByDesc(WfTaskApprovalInstance::getId)
+                        .select(WfTaskApprovalInstance::getExecutionId, WfTaskApprovalInstance::getNodeId));
+        LinkedHashSet<Long> executionIds = new LinkedHashSet<>();
+        for (WfTaskApprovalInstance instance : currentInstances) {
+            if (instance.getExecutionId() == null || instance.getNodeId() == null) {
+                continue;
+            }
+            WfTaskNodeConfig node = nodeConfigMapper.selectById(instance.getNodeId());
+            if (node != null
+                    && !Objects.equals(node.getDeleted(), 1)
+                    && Objects.equals(node.getApproveType(), WorkflowConstants.ApproveType.COPY)) {
+                executionIds.add(instance.getExecutionId());
+            }
+        }
+        return new ArrayList<>(executionIds);
+    }
 
-        List<WfTaskApprovalInstance> ccInstances = currentInstances.stream()
-                .filter(instance -> {
-                    WfTaskNodeConfig node = nodeConfigMapper.selectById(instance.getNodeId());
-                    return node != null
-                            && !Objects.equals(node.getDeleted(), 1)
-                            && Objects.equals(node.getApproveType(), WorkflowConstants.ApproveType.COPY);
-                })
-                .collect(Collectors.toList());
-        return pageByExecutionIdsFromInstances(ccInstances, param);
+    /**
+     * 抄送列表聚合元数据。
+     */
+    private static class CcListMeta {
+        private String ccNodeName;
+        private LocalDateTime ccTime;
+        private boolean unread;
     }
 
     /**
@@ -2095,7 +2253,139 @@ public class WfExecutionServiceImpl implements IWfExecutionService {
         dto.setTransferred(instances.stream().anyMatch(item -> item.getTransferFromUserId() != null));
         // 3. 最后生成最近动作摘要，供治理列表和详情页快速识别最近一次人工或系统处理。
         dto.setLatestActionSummary(actionLogs.isEmpty() ? null : buildLatestActionSummary(actionLogs.get(0)));
+        // 4. 下发当前节点等待起点，由前端按本地时钟刷新「已等待 / 剩余 / 已超时」。
+        fillWaitDurationFields(execution, dto, instances, actionLogs);
         return dto;
+    }
+
+    /**
+     * 填充当前节点等待时长相关起点时间。
+     * <p>
+     * 只下发起点时间，不下发「已等待 X 天」这类会随弹窗停留而过期的文案。
+     * 无激活待办时不填充执行单级等待字段，前端也不展示「已等待」。
+     * </p>
+     *
+     * @param execution 执行单，不可为空
+     * @param dto 执行单 DTO；为 {@code null} 时只回写实例上的 {@code waitingSinceTime}
+     * @param instances 审批实例列表，方法内会回写 {@code waitingSinceTime}
+     * @param actionLogs 已加载的动作日志，作为节点明细缺失时的回退；可为 {@code null}
+     * @see WfMyTask#createTime
+     * @see WfTaskExecutionDetail#createTime
+     */
+    private void fillWaitDurationFields(WfTaskExecution execution,
+                                        WfExecutionDTO dto,
+                                        List<WfApprovalInstanceDTO> instances,
+                                        List<WfApprovalActionLogDTO> actionLogs) {
+        if (execution == null || execution.getId() == null || instances == null) {
+            return;
+        }
+
+        // 1. 查询当前执行单全部待审批待办，供实例 waitingSinceTime 与节点等待回退使用。
+        List<WfMyTask> pendingTasks = myTaskMapper.selectList(new LambdaQueryWrapper<WfMyTask>()
+                .eq(WfMyTask::getExecutionId, execution.getId())
+                .eq(WfMyTask::getStatus, WorkflowConstants.ApprovalInstanceStatus.PENDING));
+        if (pendingTasks == null) {
+            pendingTasks = Collections.emptyList();
+        }
+
+        // 2. 按审批实例映射待办到达时间：优先 approvalInstanceId，历史行回退 nodeId + approverId。
+        for (WfApprovalInstanceDTO instance : instances) {
+            WfMyTask pendingTask = findPendingTaskForInstance(instance, pendingTasks);
+            instance.setWaitingSinceTime(pendingTask == null ? null : pendingTask.getCreateTime());
+        }
+
+        if (dto == null) {
+            return;
+        }
+
+        // 3. 没有激活待办时不展示「已等待」，执行单级等待字段保持为空。
+        List<WfApprovalInstanceDTO> activatedPending = instances.stream()
+                .filter(item -> Boolean.TRUE.equals(item.getActivated())
+                        && Objects.equals(item.getStatus(), WorkflowConstants.ApprovalInstanceStatus.PENDING))
+                .collect(Collectors.toList());
+        if (activatedPending.isEmpty()) {
+            return;
+        }
+
+        // 4. 当前节点最新执行明细创建时间：驳回再进节点会插入新明细，按 id DESC 取本次停留。
+        LocalDateTime nodeArriveTime = null;
+        if (execution.getCurrentNodeId() != null) {
+            WfTaskExecutionDetail latestDetail = executionDetailMapper.selectOne(new LambdaQueryWrapper<WfTaskExecutionDetail>()
+                    .eq(WfTaskExecutionDetail::getExecutionId, execution.getId())
+                    .eq(WfTaskExecutionDetail::getNodeId, execution.getCurrentNodeId())
+                    .orderByDesc(WfTaskExecutionDetail::getId)
+                    .last("LIMIT 1"));
+            if (latestDetail != null) {
+                nodeArriveTime = latestDetail.getCreateTime();
+            }
+        }
+        dto.setCurrentNodeArriveTime(nodeArriveTime);
+
+        // 5. 节点等待起点按约定回退，避免把整单发起时间或未激活顺序审批人算进去。
+        LocalDateTime waitStartTime = nodeArriveTime;
+        if (waitStartTime == null) {
+            waitStartTime = pendingTasks.stream()
+                    .map(WfMyTask::getCreateTime)
+                    .filter(Objects::nonNull)
+                    .min(Comparator.naturalOrder())
+                    .orElse(null);
+        }
+        if (waitStartTime == null && actionLogs != null) {
+            waitStartTime = actionLogs.stream()
+                    .map(WfApprovalActionLogDTO::getCreateTime)
+                    .filter(Objects::nonNull)
+                    .max(Comparator.naturalOrder())
+                    .orElse(null);
+        }
+        if (waitStartTime == null) {
+            waitStartTime = execution.getStartTime();
+        }
+        dto.setCurrentWaitStartTime(waitStartTime);
+
+        // 6. 摘要条超时展示取当前激活待办中最早的截止时间；未配置超时则不标红。
+        LocalDateTime deadlineTime = pendingTasks.stream()
+                .map(WfMyTask::getDeadlineTime)
+                .filter(Objects::nonNull)
+                .min(Comparator.naturalOrder())
+                .orElse(null);
+        if (deadlineTime == null) {
+            deadlineTime = activatedPending.stream()
+                    .map(WfApprovalInstanceDTO::getDeadlineTime)
+                    .filter(Objects::nonNull)
+                    .min(Comparator.naturalOrder())
+                    .orElse(null);
+        }
+        dto.setCurrentDeadlineTime(deadlineTime);
+    }
+
+    /**
+     * 定位审批实例对应的当前 pending 待办。
+     * <p>
+     * 优先用 {@code approvalInstanceId} 精确匹配；历史待办可能没有该字段，
+     * 再按 {@code nodeId + approverId} 回退，避免顺序审批后续人误入等待起点。
+     * </p>
+     *
+     * @param instance 审批实例 DTO
+     * @param pendingTasks 当前执行单 status=0 的待办列表
+     * @return 匹配到的待办；没有则返回 {@code null}
+     */
+    private WfMyTask findPendingTaskForInstance(WfApprovalInstanceDTO instance, List<WfMyTask> pendingTasks) {
+        if (instance == null || pendingTasks == null || pendingTasks.isEmpty()) {
+            return null;
+        }
+        WfMyTask matchedByInstanceId = pendingTasks.stream()
+                .filter(task -> instance.getId() != null && Objects.equals(task.getApprovalInstanceId(), instance.getId()))
+                .max(Comparator.comparing(WfMyTask::getId, Comparator.nullsLast(Long::compareTo)))
+                .orElse(null);
+        if (matchedByInstanceId != null) {
+            return matchedByInstanceId;
+        }
+        return pendingTasks.stream()
+                .filter(task -> task.getApprovalInstanceId() == null)
+                .filter(task -> Objects.equals(task.getNodeId(), instance.getNodeId())
+                        && Objects.equals(task.getApproverId(), instance.getApproverId()))
+                .max(Comparator.comparing(WfMyTask::getId, Comparator.nullsLast(Long::compareTo)))
+                .orElse(null);
     }
 
     private void fillExecutionFormMeta(WfExecutionDTO dto, Long taskConfigId) {

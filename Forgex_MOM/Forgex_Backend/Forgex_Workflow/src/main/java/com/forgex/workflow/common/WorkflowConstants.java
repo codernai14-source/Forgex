@@ -75,6 +75,23 @@ public class WorkflowConstants {
         public static final Integer REJECTED = 2;
     }
 
+    /**
+     * 抄送已读状态。
+     */
+    public static class CcReadStatus {
+        public static final Integer UNREAD = 0;
+        public static final Integer READ = 1;
+    }
+
+    /**
+     * 抄送通知状态。
+     */
+    public static class CcNotifyStatus {
+        public static final Integer PENDING = 0;
+        public static final Integer SUCCESS = 1;
+        public static final Integer FAILED = 2;
+    }
+
     public static class FormType {
         public static final Integer CUSTOM = 1;
         public static final Integer LOW_CODE = 2;

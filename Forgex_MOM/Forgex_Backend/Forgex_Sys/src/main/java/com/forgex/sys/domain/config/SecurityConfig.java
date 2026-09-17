@@ -23,12 +23,18 @@ public class SecurityConfig {
     private static PasswordPolicyConfig defaultPasswordPolicy() {
         PasswordPolicyConfig config = new PasswordPolicyConfig();
         config.setStore("bcrypt");
-        config.setDefaultPassword("Aa123456");
         config.setMinLength(8);
         config.setRequireNumbers(true);
-        config.setRequireUppercase(false);
-        config.setRequireLowercase(false);
-        config.setRequireSymbols(false);
+        config.setRequireUppercase(true);
+        config.setRequireLowercase(true);
+        config.setRequireSymbols(true);
+        config.setMaxAgeDays(90);
+        config.setHistoryCount(5);
+        config.setForceChangeOnFirstLogin(true);
+        config.setMinStrengthLevel(4);
+        config.setExpireEnabled(false);
+        config.setExpireDays(90);
+        config.setExpireWarnDays(7);
         return config;
     }
 

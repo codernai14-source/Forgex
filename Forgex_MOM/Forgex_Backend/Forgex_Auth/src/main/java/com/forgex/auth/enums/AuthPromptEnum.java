@@ -40,6 +40,11 @@ public enum AuthPromptEnum implements I18nPrompt {
     ACCOUNT_DISABLED("ACCOUNT_DISABLED", "账号已被禁用"),
     PASSWORD_TRANSPORT_DECRYPT_FAILED("PASSWORD_TRANSPORT_DECRYPT_FAILED", "密码传输解密失败"),
     LOGIN_INTERACTION_EXPIRED("LOGIN_INTERACTION_EXPIRED", "登录验证已过期，请重新登录"),
+    MFA_REQUIRED("MFA_REQUIRED", "需要多因素认证"),
+    MFA_CODE_INVALID("MFA_CODE_INVALID", "动态码或恢复码无效"),
+    PASSWORD_EXPIRED("PASSWORD_EXPIRED", "密码已过期，请先修改密码"),
+    PASSWORD_REUSED("PASSWORD_REUSED", "不能复用最近使用过的密码"),
+    PASSWORD_POLICY_INVALID("PASSWORD_POLICY_INVALID", "密码不符合安全策略"),
 
     // ========== Token 管理 ==========
     TOKEN_EXPIRED("TOKEN_EXPIRED", "Token 已过期"),

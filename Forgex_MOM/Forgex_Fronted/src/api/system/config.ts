@@ -2,11 +2,44 @@
 
 export type LoginBackgroundType = 'video' | 'image' | 'color'
 export type LoginStyle = 'cyber' | 'simple' | 'classic'
-export type LoginLayout = 'center' | 'split' | 'compact'
+export type LoginLayout = 'center' | 'form-right' | 'form-left' | 'split-hero' | 'form-row-left' | 'form-row-right'
+export type LoginSplitBackgroundMode = 'fullscreen' | 'separated'
+export interface LoginTitleStyle {
+  fontFamily: string
+  fontSize: number
+  colorMode: 'solid' | 'gradient'
+  color: string
+  gradientFrom: string
+  gradientTo: string
+  gradientAngle: number
+  fontWeight: string
+  fontStyle: string
+  letterSpacing: number
+}
+
+export interface LoginSubtitleStyle {
+  fontFamily: string
+  fontSize: number
+  color: string
+  fontWeight: string
+  fontStyle: string
+  letterSpacing: number
+}
+export interface LoginHeroSlide { type: 'image' | 'video'; url: string }
+export type LoginFormStyle = 'glass-dark' | 'glass-light' | 'solid'
+export interface LoginShadowStyle {
+  enabled: boolean
+  color: string
+  blur: number
+  opacity: number
+  spread: number
+}
 
 export interface SystemBasicConfig {
   systemName: string
   systemLogo: string
+  browserTitle: string
+  browserIcon: string
   systemVersion: string
   copyright: string
   copyrightLink: string
@@ -17,7 +50,19 @@ export interface SystemBasicConfig {
   loginBackgroundImage: string
   loginBackgroundColor: string
   loginStyle: LoginStyle
-  loginLayout?: LoginLayout
+  loginLayout: LoginLayout
+  loginSplitBackgroundMode: LoginSplitBackgroundMode
+  loginTitleStyle: LoginTitleStyle
+  loginSubtitleStyle: LoginSubtitleStyle
+  loginPageSubtitleFontSize: number
+  loginPageSubtitleColor: string
+  loginHeroSlides: LoginHeroSlide[]
+  loginHeroIntervalSeconds: number
+  loginFormStyle: LoginFormStyle
+  loginFormOpacity: number
+  loginFormRadius: number
+  loginFormShadow: LoginShadowStyle
+  loginMediaShadow: LoginShadowStyle
   showOAuthLogin: boolean
   showRegisterEntry: boolean
   registerUrl: string
@@ -55,6 +100,12 @@ export interface PasswordPolicyConfig {
   requireUppercase: boolean
   requireLowercase: boolean
   requireSymbols: boolean
+  maxAgeDays: number
+  historyCount: number
+  forceChangeOnFirstLogin: boolean
+  expireEnabled: boolean
+  expireDays: number
+  expireWarnDays: number
 }
 
 export interface LoginSecurityConfig {
@@ -67,6 +118,7 @@ export interface CryptoTransportConfig {
   algorithm: string
   publicKey: string
   privateKey: string
+  privateKeyConfigured?: boolean
   cipher: string
 }
 
@@ -114,16 +166,49 @@ export function createDefaultSystemBasicConfig(): SystemBasicConfig {
   return {
     systemName: 'FORGEX_MOM',
     systemLogo: '',
+    browserTitle: 'FORGEX_MOM',
+    browserIcon: '',
     systemVersion: '1.0.0',
     copyright: '© 2025 FORGEX_MOM',
     copyrightLink: '#',
     loginPageTitle: 'FORGEX_MOM',
+    loginPageSubtitle: '',
     loginBackgroundType: 'image',
     loginBackgroundVideo: '/loading.mp4',
     loginBackgroundImage: '/back.jpg',
     loginBackgroundColor: '#0d0221',
     loginStyle: 'cyber',
     loginLayout: 'center',
+    loginSplitBackgroundMode: 'fullscreen',
+    loginTitleStyle: {
+      fontFamily: "'Orbitron', 'Segoe UI', sans-serif",
+      fontSize: 28,
+      colorMode: 'solid',
+      color: '#ffffff',
+      gradientFrom: '#05d9e8',
+      gradientTo: '#ff2a6d',
+      gradientAngle: 90,
+      fontWeight: '600',
+      fontStyle: 'normal',
+      letterSpacing: 0,
+    },
+    loginSubtitleStyle: {
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif',
+      fontSize: 13,
+      color: '#9ca3af',
+      fontWeight: 'normal',
+      fontStyle: 'normal',
+      letterSpacing: 0,
+    },
+    loginPageSubtitleFontSize: 13,
+    loginPageSubtitleColor: '#9ca3af',
+    loginHeroSlides: [],
+    loginHeroIntervalSeconds: 6,
+    loginFormStyle: 'glass-dark',
+    loginFormOpacity: 72,
+    loginFormRadius: 20,
+    loginFormShadow: { enabled: true, color: '#1e9bff', blur: 16, opacity: 45, spread: 0 },
+    loginMediaShadow: { enabled: true, color: '#0f172a', blur: 28, opacity: 35, spread: 0 },
     showOAuthLogin: true,
     showRegisterEntry: true,
     registerUrl: '/register',
@@ -159,6 +244,12 @@ export function createDefaultSecurityConfig(): SecurityConfig {
       requireUppercase: false,
       requireLowercase: false,
       requireSymbols: false,
+      maxAgeDays: 90,
+      historyCount: 5,
+      forceChangeOnFirstLogin: true,
+      expireEnabled: false,
+      expireDays: 90,
+      expireWarnDays: 7,
     },
     loginSecurity: {
       failWindowMinutes: 15,

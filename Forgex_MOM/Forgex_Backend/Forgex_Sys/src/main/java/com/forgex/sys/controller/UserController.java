@@ -233,6 +233,7 @@ public class UserController {
      * @param param 用户 ID 参数
      * @return 重置结果
      */
+    @OperationLog(module = "sys", menuPath = "/system/user", operationType = OperationType.UPDATE, detailTemplateCode = "USER_RESET_PASSWORD")
     @RequirePerm("sys:user:resetPwd")
     @PostMapping("/resetPassword")
     public R<Void> resetPassword(@RequestBody IdParam param) {

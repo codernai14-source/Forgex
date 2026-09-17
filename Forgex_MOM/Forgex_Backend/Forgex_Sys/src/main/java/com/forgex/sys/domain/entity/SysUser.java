@@ -15,6 +15,9 @@ package com.forgex.sys.domain.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.forgex.common.base.BaseEntity;
+import com.forgex.common.crypto.FieldEncrypt;
+import com.forgex.common.security.desensitize.Desensitize;
+import com.forgex.common.security.desensitize.DesensitizeType;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
@@ -73,12 +76,16 @@ public class SysUser extends BaseEntity {
     /**
      * 邮箱。
      */
+    @FieldEncrypt
+    @Desensitize(DesensitizeType.EMAIL)
     private String email;
 
     /** 手机号 */
     /**
      * 手机号。
      */
+    @FieldEncrypt
+    @Desensitize(DesensitizeType.PHONE)
     private String phone;
 
     /** 性别（0=未知，1=男，2=女） */
@@ -154,4 +161,31 @@ public class SysUser extends BaseEntity {
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime lastLoginTime;
+
+    /**
+     * 最近一次口令更新时间。
+     * <p>用于判断口令是否超过 {@code security.password.policy.maxAgeDays}。</p>
+     */
+    private LocalDateTime pwdUpdateTime;
+
+    /**
+     * 是否必须在下次登录时修改口令。
+     * <p>管理员重置或首次登录时置为 {@code true}。</p>
+     */
+    private Boolean mustChangePwd;
+
+    /**
+     * 是否已启用 MFA。
+     */
+    private Boolean mfaEnabled;
+
+    /**
+     * 用户密级，对应 {@code SecurityLabel} 数值。
+     */
+    private Integer securityLevel;
+
+    /**
+     * 用户档案自身的安全标记。
+     */
+    private Integer securityLabel;
 }

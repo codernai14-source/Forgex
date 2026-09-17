@@ -44,6 +44,7 @@ Web 管理端基于 **Vue 3 + TypeScript + Vite + Ant Design Vue**。与《项�
 | 图标选择器 | `src/components/common/IconPicker.vue` | [实现逻辑](./组件与页面/图标选择器实现逻辑.md) | [使用方式](./组件与页面/图标选择器使用方式.md) |
 | 消息模板预览与接收人选择 | `TemplatePreview.vue` / `ReceiverSelector.vue` | [实现逻辑](./组件与页面/消息模板预览与接收人选择实现逻辑.md) | [使用方式](./组件与页面/消息模板预览与接收人选择使用方式.md) |
 | 系统页面引导 | `FxGuideTour.vue` / `systemPageGuides.ts` | [实现逻辑](./组件与页面/系统页面引导实现逻辑.md) | [使用方式](./组件与页面/系统页面引导使用方式.md) |
+| 帮助中心悬浮栏 | `GlobalHelpToolbar.vue` / `FilePreview.vue` | [实现逻辑](./组件与页面/帮助中心悬浮栏实现逻辑.md) | [使用方式](./组件与页面/帮助中心悬浮栏使用方式.md) |
 | 公共 Excel 导入 | `src/components/excel/CommonImportDialog.vue` | [实现逻辑](./组件与页面/公共导入组件实现逻辑.md) | [使用方式](./组件与页面/公共导入组件使用方式.md) |
 | 缺省页（403/404/离线） | `src/views/fallback/index.vue` | [实现逻辑](./组件与页面/缺省页实现逻辑.md) | [使用方式](./组件与页面/缺省页使用方式.md) |
 | 多语言输入 | `I18nInput.vue` / `I18nJsonEditor.vue` | [实现逻辑](./国际化与布局/多语言输入实现逻辑.md) | [使用方式](./国际化与布局/多语言输入使用方式.md) |

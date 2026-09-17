@@ -111,7 +111,7 @@
             </a-row>
 
             <a-form-item :label="t('system.excel.headerStyleJson')" name="headerStyleJson">
-              <a-textarea v-model:value="editForm.headerStyleJson" :rows="4" :placeholder="headerStylePlaceholder" />
+              <StyleJsonEditor v-model="editForm.headerStyleJson" />
             </a-form-item>
           </a-form>
         </a-tab-pane>
@@ -144,10 +144,24 @@
                 />
               </template>
               <template v-else-if="column.key === 'headerStyleJson'">
-                <a-textarea v-model:value="record.headerStyleJson" :rows="2" :placeholder="headerStylePlaceholder" />
+                <a-popover trigger="click" placement="bottomLeft" :destroy-tooltip-on-hide="true">
+                  <template #content>
+                    <div class="style-editor-popover">
+                      <StyleJsonEditor v-model="record.headerStyleJson" />
+                    </div>
+                  </template>
+                  <a-button type="link" size="small">{{ t('system.excel.headerStyleJson') }}</a-button>
+                </a-popover>
               </template>
               <template v-else-if="column.key === 'cellStyleJson'">
-                <a-textarea v-model:value="record.cellStyleJson" :rows="2" :placeholder="cellStylePlaceholder" />
+                <a-popover trigger="click" placement="bottomLeft" :destroy-tooltip-on-hide="true">
+                  <template #content>
+                    <div class="style-editor-popover">
+                      <StyleJsonEditor v-model="record.cellStyleJson" />
+                    </div>
+                  </template>
+                  <a-button type="link" size="small">{{ t('system.excel.cellStyleJson') }}</a-button>
+                </a-popover>
               </template>
               <template v-else-if="column.key === 'orderNum'">
                 <a-input-number v-model:value="record.orderNum" :min="0" style="width: 100px" />
@@ -176,6 +190,7 @@ import { useDict } from '@/hooks/useDict'
 import FxDynamicTable from '@/components/common/FxDynamicTable.vue'
 import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import I18nInput from '@/components/common/I18nInput.vue'
+import StyleJsonEditor from '@/components/excel/StyleJsonEditor.vue'
 import { deleteExportConfig, exportConfigDetail, pageExportConfig, saveExportConfig } from '@/api/system/excel'
 import { translateLegacyText } from '@/utils/legacyI18n'
 
@@ -183,8 +198,6 @@ const { t } = useI18n()
 const { dictItems: yesNoOptions } = useDict('yes_no')
 
 const i18nPlaceholder = translateLegacyText('{"zh-CN":"标题"}')
-const headerStylePlaceholder = '{"fontWeight":"bold"}'
-const cellStylePlaceholder = '{"align":"left"}'
 
 const tableRef = ref()
 const basicFormRef = ref<FormInstance>()

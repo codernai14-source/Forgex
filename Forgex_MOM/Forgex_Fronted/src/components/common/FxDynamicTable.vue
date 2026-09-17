@@ -1082,6 +1082,7 @@ async function persistColumnConfig() {
       visible: column.visible !== false,
       order: column.order ?? index,
       width: column.field === ACTION_FIELD ? undefined : clampWidth(Number(column.width ?? 160) || 160),
+      fixed: column.field === ACTION_FIELD ? 'right' : column.fixed,
     }))
     await saveUserColumns({
       tableCode: props.tableCode,
@@ -1223,7 +1224,7 @@ function handleColumnChange(columns: FxTableColumn[]) {
     const mergedColumns = config.value.columns.map(column => {
       const changed = columnMap.get(column.field)
       return changed ? { ...column, ...changed } : column
-    })
+    }).sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
     config.value = {
       ...config.value,
       columns: mergedColumns,

@@ -25,13 +25,13 @@
     justify-content: space-between;
     gap: 12px;
     padding: 12px 14px;
-    border: 1px solid #d9d9d9;
+    border: 1px solid var(--fx-border-color, #d9d9d9);
     border-radius: 8px;
-    background: #fafafa;
+    background: var(--fx-fill-alter, #fafafa);
 
     &--invalid {
       border-color: #faad14;
-      background: #fffbe6;
+      background: var(--fx-warning-bg, #fffbe6);
     }
 
     &--empty {
@@ -44,14 +44,14 @@
   }
 
   .json-summary-panel__summary {
-    color: rgba(0, 0, 0, 0.88);
+    color: var(--fx-text-primary, rgba(0, 0, 0, 0.88));
     font-weight: 500;
     line-height: 1.5;
   }
 
   .json-summary-panel__hint {
     margin-top: 4px;
-    color: rgba(0, 0, 0, 0.45);
+    color: var(--fx-text-secondary, rgba(0, 0, 0, 0.45));
     font-size: 12px;
     line-height: 1.5;
   }

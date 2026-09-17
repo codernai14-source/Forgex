@@ -129,7 +129,7 @@ spring:
                 - name: CircuitBreaker
                   args:
                     name: api-wf
-                    fallbackUri: forward:/fallback/sys
+                    fallbackUri: forward:/fallback/workflow
             - id: api-integration
               uri: lb://forgex-integration
               predicates:
@@ -144,7 +144,7 @@ spring:
                 - name: CircuitBreaker
                   args:
                     name: api-integration
-                    fallbackUri: forward:/fallback/sys
+                    fallbackUri: forward:/fallback/integration
             - id: api-report
               uri: lb://forgex-report
               predicates:
@@ -159,7 +159,7 @@ spring:
                 - name: CircuitBreaker
                   args:
                     name: api-report
-                    fallbackUri: forward:/fallback/sys
+                    fallbackUri: forward:/fallback/report
           default-filters:
             - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST
   main:

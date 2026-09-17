@@ -22,6 +22,14 @@ export default {
   lastLoginTime: '最后登录时间',
   lastLoginIp: '最后登录IP',
   lastLoginRegion: '最后登录地区',
+  securityLevel: '用户密级',
+  securityLevelHint: '仅安全管理员可调整。读取要求数据密级不超过用户密级。',
+  securityLevelOptions: {
+    public: '公开',
+    internal: '内部',
+    secret: '秘密',
+    confidential: '机密',
+  },
   action: '操作',
 
   genderOptions: {
@@ -87,6 +95,8 @@ export default {
   statusActive: '启用',
   statusInactive: '禁用',
   statusLocked: '锁定',
+  online: '在线',
+  offline: '离线',
 
   add: '新增用户',
   edit: '编辑',
@@ -116,6 +126,7 @@ export default {
     assignedStatus: '分配状态',
     assigned: '已分配',
     summary: '共 {total} 个角色，已选 {selected} 个',
+    threeRoleHint: '等保三级下，同一用户不得同时持有系统管理员、安全管理员、审计管理员中的两个保留角色。',
     loadFailed: '加载角色数据失败',
     saveFailed: '保存失败',
     missingUserId: '缺少用户 ID',

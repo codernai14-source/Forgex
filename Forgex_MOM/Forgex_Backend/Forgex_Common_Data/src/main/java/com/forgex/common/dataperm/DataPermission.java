@@ -23,6 +23,11 @@ import java.lang.annotation.*;
  * <pre>
  * {@code @DataPermission(deptAlias = "d", userAlias = "u")}
  * List&lt;User&gt; selectUserList(@Param("param") UserParam param);
+ *
+ * // 重写 BaseMapper.selectList 时必须保留 ew 参数名，否则 selectOne 会报没有 ew getter。
+ * // 查当前用户自身请用 selectById，不要复用本方法，否则会加载数据范围并查询 sys_role_dept。
+ * {@code @DataPermission(userColumn = "id", deptColumn = "department_id")}
+ * List&lt;User&gt; selectList(@Param(Constants.WRAPPER) Wrapper&lt;User&gt; queryWrapper);
  * </pre>
  * 
  * @author Forgex Team

@@ -1,0 +1,11 @@
+[Unit]
+Description=Forgex periodic backup
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/opt/Forgex/app/.env
+ExecStart=/bin/bash /opt/Forgex/app/scripts/backup.sh
+# 可选异地同步：设置 FORGEX_BACKUP_RSYNC_TARGET=user@host:/path
+ExecStartPost=/bin/bash -c 'if [ -n "${FORGEX_BACKUP_RSYNC_TARGET:-}" ]; then rsync -az --delete "${FORGEX_BACKUP_DIR:-/opt/Forgex/backup}/" "${FORGEX_BACKUP_RSYNC_TARGET}"; fi'

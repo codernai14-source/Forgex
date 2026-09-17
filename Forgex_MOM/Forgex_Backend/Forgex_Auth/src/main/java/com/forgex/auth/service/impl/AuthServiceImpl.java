@@ -47,6 +47,7 @@ import com.forgex.auth.strategy.tenant.ChooseTenantStrategyFactory;
 import com.forgex.common.config.ConfigService;
 import com.forgex.auth.service.CaptchaService;
 import com.forgex.common.i18n.CommonPrompt;
+import com.forgex.common.license.LicenseManager;
 import com.forgex.common.security.LoginSessionKeys;
 import com.forgex.common.security.LoginSessionSupport;
 import com.forgex.common.tenant.TenantContext;
@@ -69,6 +70,11 @@ import com.forgex.common.domain.config.CaptchaConfig;
 import com.forgex.common.domain.config.CryptoTransportConfig;
 import com.forgex.common.domain.config.LoginSecurityConfig;
 import com.forgex.common.domain.config.PasswordPolicyConfig;
+import com.forgex.auth.mfa.MfaService;
+import com.forgex.auth.service.PasswordLifecycleHelper;
+import com.forgex.common.security.compliance.ComplianceContext;
+import com.forgex.common.security.compliance.ComplianceLevel;
+import com.forgex.common.security.password.PasswordPolicyValidator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Locale;
@@ -166,6 +172,12 @@ public class AuthServiceImpl implements AuthService {
     private LoginInteractionCodeService loginInteractionCodeService;
     @Autowired
     private TenantSelectionAuthorizationService tenantSelectionAuthorizationService;
+    @Autowired
+    private LicenseManager licenseManager;
+    @Autowired
+    private MfaService mfaService;
+    @Autowired
+    private PasswordLifecycleHelper passwordLifecycleHelper;
 
 
     /**
@@ -254,7 +266,8 @@ public class AuthServiceImpl implements AuthService {
         // 根据账号查询用户信息
         String idKey = account;
         SysUser user = userMapper.selectOne(new LambdaQueryWrapper<SysUser>()
-                .select(SysUser::getId, SysUser::getAccount, SysUser::getUsername, SysUser::getPassword, SysUser::getEmail, SysUser::getPhone, SysUser::getStatus)
+                .select(SysUser::getId, SysUser::getAccount, SysUser::getUsername, SysUser::getPassword, SysUser::getEmail,
+                        SysUser::getPhone, SysUser::getStatus, SysUser::getMfaEnabled, SysUser::getMustChangePwd, SysUser::getPwdUpdateTime, SysUser::getCreateTime)
                 .eq(SysUser::getAccount, idKey));
         // 如果用户不存在
         if (user == null) {
@@ -270,7 +283,7 @@ public class AuthServiceImpl implements AuthService {
         // 解析密码存储方式
         String store = resolvePasswordStore(policy);
         // 根据存储方式解析对应的密码加密提供者
-        CryptoPasswordProvider provider = CryptoProviders.resolve(store, configService);
+        CryptoPasswordProvider provider = CryptoProviders.resolvePassword(store, configService);
         // 验证密码
         boolean passOk = provider.verify(password, user.getPassword());
         if (!passOk) {
@@ -295,6 +308,19 @@ public class AuthServiceImpl implements AuthService {
 
         // 清除登录失败状态
         clearLoginFailureState(account);
+
+        if (ComplianceContext.atLeast(ComplianceLevel.L3) && Boolean.TRUE.equals(user.getMfaEnabled())) {
+            LoginResultVO challenge = new LoginResultVO();
+            challenge.setNextStep("MFA");
+            challenge.setChallengeId(mfaService.issueChallenge(user.getId(), account));
+            return R.fail(AuthPromptEnum.MFA_REQUIRED, challenge);
+        }
+        if (passwordLifecycleHelper.requiresChange(user, policy)) {
+            LoginResultVO ticket = new LoginResultVO();
+            ticket.setNextStep("FORCE_CHANGE_PASSWORD");
+            ticket.setPasswordTicket(passwordLifecycleHelper.issueTicket(user.getId(), account));
+            return R.fail(AuthPromptEnum.PASSWORD_EXPIRED, ticket);
+        }
 
         // 查询用户绑定的租户列表
         List<SysUserTenant> binds = userTenantMapper.selectList(new LambdaQueryWrapper<SysUserTenant>()
@@ -490,6 +516,12 @@ public class AuthServiceImpl implements AuthService {
         result.setAvatar(user.getAvatar());
         result.setStatus(user.getStatus());
         result.setTenantId(bind.getTenantId());
+        PasswordPolicyConfig policy = getPasswordPolicyConfig();
+        boolean expired = passwordLifecycleHelper.isExpired(user, policy);
+        result.setPasswordExpired(expired);
+        result.setPasswordExpireInDays(passwordLifecycleHelper.expireInDays(user, policy));
+        cn.dev33.satoken.session.SaSession current = LoginSessionSupport.getCurrentTokenSession();
+        if (current != null) current.set(LoginSessionKeys.KEY_PASSWORD_EXPIRED, expired);
         return R.ok(result);
     }
 
@@ -577,7 +609,7 @@ public class AuthServiceImpl implements AuthService {
     /**
      * 重置用户密码
      * <p>
-     * 根据用户 ID 重置密码为默认密码（123456），使用 BCrypt 或 SM2 加密存储
+     * 根据用户 ID 重置密码为策略中显式配置的密码，使用不可逆哈希存储
      * </p>
      *
      * @param userId 用户 ID
@@ -595,6 +627,8 @@ public class AuthServiceImpl implements AuthService {
         String hashed = encryptPassword(resolveDefaultPassword());
         int n = userMapper.update(null, new LambdaUpdateWrapper<SysUser>()
                 .set(SysUser::getPassword, hashed)
+                .set(SysUser::getMustChangePwd, true)
+                .set(SysUser::getPwdUpdateTime, LocalDateTime.now())
                 .eq(SysUser::getId, userId));
         if (n > 0) {
             return R.ok(true);
@@ -624,7 +658,11 @@ public class AuthServiceImpl implements AuthService {
     private PasswordPolicyConfig getPasswordPolicyConfig() {
         PasswordPolicyConfig defaults = new PasswordPolicyConfig();
         defaults.setStore("bcrypt");
-        defaults.setDefaultPassword("Aa123456");
+        defaults.setMinLength(8);
+        defaults.setRequireNumbers(true);
+        defaults.setRequireUppercase(true);
+        defaults.setRequireLowercase(true);
+        defaults.setRequireSymbols(true);
         PasswordPolicyConfig policy = configService.getJson(KEY_SECURITY_PASSWORD_POLICY, PasswordPolicyConfig.class, defaults);
         return policy == null ? defaults : policy;
     }
@@ -654,7 +692,7 @@ public class AuthServiceImpl implements AuthService {
      */
     private String resolveDefaultPassword() {
         PasswordPolicyConfig policy = getPasswordPolicyConfig();
-        return StringUtils.hasText(policy.getDefaultPassword()) ? policy.getDefaultPassword() : "Aa123456";
+        return PasswordPolicyValidator.requireConfiguredDefaultPassword(policy);
     }
 
     /**
@@ -669,7 +707,7 @@ public class AuthServiceImpl implements AuthService {
      * @see com.forgex.common.crypto.CryptoProviders#resolve(String, com.forgex.common.config.ConfigService)
      */
     private String encryptPassword(String rawPassword) {
-        CryptoPasswordProvider provider = CryptoProviders.resolve(resolvePasswordStore(getPasswordPolicyConfig()), configService);
+        CryptoPasswordProvider provider = CryptoProviders.resolvePassword(resolvePasswordStore(getPasswordPolicyConfig()), configService);
         if (provider.supportsEncrypt()) {
             return provider.encrypt(rawPassword);
         }
@@ -892,6 +930,7 @@ public class AuthServiceImpl implements AuthService {
         session.set(LoginSessionKeys.KEY_USER_ID, userId);
         session.set(LoginSessionKeys.KEY_TENANT_ID, tenantId);
         session.set(LoginSessionKeys.KEY_ACCOUNT, account);
+        session.set(LoginSessionKeys.KEY_PASSWORD_EXPIRED, false);
     }
 
     /**
@@ -1388,6 +1427,9 @@ public class AuthServiceImpl implements AuthService {
         newUser.setEmail(param.getEmail());
         newUser.setStatus(true);
         newUser.setUserSource(UserSourceEnum.SELF_REGISTERED.getCode());
+        newUser.setPwdUpdateTime(LocalDateTime.now());
+        licenseManager.checkUserLimit(userMapper.selectCount(new LambdaQueryWrapper<SysUser>()
+                .eq(SysUser::getDeleted, false)));
         userMapper.insert(newUser);
 
         Long userId = newUser.getId();
@@ -1502,6 +1544,46 @@ public class AuthServiceImpl implements AuthService {
         } else {
             TenantContextIgnore.clear();
         }
+    }
+
+    /**
+     * 使用一次性票据强制修改口令并继续登录。
+     *
+     * @param ticket      票据
+     * @param newPassword 传输加密口令
+     * @return 登录结果
+     */
+    @Override
+    public R<LoginResultVO> forceChangePassword(String ticket, String newPassword) {
+        String payload = passwordLifecycleHelper.consumeTicket(ticket);
+        if (!StringUtils.hasText(payload)) {
+            return R.fail(AuthPromptEnum.LOGIN_INTERACTION_EXPIRED);
+        }
+        String[] parts = payload.split(":", 2);
+        Long userId = Long.valueOf(parts[0]);
+        String account = parts.length > 1 ? parts[1] : "";
+        SysUser user = userMapper.selectById(userId);
+        if (user == null) {
+            return R.fail(CommonPrompt.USER_NOT_FOUND);
+        }
+        String raw;
+        try {
+            raw = decryptTransportPassword(newPassword);
+        } catch (IllegalStateException ex) {
+            return R.fail(AuthPromptEnum.PASSWORD_TRANSPORT_DECRYPT_FAILED);
+        }
+        PasswordPolicyConfig policy = getPasswordPolicyConfig();
+        if (!passwordLifecycleHelper.validPolicy(raw, account, policy)) {
+            return R.fail(AuthPromptEnum.PASSWORD_POLICY_INVALID);
+        }
+        CryptoPasswordProvider provider = CryptoProviders.resolvePassword(resolvePasswordStore(policy), configService);
+        String hash = provider.supportsHash() ? provider.hash(raw) : encryptPassword(raw);
+        if (!passwordLifecycleHelper.assertNotReusedAndRecord(user, raw, hash, provider, policy)) {
+            return R.fail(AuthPromptEnum.PASSWORD_REUSED);
+        }
+        passwordLifecycleHelper.markPasswordUpdated(userId, hash);
+        String interactionCode = loginInteractionCodeService.issue(userId, account, "B");
+        return R.ok(new LoginResultVO(interactionCode, Collections.emptyList()));
     }
 
     private boolean isValidInviteRole(Long roleId, Long inviteTenantId) {

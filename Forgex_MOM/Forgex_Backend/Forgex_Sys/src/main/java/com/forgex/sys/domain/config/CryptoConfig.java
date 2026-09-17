@@ -64,6 +64,7 @@ public class CryptoConfig {
     public static class Sm4Config {
         /** SM4 密钥（32字符Hex，128位） */
         private String keyHex = "";
+        private boolean keyHexConfigured;
     }
 
     /**
@@ -73,6 +74,7 @@ public class CryptoConfig {
     public static class AesConfig {
         /** AES-256 密钥（64字符Hex，256位） */
         private String keyHex = "";
+        private boolean keyHexConfigured;
     }
 
     /**
@@ -84,6 +86,7 @@ public class CryptoConfig {
         private String publicKey = "";
         /** RSA 私钥（Base64） */
         private String privateKey = "";
+        private boolean privateKeyConfigured;
         /** 密钥长度（2048/4096） */
         private int keySize = 2048;
     }
@@ -117,6 +120,7 @@ public class CryptoConfig {
          * 实际主密钥从外部环境变量或密钥文件注入。
          */
         private String masterKeyHex = "";
+        private boolean masterKeyHexConfigured;
 
         /** 密钥轮换提醒天数 */
         private int rotateRemindDays = 90;

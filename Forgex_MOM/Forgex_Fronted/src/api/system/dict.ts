@@ -30,3 +30,8 @@ export function getDictTree(params?: any) {
 export function pullPublicDicts() {
   return http.post('/sys/dict/pull-public')
 }
+
+/** 清理当前租户的字典服务端缓存。 */
+export function refreshDictCache() {
+  return http.post('/sys/dict/refresh-cache', undefined, { showSuccessMessage: false })
+}

@@ -31,6 +31,8 @@ import java.util.List;
  */
 @Data
 public class SysUserDTO {
+    private Boolean passwordExpired;
+    private Integer passwordExpireInDays;
 
     /**
      * 主键ID
@@ -161,6 +163,11 @@ public class SysUserDTO {
      * 当前租户下已分配的角色名称列表。
      */
     private List<String> roleNames;
+
+    /**
+     * 用户密级：0 公开 / 1 内部 / 2 秘密 / 3 机密。
+     */
+    private Integer securityLevel;
 
     /**
      * 用户附属信息（可选）。

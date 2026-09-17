@@ -65,4 +65,11 @@ export default {
     passwordChanged: 'Password changed. Please sign in again.',
     passwordChangeFailed: 'Failed to change password',
   },
+  mfaTitle: 'Multi-factor authentication',
+  mfaHint: 'After binding an authenticator, login requires a one-time code. Keep recovery codes safe.',
+  mfaSecret: 'Secret',
+  mfaBind: 'Start binding',
+  mfaConfirm: 'Confirm',
+  mfaUnbind: 'Unbind',
+  mfaRecovery: 'Recovery codes',
 }

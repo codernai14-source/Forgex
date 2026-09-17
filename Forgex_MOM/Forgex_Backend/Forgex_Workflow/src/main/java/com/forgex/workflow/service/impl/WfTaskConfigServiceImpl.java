@@ -23,6 +23,7 @@ import com.forgex.workflow.domain.dto.WfTaskNodeRuleDTO;
 import com.forgex.workflow.domain.entity.WfTaskConfig;
 import com.forgex.workflow.domain.entity.WfTaskNodeRule;
 import com.forgex.workflow.domain.entity.WfTaskNodeApprover;
+import com.forgex.workflow.domain.entity.WfTaskNodeCc;
 import com.forgex.workflow.domain.entity.WfTaskNodeConfig;
 import com.forgex.workflow.domain.param.WfTaskConfigQueryParam;
 import com.forgex.workflow.domain.param.WfTaskConfigSaveParam;
@@ -32,6 +33,7 @@ import com.forgex.workflow.enums.WorkflowPromptEnum;
 import com.forgex.workflow.mapper.WfTaskConfigMapper;
 import com.forgex.workflow.mapper.WfTaskNodeRuleMapper;
 import com.forgex.workflow.mapper.WfTaskNodeApproverMapper;
+import com.forgex.workflow.mapper.WfTaskNodeCcMapper;
 import com.forgex.workflow.mapper.WfTaskNodeConfigMapper;
 import com.forgex.workflow.service.IWfTaskConfigService;
 import lombok.RequiredArgsConstructor;
@@ -97,6 +99,7 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
     private final WfTaskConfigMapper taskConfigMapper;
     private final WfTaskNodeConfigMapper nodeConfigMapper;
     private final WfTaskNodeApproverMapper nodeApproverMapper;
+    private final WfTaskNodeCcMapper nodeCcMapper;
     private final WfTaskNodeRuleMapper nodeRuleMapper;
 
     /**
@@ -545,6 +548,8 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
         List<Long> nodeIds = nodes.stream().map(WfTaskNodeConfig::getId).collect(Collectors.toList());
         Map<Long, List<WfTaskNodeApprover>> approverMap = listActiveApprovers(nodeIds, tenantId).stream()
                 .collect(Collectors.groupingBy(WfTaskNodeApprover::getNodeConfigId, LinkedHashMap::new, Collectors.toList()));
+        Map<Long, List<WfTaskNodeCc>> ccMap = listActiveNodeCc(nodeIds, tenantId).stream()
+                .collect(Collectors.groupingBy(WfTaskNodeCc::getNodeConfigId, LinkedHashMap::new, Collectors.toList()));
         Map<Long, List<WfTaskNodeRule>> ruleMap = listActiveNodeRules(nodeIds, tenantId).stream()
                 .collect(Collectors.groupingBy(WfTaskNodeRule::getNodeConfigId, LinkedHashMap::new, Collectors.toList()));
 
@@ -567,6 +572,15 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
                         })
                         .collect(Collectors.toList());
                 nodeDto.setApprovers(approvers);
+                nodeDto.setCcEnabled(Objects.equals(node.getCcEnabled(), 1));
+                nodeDto.setCcTargets(ccMap.getOrDefault(node.getId(), Collections.emptyList()).stream()
+                        .map(item -> {
+                            WfNodeApproverDTO targetDto = new WfNodeApproverDTO();
+                            targetDto.setApproverType(item.getCcType());
+                            targetDto.setApproverIds(parseLongArray(item.getCcIds()));
+                            return targetDto;
+                        })
+                        .collect(Collectors.toList()));
                 nodeDto.setRuleConfigs(ruleMap.getOrDefault(node.getId(), Collections.emptyList()).stream()
                         .map(rule -> toNodeRuleDTO(rule, approverMap.getOrDefault(node.getId(), Collections.emptyList())))
                         .collect(Collectors.toList()));
@@ -665,6 +679,7 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
             entity.setNextNodeIds("[]");
             entity.setApproveType(Objects.equals(node.getNodeType(), WorkflowConstants.NodeType.APPROVE)
                     ? node.getApproveType() : null);
+            entity.setCcEnabled(Boolean.TRUE.equals(node.getCcEnabled()) ? 1 : 0);
             entity.setBranchConditions(null);
             entity.setCanvasX(node.getCanvasX());
             entity.setCanvasY(node.getCanvasY());
@@ -738,6 +753,37 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
                 entity.setDeleted(0);
                 nodeApproverMapper.insert(entity);
             }
+            persistNodeCc(node, persistedNode.getId(), tenantId);
+        }
+    }
+
+    /**
+     * 持久化审批节点抄送配置。
+     * <p>
+     * 开关关闭时不写抄送行；开启时写入有效的类型 + ID 组合。
+     * </p>
+     *
+     * @param node         设计器节点
+     * @param nodeConfigId 已落库的节点配置 ID
+     * @param tenantId     租户 ID
+     */
+    void persistNodeCc(WfTaskNodeEditorDTO node, Long nodeConfigId, Long tenantId) {
+        if (node == null || nodeConfigId == null || !Boolean.TRUE.equals(node.getCcEnabled())) {
+            return;
+        }
+        List<WfNodeApproverDTO> targets = node.getCcTargets() == null ? Collections.emptyList() : node.getCcTargets();
+        for (WfNodeApproverDTO target : targets) {
+            if (target == null || target.getApproverType() == null
+                    || target.getApproverIds() == null || target.getApproverIds().isEmpty()) {
+                continue;
+            }
+            WfTaskNodeCc entity = new WfTaskNodeCc();
+            entity.setNodeConfigId(nodeConfigId);
+            entity.setCcType(target.getApproverType());
+            entity.setCcIds(JSON.toJSONString(target.getApproverIds()));
+            entity.setTenantId(tenantId);
+            entity.setDeleted(0);
+            nodeCcMapper.insert(entity);
         }
     }
     private List<WfTaskNodeEditorDTO> normalizeNodes(List<WfTaskNodeEditorDTO> source) {
@@ -768,6 +814,24 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
                     approvers.add(approver);
                 }
                 item.setApprovers(approvers);
+            }
+            if (item.getCcEnabled() == null) {
+                item.setCcEnabled(Boolean.FALSE);
+            }
+            if (item.getCcTargets() == null) {
+                item.setCcTargets(new ArrayList<>());
+            } else {
+                List<WfNodeApproverDTO> ccTargets = new ArrayList<>();
+                for (WfNodeApproverDTO target : item.getCcTargets()) {
+                    if (target == null) {
+                        continue;
+                    }
+                    target.setApproverIds(target.getApproverIds() == null
+                            ? new ArrayList<>() : target.getApproverIds().stream().filter(Objects::nonNull)
+                            .distinct().collect(Collectors.toList()));
+                    ccTargets.add(target);
+                }
+                item.setCcTargets(ccTargets);
             }
             if (item.getBranchRules() == null) {
                 item.setBranchRules(new ArrayList<>());
@@ -995,6 +1059,25 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
         }
         if (!hasResolvableApproverConfig(node)) {
             throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_APPROVE_NODE_NOT_CONFIGURED_APPROVER);
+        }
+        validateNodeCc(node);
+    }
+
+    /**
+     * 校验审批节点抄送配置。
+     * <p>
+     * 开关关闭允许空；开启时至少一组有效 {@code ccType + ccIds}，且不能替代审批人。
+     * </p>
+     *
+     * @param node 审批节点
+     * @throws I18nBusinessException 启用抄送但未选择对象时抛出
+     */
+    void validateNodeCc(WfTaskNodeEditorDTO node) {
+        if (node == null || !Boolean.TRUE.equals(node.getCcEnabled())) {
+            return;
+        }
+        if (!hasResolvableApproverSource(node.getCcTargets())) {
+            throw new I18nBusinessException(StatusCode.BUSINESS_ERROR, WorkflowPromptEnum.WF_NODE_CC_TARGET_REQUIRED);
         }
     }
     private boolean hasResolvableApproverConfig(WfTaskNodeEditorDTO node) {
@@ -1226,6 +1309,7 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
         }
         List<Long> nodeIds = nodes.stream().map(WfTaskNodeConfig::getId).collect(Collectors.toList());
         markNodeApproversDeleted(nodeIds, tenantId);
+        markNodeCcDeleted(nodeIds, tenantId);
         markNodeRulesDeleted(nodeIds, tenantId);
         for (WfTaskNodeConfig node : nodes) {
             WfTaskNodeConfig update = new WfTaskNodeConfig();
@@ -1266,6 +1350,30 @@ public class WfTaskConfigServiceImpl implements IWfTaskConfigService {
                 .orderByAsc(WfTaskNodeConfig::getOrderNum)
                 .orderByAsc(WfTaskNodeConfig::getId));
     }
+    private void markNodeCcDeleted(List<Long> nodeIds, Long tenantId) {
+        if (nodeIds.isEmpty()) {
+            return;
+        }
+        List<WfTaskNodeCc> targets = listActiveNodeCc(nodeIds, tenantId);
+        for (WfTaskNodeCc target : targets) {
+            WfTaskNodeCc update = new WfTaskNodeCc();
+            update.setId(target.getId());
+            update.setDeleted(1);
+            nodeCcMapper.updateById(update);
+        }
+    }
+
+    private List<WfTaskNodeCc> listActiveNodeCc(List<Long> nodeIds, Long tenantId) {
+        if (nodeIds == null || nodeIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return nodeCcMapper.selectList(new LambdaQueryWrapper<WfTaskNodeCc>()
+                .in(WfTaskNodeCc::getNodeConfigId, nodeIds)
+                .eq(WfTaskNodeCc::getTenantId, tenantId)
+                .eq(WfTaskNodeCc::getDeleted, 0)
+                .orderByAsc(WfTaskNodeCc::getId));
+    }
+
     private List<WfTaskNodeApprover> listActiveApprovers(List<Long> nodeIds, Long tenantId) {
         if (nodeIds.isEmpty()) {
             return Collections.emptyList();

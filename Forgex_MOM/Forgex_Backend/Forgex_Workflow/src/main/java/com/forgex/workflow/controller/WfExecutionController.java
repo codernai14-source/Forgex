@@ -17,6 +17,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.api.dto.WorkflowExecutionStartRequestDTO;
 import com.forgex.common.api.dto.WorkflowTimeoutScanRequestDTO;
 import com.forgex.common.i18n.CommonPrompt;
+import com.forgex.common.audit.OperationLog;
+import com.forgex.common.audit.OperationType;
 import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.R;
@@ -24,6 +26,7 @@ import com.forgex.workflow.domain.dto.WfApprovalActionLogDTO;
 import com.forgex.workflow.domain.dto.WfApprovalInstanceDTO;
 import com.forgex.workflow.domain.dto.WfDashboardAnalyticsVO;
 import com.forgex.workflow.domain.dto.WfDashboardSummaryVO;
+import com.forgex.workflow.domain.dto.WfCcRecordDTO;
 import com.forgex.workflow.domain.dto.WfExecutionDTO;
 import com.forgex.workflow.domain.param.WfExecutionAddSignParam;
 import com.forgex.workflow.domain.param.WfExecutionApproveParam;
@@ -33,6 +36,7 @@ import com.forgex.workflow.domain.param.WfExecutionBatchTransferParam;
 import com.forgex.workflow.domain.param.WfExecutionCompensateParam;
 import com.forgex.workflow.domain.param.WfExecutionDelegateSaveParam;
 import com.forgex.workflow.domain.param.WfExecutionDelegateParam;
+import com.forgex.workflow.domain.param.WfExecutionIdParam;
 import com.forgex.workflow.domain.param.WfExecutionQueryParam;
 import com.forgex.workflow.domain.param.WfExecutionRecallParam;
 import com.forgex.workflow.domain.param.WfExecutionStartParam;
@@ -496,6 +500,31 @@ public class WfExecutionController {
     @RequirePerm("wf:myTask:cc")
     public R<Page<WfExecutionDTO>> pageMyCc(@RequestBody WfExecutionQueryParam param) {
         return R.ok(executionService.pageMyCc(param));
+    }
+
+    /**
+     * 将当前用户在指定执行单下的未读抄送标为已读。
+     *
+     * @param param 执行单 ID
+     * @return 空成功响应
+     */
+    @PostMapping("/cc/mark-read")
+    @RequirePerm("wf:myTask:cc")
+    @OperationLog(module = "workflow", menuPath = "/workspace/approval/my/cc", operationType = OperationType.UPDATE)
+    public R<Void> markCcRead(@RequestBody WfExecutionIdParam param) {
+        executionService.markCcRead(param == null ? null : param.getExecutionId());
+        return R.ok();
+    }
+
+    /**
+     * 查询执行单抄送人，供审批轨迹只读展示。
+     *
+     * @param param 执行单 ID
+     * @return 抄送人列表
+     */
+    @PostMapping("/cc/list-by-execution")
+    public R<List<WfCcRecordDTO>> listCcByExecution(@RequestBody WfExecutionIdParam param) {
+        return R.ok(executionService.listCcByExecution(param == null ? null : param.getExecutionId()));
     }
 
     /**

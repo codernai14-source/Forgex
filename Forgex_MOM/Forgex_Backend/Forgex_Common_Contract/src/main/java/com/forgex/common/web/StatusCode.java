@@ -82,4 +82,7 @@ public final class StatusCode {
      * </p>
      */
     public static final int LICENSE_INVALID = 605;
+
+    /** 密码已过期，需要先修改密码。 */
+    public static final int PASSWORD_EXPIRED = 606;
 }

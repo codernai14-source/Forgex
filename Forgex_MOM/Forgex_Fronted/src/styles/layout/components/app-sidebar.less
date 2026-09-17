@@ -1,5 +1,7 @@
 .app-sidebar-wrapper {
   display: flex;
+  flex: 0 0 auto;
+  align-self: stretch;
   height: 100%;
   min-height: 0;
   overflow: hidden;
@@ -15,6 +17,7 @@
 }
 
 .app-sidebar-mini {
+  flex-shrink: 0;
   background: var(--fx-sider-mini-bg, #161720);
   border-right: 1px solid rgba(255, 255, 255, 0.06);
   min-height: 0;
@@ -165,6 +168,7 @@
 
 .app-sidebar {
   position: relative;
+  flex-shrink: 0;
   background: var(--fx-sider-bg, #001529);
   border-right: 1px solid var(--fx-border-color, rgba(255, 255, 255, 0.1));
   min-height: 0;

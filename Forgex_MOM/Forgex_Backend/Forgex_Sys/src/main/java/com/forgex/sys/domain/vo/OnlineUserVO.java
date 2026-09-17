@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 在线用户 VO。
@@ -73,4 +74,10 @@ public class OnlineUserVO {
      * </p>
      */
     private Long ttlSeconds;
+
+    /** 同一用户的全部有效会话。 */
+    private List<OnlineSessionVO> sessions;
+
+    /** 有效会话数量。 */
+    private Integer sessionCount;
 }

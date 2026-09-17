@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.security.perm.RequirePerm;
+import com.forgex.common.audit.OperationLog;
+import com.forgex.common.audit.OperationType;
 import com.forgex.common.web.R;
 import com.forgex.sys.domain.dto.SysFileRecordQueryDTO;
 import com.forgex.sys.domain.entity.SysFileRecord;
@@ -34,7 +36,9 @@ public class FileController {
     private final FileService fileService;
     private final ISysFileRecordService fileRecordService;
 
+    @RequirePerm("sys:file:upload")
     @PostMapping("/upload")
+    @OperationLog(module = "sys", menuPath = "/system/file", operationType = OperationType.ADD, detailTemplateCode = "FILE_UPLOAD")
     public R<String> upload(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "moduleCode", required = false) String moduleCode,

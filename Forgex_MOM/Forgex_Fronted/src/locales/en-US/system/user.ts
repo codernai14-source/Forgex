@@ -22,6 +22,14 @@ export default {
   lastLoginTime: 'Last Login Time',
   lastLoginIp: 'Last Login IP',
   lastLoginRegion: 'Last Login Region',
+  securityLevel: 'Security level',
+  securityLevelHint: 'Only the security administrator can change this value.',
+  securityLevelOptions: {
+    public: 'Public',
+    internal: 'Internal',
+    secret: 'Secret',
+    confidential: 'Confidential',
+  },
   action: 'Action',
 
   genderOptions: {
@@ -87,6 +95,8 @@ export default {
   statusActive: 'Enabled',
   statusInactive: 'Disabled',
   statusLocked: 'Locked',
+  online: 'Online',
+  offline: 'Offline',
 
   add: 'Add User',
   edit: 'Edit',
@@ -116,6 +126,7 @@ export default {
     assignedStatus: 'Assignment Status',
     assigned: 'Assigned',
     summary: 'Total {total} roles, {selected} selected',
+    threeRoleHint: 'At L3, a user cannot hold more than one reserved role among system, security, and audit administrators.',
     loadFailed: 'Failed to load role data',
     saveFailed: 'Save failed',
     missingUserId: 'User ID is missing',

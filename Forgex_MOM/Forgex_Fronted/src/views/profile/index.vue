@@ -122,6 +122,7 @@
               </a-button>
             </a-form-item>
           </a-form>
+          <MfaBind style="margin-top: 24px" />
         </a-tab-pane>
         <a-tab-pane key="personalHomepage" :tab="$t('profile.tabs.personalHomepage')">
           <PersonalHomepageDesigner
@@ -190,6 +191,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import AvatarUpload from '@/components/AvatarUpload.vue'
+import MfaBind from '@/views/system/profile/components/MfaBind.vue'
 import PersonalHomepageDesigner from '@/components/personal-homepage/PersonalHomepageDesigner.vue'
 import { getCurrentUserInfo, updateBasicInfo, changePassword } from '@/api/profile'
 import { useGuideStore } from '@/stores/guide'

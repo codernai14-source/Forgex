@@ -89,5 +89,17 @@ public interface KmsService {
      * @return 最大版本号，如无记录返回 0
      */
     int getMaxVersion(String alias);
+
+    /**
+     * 导入已有明文密钥，用于存量 {@code security.crypto.sm4.keyHex} 迁移。
+     *
+     * @param alias       别名
+     * @param keyType     算法
+     * @param keySize     位数
+     * @param rawKeyBase64 明文 Base64
+     * @param description 描述
+     * @return 密钥 ID
+     */
+    Long importExistingKey(String alias, String keyType, int keySize, String rawKeyBase64, String description);
 }
 

@@ -7,6 +7,8 @@ import com.forgex.common.license.LicenseRuntimeInfo;
 import com.forgex.common.license.LicenseStatus;
 import com.forgex.common.web.R;
 import com.forgex.common.web.StatusCode;
+import com.forgex.common.security.LoginSessionKeys;
+import com.forgex.common.security.LoginSessionSupport;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -29,11 +31,14 @@ import java.time.Duration;
 /**
  * 网关认证全局过滤器。
  * <p>
- * 统一基于 Sa-Token 会话判断请求是否已登录，不再依赖自建登录上下文缓存。
+ * 统一基于 Sa-Token Cookie 会话判断请求是否已登录。
+ * 路径白名单由 {@link GatewayAuthPathRules} 判定，其中 {@code GET/HEAD /api/sys/files/**}
+ * 必须匿名可读，否则登录页 Logo/背景和头像会裂图。
  * </p>
  *
  * @author Forgex Team
  * @version 1.0.0
+ * @see GatewayAuthPathRules
  */
 @Component
 public class GatewayAuthGlobalFilter implements GlobalFilter, Ordered {
@@ -82,7 +87,7 @@ public class GatewayAuthGlobalFilter implements GlobalFilter, Ordered {
         }
 
         String path = request.getURI().getPath();
-        if (!needAuth(path, method)) {
+        if (!GatewayAuthPathRules.needAuth(path, method)) {
             return chain.filter(exchange);
         }
 
@@ -98,80 +103,36 @@ public class GatewayAuthGlobalFilter implements GlobalFilter, Ordered {
 
         exchange.getAttributes().put(GatewayLoginSessionSupport.LOGIN_CONTEXT_ATTRIBUTE, loginContext);
         loginSessionSupport.refreshOnlineUserTtl(loginContext);
+        if (isPasswordExpired(loginContext, path)) {
+            return writePasswordExpired(exchange);
+        }
         return chain.filter(exchange);
     }
 
-    private boolean needAuth(String path, HttpMethod method) {
-        if (!StringUtils.hasText(path)) {
+    private boolean isPasswordExpired(GatewayLoginSessionSupport.LoginSessionContext context, String path) {
+        if (isPasswordRecoveryPath(path)) {
             return false;
         }
-        if (path.startsWith("/api/auth/")) {
-            return false;
+        var session = LoginSessionSupport.getSessionByToken(context.getToken());
+        return session != null && Boolean.TRUE.equals(session.get(LoginSessionKeys.KEY_PASSWORD_EXPIRED));
+    }
+
+    private boolean isPasswordRecoveryPath(String path) {
+        return "/api/sys/profile/changePassword".equals(path)
+                || "/api/auth/logout".equals(path)
+                || "/api/auth/password/force-change".equals(path);
+    }
+
+    private Mono<Void> writePasswordExpired(ServerWebExchange exchange) {
+        exchange.getResponse().setStatusCode(HttpStatus.OK);
+        exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
+        try {
+            byte[] bytes = objectMapper.writeValueAsBytes(java.util.Map.of("code", StatusCode.PASSWORD_EXPIRED, "message", "PASSWORD_EXPIRED"));
+            return exchange.getResponse().writeWith(Mono.just(exchange.getResponse().bufferFactory().wrap(bytes)));
+        } catch (Exception e) {
+            byte[] bytes = "{\"code\":606,\"message\":\"PASSWORD_EXPIRED\"}".getBytes(StandardCharsets.UTF_8);
+            return exchange.getResponse().writeWith(Mono.just(exchange.getResponse().bufferFactory().wrap(bytes)));
         }
-        if (path.equals("/api/sys/config/system-basic") && HttpMethod.GET.equals(method)) {
-            return false;
-        }
-        if (path.equals("/api/sys/config/login-captcha") && HttpMethod.GET.equals(method)) {
-            return false;
-        }
-        if (path.equals("/api/sys/i18n/languageType/listEnabled") && HttpMethod.POST.equals(method)) {
-            return false;
-        }
-        if (path.equals("/api/sys/i18n/languageType/getDefault") && HttpMethod.POST.equals(method)) {
-            return false;
-        }
-        if (path.equals("/api/sys/i18n/message/mobileBundle") && HttpMethod.POST.equals(method)) {
-            return false;
-        }
-        if (path.equals("/api/sys/init/status") && HttpMethod.GET.equals(method)) {
-            return false;
-        }
-        if (path.equals("/api/sys/init/apply") && HttpMethod.POST.equals(method)) {
-            return false;
-        }
-        if (path.equals("/api/sys/license/status") && HttpMethod.GET.equals(method)) {
-            return false;
-        }
-        if (path.equals("/api/sys/license/request-info") && HttpMethod.GET.equals(method)) {
-            return false;
-        }
-        if (path.equals("/api/sys/license/logs") && HttpMethod.GET.equals(method)) {
-            return false;
-        }
-        if (path.equals("/api/sys/license/refresh") && HttpMethod.POST.equals(method)) {
-            return false;
-        }
-        if (path.equals("/api/basic/module/ping") && HttpMethod.GET.equals(method)) {
-            return false;
-        }
-        if (path.equals("/api/integration/invoke")) {
-            return false;
-        }
-        if (path.equals("/api/integration/third-authorization/validate-token")) {
-            return false;
-        }
-        if (path.startsWith("/api/integration/third-authorization/check-ip-whitelist/")) {
-            return false;
-        }
-        if (path.startsWith("/api/sys/files/") && (HttpMethod.GET.equals(method) || HttpMethod.HEAD.equals(method))) {
-            return false;
-        }
-        if (path.startsWith("/api/integration/api-config/")
-                || path.startsWith("/api/integration/call-log/")
-                || path.startsWith("/api/integration/param-config/")
-                || path.startsWith("/api/integration/param-mapping/")
-                || path.startsWith("/api/integration/third-system/")
-                || path.startsWith("/api/integration/third-authorization/")) {
-            return true;
-        }
-        return path.startsWith("/api/sys/")
-                || path.startsWith("/api/basic/")
-                || path.startsWith("/api/sys/files/")
-                || path.startsWith("/api/sys/app/")
-                || path.startsWith("/api/wf/")
-                || path.startsWith("/api/integration/")
-                || path.startsWith("/api/job/")
-                || path.startsWith("/api/report/");
     }
 
     private Mono<Void> writeNotLogin(ServerWebExchange exchange) {

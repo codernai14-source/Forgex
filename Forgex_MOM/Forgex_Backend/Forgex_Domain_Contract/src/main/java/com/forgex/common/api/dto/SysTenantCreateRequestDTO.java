@@ -51,6 +51,11 @@ public class SysTenantCreateRequestDTO implements Serializable {
     private TenantTypeEnum tenantType;
 
     /**
+     * 父租户 ID；非主租户只能指向主租户。
+     */
+    private Long parentTenantId;
+
+    /**
      * 状态
      */
     private Boolean status;

@@ -299,6 +299,52 @@
                 <a-button type="dashed" block @click="addApprover">{{ t('workflow.taskConfig.nodes.addApproverSource') }}</a-button>
               </a-form-item>
 
+              <a-form-item :label="t('workflow.taskConfig.nodes.ccEnabled')">
+                <a-switch
+                  :checked="Boolean(selectedNodeData.ccEnabled)"
+                  @update:checked="updateSelectedNodeData({ ccEnabled: Boolean($event) })"
+                />
+                <div class="field-tip">{{ t('workflow.taskConfig.nodes.ccEnabledTip') }}</div>
+              </a-form-item>
+
+              <a-form-item v-if="selectedNodeData.ccEnabled" :label="t('workflow.taskConfig.nodes.ccSource')">
+                <div class="editor-list">
+                  <div
+                    v-for="(target, index) in (selectedNodeData.ccTargets || [])"
+                    :key="`cc-${target.approverType}-${index}`"
+                    class="editor-card editor-card--column"
+                  >
+                    <div class="approver-toolbar">
+                      <a-select
+                        :value="target.approverType"
+                        style="width: 132px"
+                        @update:value="updateCcType(index, Number($event))"
+                      >
+                        <a-select-option v-for="item in approverTypeOptions" :key="item.value" :value="item.value">
+                          {{ item.label }}
+                        </a-select-option>
+                      </a-select>
+                      <a-space>
+                        <a-button @click="openCcDialog(index)">
+                          {{ target.approverIds.length ? t('workflow.taskConfig.nodes.editSelection') : t('workflow.taskConfig.nodes.selectTarget') }}
+                        </a-button>
+                        <a-button danger @click="removeCcTarget(index)">{{ t('common.delete') }}</a-button>
+                      </a-space>
+                    </div>
+
+                    <div class="approver-summary">
+                      <template v-if="target.approverIds.length">
+                        <a-tag v-for="label in approverDisplayLabels(target)" :key="label" color="cyan">
+                          {{ label }}
+                        </a-tag>
+                      </template>
+                      <span v-else class="approver-summary__empty">{{ t('workflow.taskConfig.nodes.ccEmpty', { type: approverTypeLabel(target.approverType) }) }}</span>
+                    </div>
+                  </div>
+                </div>
+                <a-button type="dashed" block @click="addCcTarget">{{ t('workflow.taskConfig.nodes.addCcSource') }}</a-button>
+              </a-form-item>
+
               <a-form-item :label="t('workflow.taskConfig.nodes.nodeCapability')">
                 <a-space wrap>
                   <a-checkbox
@@ -634,6 +680,7 @@ const lowCodeFormContent = ref('')
 const availableFormFields = ref<WfLowCodeFieldMetaDTO[]>([])
 const approverDialogOpen = ref(false)
 const approverDialogIndex = ref<number | null>(null)
+const approverDialogMode = ref<'approver' | 'cc'>('approver')
 const approverDialogModel = ref<ReceiverModel>({ receiverType: undefined, receiverIds: [] })
 const silentErrorConfig = { silentError: true }
 const flowConnectionColor = ref('#2563eb')
@@ -813,7 +860,11 @@ function nodeSummary(data: WorkflowNodeData) {
   if (data.nodeType === NODE_TYPES.APPROVE) {
     const approveType = approveTypeOptions.value.find(item => item.value === Number(data.approveType))?.label || t('workflow.taskConfig.nodes.notConfigured')
     const approverCount = data.approvers.filter(item => item.approverType != null && item.approverIds?.length).length
-    return t('workflow.taskConfig.nodes.approveSummary', { approveType, approverCount })
+    const ccCount = (data.ccTargets || []).filter(item => item.approverType != null && item.approverIds?.length).length
+    const summary = t('workflow.taskConfig.nodes.approveSummary', { approveType, approverCount })
+    return data.ccEnabled
+      ? `${summary}，${t('workflow.taskConfig.nodes.ccSummary', { count: ccCount })}`
+      : summary
   }
   return t('workflow.taskConfig.nodes.branchSummary', {
     ruleCount: data.branchRules.length,
@@ -834,6 +885,8 @@ function createNodeData(node: Partial<WfTaskNodeEditorDTO> & { nodeType: number;
     canvasX: node.canvasX ?? 0,
     canvasY: node.canvasY ?? 0,
     defaultBranchNodeKey: node.defaultBranchNodeKey,
+    ccEnabled: Boolean(node.ccEnabled),
+    ccTargets: clone(node.ccTargets || []),
     approvers: clone(node.approvers || []),
     ruleConfigs: clone(node.ruleConfigs || []),
     branchRules: clone(node.branchRules || [])
@@ -1195,6 +1248,8 @@ function buildNewNode(nodeType: number, x: number, y: number) {
     canvasX: x,
     canvasY: y,
     approveType: nodeType === NODE_TYPES.APPROVE ? 2 : undefined,
+    ccEnabled: false,
+    ccTargets: [],
     approvers: nodeType === NODE_TYPES.APPROVE ? [{ approverType: APPROVER_TYPES.USER, approverIds: [] }] : [],
     ruleConfigs: nodeType === NODE_TYPES.APPROVE ? [buildDefaultRuleConfig()] : [],
     branchRules: nodeType === NODE_TYPES.BRANCH ? [] : []
@@ -1399,6 +1454,7 @@ function openApproverDialog(index: number) {
     return
   }
   const approver = (ensureNodeRuleConfigs(current)[0]?.approvers || current.approvers)[index]
+  approverDialogMode.value = 'approver'
   approverDialogIndex.value = index
   approverDialogModel.value = buildApproverDialogModel(approver)
   approverDialogOpen.value = true
@@ -1408,6 +1464,7 @@ function openApproverDialog(index: number) {
 function closeApproverDialog() {
   approverDialogOpen.value = false
   approverDialogIndex.value = null
+  approverDialogMode.value = 'approver'
   approverDialogModel.value = { receiverType: undefined, receiverIds: [] }
 }
 
@@ -1431,12 +1488,78 @@ function handleApproverDialogOk() {
     return
   }
 
-  updateApprover(approverDialogIndex.value, {
-    approverType,
-    approverIds
-  })
+  if (approverDialogMode.value === 'cc') {
+    updateCcTarget(approverDialogIndex.value, {
+      approverType,
+      approverIds
+    })
+  } else {
+    updateApprover(approverDialogIndex.value, {
+      approverType,
+      approverIds
+    })
+  }
   void ensureApproverOptionsLoaded(approverType)
   closeApproverDialog()
+}
+
+function ensureCcTargets(current: WorkflowNodeData): WfNodeApproverDTO[] {
+  return current.ccTargets ? clone(current.ccTargets) : []
+}
+
+function addCcTarget() {
+  const current = selectedNodeData.value
+  if (!current) {
+    return
+  }
+  updateSelectedNodeData({
+    ccEnabled: true,
+    ccTargets: [...ensureCcTargets(current), { approverType: APPROVER_TYPES.USER, approverIds: [] }]
+  })
+}
+
+function updateCcTarget(index: number, patch: Partial<WfNodeApproverDTO>) {
+  const current = selectedNodeData.value
+  if (!current) {
+    return
+  }
+  const ccTargets = ensureCcTargets(current)
+  ccTargets[index] = {
+    ...ccTargets[index],
+    ...patch
+  }
+  updateSelectedNodeData({ ccTargets })
+}
+
+function updateCcType(index: number, approverType: number) {
+  updateCcTarget(index, { approverType, approverIds: [] })
+  void ensureApproverOptionsLoaded(approverType)
+}
+
+function removeCcTarget(index: number) {
+  const current = selectedNodeData.value
+  if (!current) {
+    return
+  }
+  updateSelectedNodeData({
+    ccTargets: ensureCcTargets(current).filter((_, itemIndex) => itemIndex !== index)
+  })
+}
+
+function openCcDialog(index: number) {
+  const current = selectedNodeData.value
+  if (!current) {
+    return
+  }
+  const target = (current.ccTargets || [])[index]
+  if (!target) {
+    return
+  }
+  approverDialogMode.value = 'cc'
+  approverDialogIndex.value = index
+  approverDialogModel.value = buildApproverDialogModel(target)
+  approverDialogOpen.value = true
+  void ensureApproverOptionsLoaded(target.approverType)
 }
 
 function addBranchRule() {
@@ -1630,6 +1753,8 @@ function buildSavePayload(): WfTaskNodeEditorDTO[] {
       canvasX: Number(node.position.x),
       canvasY: Number(node.position.y),
       defaultBranchNodeKey: data.defaultBranchNodeKey,
+      ccEnabled: Boolean(data.ccEnabled),
+      ccTargets: clone(data.ccTargets || []),
       approvers: clone(data.approvers),
       ruleConfigs: clone(data.ruleConfigs || []),
       branchRules: clone(data.branchRules)

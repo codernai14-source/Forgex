@@ -13,6 +13,7 @@ import com.forgex.workflow.domain.param.WfExecutionDelegateParam;
 import com.forgex.workflow.domain.param.WfExecutionDelegateSaveParam;
 import com.forgex.workflow.domain.param.WfExecutionApproveParam;
 import com.forgex.workflow.mapper.WfMyTaskMapper;
+import com.forgex.workflow.mapper.WfTaskCcRecordMapper;
 import com.forgex.workflow.mapper.WfTaskApprovalActionLogMapper;
 import com.forgex.workflow.mapper.WfTaskApprovalInstanceMapper;
 import com.forgex.workflow.mapper.WfTaskConfigMapper;
@@ -53,6 +54,7 @@ class WfExecutionServiceImplTest {
     @Mock private WfTaskNodeRuleMapper nodeRuleMapper;
     @Mock private WfTaskApprovalInstanceMapper approvalInstanceMapper;
     @Mock private WfTaskApprovalActionLogMapper approvalActionLogMapper;
+    @Mock private WfTaskCcRecordMapper ccRecordMapper;
     @Mock private IWfEngineService engineService;
     @Mock private UserInfoService userInfoService;
     @Mock private ApprovalInterpreterRegistry interpreterRegistry;

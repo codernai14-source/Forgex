@@ -52,4 +52,11 @@ export default {
     passwordChanged: '비밀번호가 변경되었습니다. 다시 日志인하세요.',
     passwordChangeFailed: '비밀번호 변경에 실패했습니다',
   },
+  mfaTitle: '다중 인증',
+  mfaHint: '인증 앱을 연결하면 로그인 시 일회용 코드가 필요합니다. 복구 코드를 안전하게 보관하세요.',
+  mfaSecret: '비밀키',
+  mfaBind: '연결 시작',
+  mfaConfirm: '확인',
+  mfaUnbind: '해제',
+  mfaRecovery: '복구 코드',
 }

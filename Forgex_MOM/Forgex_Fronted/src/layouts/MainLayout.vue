@@ -23,6 +23,7 @@
       :current-tenant-id="currentTenantId"
       :tenant-loading="tenantLoading"
       :switching-tenant-id="switchingTenantId"
+      :permission-refreshing="permissionRefreshing"
       @module-click="onModuleClick"
       @search-click="globalSearchVisible = true"
       @locale-change="onLocaleChange"
@@ -93,6 +94,7 @@
               </router-view>
             </div>
           </div>
+          <GlobalHelpToolbar />
           <Transition name="fx-back-top-fade">
             <a-button
               v-if="showBackTop"
@@ -112,7 +114,15 @@
     </a-layout>
 
     <div v-if="layoutConfig.footerCopyrightEnabled" class="fx-footer">
-      {{ systemConfig.copyright }}
+      <a
+        v-if="copyrightLink"
+        :href="copyrightLink"
+        :target="copyrightLinkIsExternal ? '_blank' : undefined"
+        :rel="copyrightLinkIsExternal ? 'noopener noreferrer' : undefined"
+      >
+        {{ systemConfig.copyright }}
+      </a>
+      <span v-else>{{ systemConfig.copyright }}</span>
     </div>
 
     <a-dropdown
@@ -565,12 +575,13 @@ import jaJP from 'ant-design-vue/es/locale/ja_JP'
 import koKR from 'ant-design-vue/es/locale/ko_KR'
 import zhCN from 'ant-design-vue/es/locale/zh_CN'
 import zhTW from 'ant-design-vue/es/locale/zh_TW'
-import { FAVORITE_MANAGEMENT_PATH, PERSONAL_HOME_PATH, dynamicModules, dynamicRoutes, injectDynamicRoutes } from '../router'
+import { FAVORITE_MANAGEMENT_PATH, PERSONAL_HOME_PATH, dynamicModules, dynamicRoutes, injectDynamicRoutes, refreshDynamicRoutes } from '../router'
 import { getUserLayoutStyle, saveUserLayoutStyle } from '../api/system/userStyle'
 import { changeLanguage, chooseTenant, listCurrentTenants, type TenantOption } from '../api/auth/login'
 import { getRoutes } from '../api/system/route'
 import { TAB_CLOSE_QUERY_KEY } from '../router/approvalRoutePaths'
 import { getSystemBasicConfig } from '../api/system/config'
+import { getLicenseStatus } from '../api/system/license'
 import { setLocale, type LocaleCode } from '../locales'
 import { getUnreadMessageCount, listUnreadMessages, markMessageRead, sendMessage, type SysMessageVO } from '../api/system/message'
 import { noticeApi, type SysNotice } from '../api/system/notice'
@@ -597,6 +608,7 @@ import AppHeader from './components/AppHeader.vue'
 import AppSidebar from './components/AppSidebar.vue'
 import AppTabBar from './components/AppTabBar.vue'
 import GlobalSearch from './components/GlobalSearch.vue'
+import GlobalHelpToolbar from '../components/help/GlobalHelpToolbar.vue'
 import FxGuideTour from '../components/common/FxGuideTour.vue'
 import FxIcon from '../components/common/FxIcon.vue'
 import SystemNoticePopup from '../components/system/SystemNoticePopup.vue'
@@ -607,11 +619,13 @@ import { useAntdTheme } from '../theme/antdTheme'
 import { lightTokens, darkTokens } from '../theme/tokens'
 import { generateCSSVariablesWithCache } from '../theme/cssVariables'
 import { normalizeMediaUrl } from '../utils/media'
+import { normalizeWorkspacePath } from '../utils/workspacePath'
+import { applySiteBranding } from '../utils/siteBranding'
 import { useAppStore } from '../stores/app'
 import { useGuideStore } from '../stores/guide'
 import { useUserStore } from '../stores/user'
 import { usePermissionStore } from '../stores/permission'
-import { resolveSystemPageGuide } from '../guide/systemPageGuides'
+import { hasSystemPageGuide, resolveSystemPageGuide } from '../guide/systemPageGuides'
 import type { SystemBasicConfig } from '../api/system/config'
 import type { FxGuideStep } from '../types/guide'
 
@@ -623,6 +637,9 @@ const appStore = useAppStore()
 const guideStore = useGuideStore()
 const userStore = useUserStore()
 const permissionStore = usePermissionStore()
+const permissionRefreshing = ref(false)
+let permissionRefreshPromise: Promise<boolean> | null = null
+const licenseGraceNoticeKey = 'fx-license-grace-notice'
 
 // 使用系统主题检测
 const { systemTheme } = useSystemTheme()
@@ -1211,6 +1228,8 @@ const antdLocale = computed(() => {
 const systemConfig = ref<SystemBasicConfig>({
   systemName: 'FORGEX_MOM',
   systemLogo: '',
+  browserTitle: 'FORGEX_MOM',
+  browserIcon: '',
   systemVersion: '1.0.0',
   copyright: '© 2025 FORGEX_MOM',
   copyrightLink: '#',
@@ -1228,6 +1247,29 @@ const systemConfig = ref<SystemBasicConfig>({
   secondaryColor: '#ff2a6d'
 })
 
+/**
+ * 仅允许普通网页链接，避免将后台配置直接作为 javascript/data URL 执行。
+ */
+const copyrightLink = computed(() => normalizeCopyrightLink(systemConfig.value.copyrightLink))
+const copyrightLinkIsExternal = computed(() => {
+  const value = copyrightLink.value
+  return !!value && /^(https?:)?\/\//i.test(value)
+})
+
+function normalizeCopyrightLink(value: unknown): string {
+  const raw = String(value || '').trim()
+  if (!raw || raw === '#') {
+    return ''
+  }
+  if (/^(javascript|data|vbscript):/i.test(raw)) {
+    return ''
+  }
+  if (/^(https?:)?\/\//i.test(raw) || raw.startsWith('/') || raw.startsWith('#')) {
+    return raw
+  }
+  return ''
+}
+
 function formatMediaUrl(value: string): string {
   return normalizeMediaUrl(value)
 }
@@ -1235,16 +1277,23 @@ function formatMediaUrl(value: string): string {
 const headerLogo = computed(() => formatMediaUrl(systemConfig.value.systemLogo))
 const headerTitle = computed(() => String(systemConfig.value.systemName || 'Forgex MOM'))
 
+watch(
+  () => [systemConfig.value.browserTitle, systemConfig.value.browserIcon, systemConfig.value.systemName],
+  () => {
+    applySiteBranding({
+      title: systemConfig.value.browserTitle || systemConfig.value.systemName,
+      icon: formatMediaUrl(systemConfig.value.browserIcon),
+    })
+  },
+  { immediate: true },
+)
+
 locale.value = currentLocale.value as any
 
 // 解析实际的主题模式（处理 system 模式）
 const resolvedMode = computed(() => 
   resolveThemeMode(layoutConfig.value.themeMode, systemTheme.value)
 )
-
-function normalizeWorkspacePath(path: string) {
-  return String(path || '').split('?')[0]
-}
 
 const menuFavoritePathList = computed(() => Array.from(menuFavoritePathSet.value))
 const currentFavoritePath = computed(() => normalizeFavoritePath(route.fullPath || route.path))
@@ -1784,15 +1833,28 @@ function buildSearchMenuNodes(
   return result
 }
 
+/**
+ * 是否渲染左侧菜单。
+ * <p>
+ * 水平布局只使用顶栏模块入口，不显示侧栏。混合 / 水平布局在个人首页、收藏管理页也隐藏侧栏，
+ * 因为顶栏仍能切换模块。垂直、垂直双列没有顶栏模块导航，这两类页面必须保留侧栏，否则选中
+ * 垂直双列后会同时失去顶栏模块和左侧菜单，无法进入业务页。
+ * </p>
+ *
+ * @returns 当前路由和布局模式下是否显示 {@link AppSidebar}
+ */
 const shouldShowSidebar = computed(() => {
   const currentPath = normalizeWorkspacePath(route.fullPath)
-  if (layoutConfig.value.layoutMode === 'top') {
+  const layoutMode = layoutConfig.value.layoutMode
+  if (layoutMode === 'top') {
     return false
   }
-  if (currentPath === PERSONAL_HOME_PATH || currentPath === FAVORITE_MANAGEMENT_PATH) {
+  const isHomeLikePage = currentPath === PERSONAL_HOME_PATH || currentPath === FAVORITE_MANAGEMENT_PATH
+  const usesHeaderModuleNav = layoutMode === 'mix'
+  if (isHomeLikePage && usesHeaderModuleNav) {
     return false
   }
-  if (layoutConfig.value.layoutMode === 'mix' || layoutConfig.value.layoutMode === 'vertical-mix') {
+  if (layoutMode === 'mix' || layoutMode === 'vertical-mix') {
     return sidebarMenus.value.length > 0
   }
   return true
@@ -2363,6 +2425,59 @@ function refreshPage() {
 }
 
 /**
+ * 刷新当前会话菜单权限，并在当前页面被撤权时回到个人主页。
+ *
+ * @param showMessage 是否显示手动操作结果
+ * @returns 是否刷新成功
+ */
+async function refreshMenuPermissions(showMessage = false): Promise<boolean> {
+  if (permissionRefreshPromise) {
+    return permissionRefreshPromise
+  }
+
+  const currentPath = route.fullPath
+  permissionRefreshing.value = true
+  permissionRefreshPromise = (async () => {
+    try {
+      const refreshed = await refreshDynamicRoutes({ silent: true })
+      if (!refreshed) {
+        throw new Error('permission refresh returned no route payload')
+      }
+
+      const revokedTabs = tabs.value
+        .filter(tab => tab.key !== PERSONAL_HOME_PATH)
+        .filter(tab => router.resolve(tab.key).name === 'WorkspaceNotFound')
+        .map(tab => tab.key)
+      removeTabsByKeys(revokedTabs)
+
+      const currentResolved = router.resolve(currentPath)
+      if (currentResolved.name === 'WorkspaceNotFound') {
+        await router.replace(PERSONAL_HOME_PATH)
+      } else {
+        updateTabsByRoute(route.fullPath)
+      }
+
+      if (showMessage) {
+        message.success(t('layout.user.refreshPermissionsSuccess'))
+      }
+      return true
+    } catch (error) {
+      console.error('[MainLayout] 菜单权限刷新失败:', error)
+      if (showMessage) {
+        message.error(t('layout.user.refreshPermissionsFailed'))
+      }
+      return false
+    } finally {
+      permissionRefreshing.value = false
+    }
+  })().finally(() => {
+    permissionRefreshPromise = null
+  })
+
+  return permissionRefreshPromise
+}
+
+/**
  * 打开消息通知抽屉
  * <p>
  * 加载当前用户收到的消息列表，并打开抽屉显示
@@ -2383,6 +2498,18 @@ function handleOpenMessageDrawerEvent(event?: Event) {
 
 function handleOpenGlobalSearchEvent() {
   globalSearchVisible.value = true
+}
+
+/**
+ * 重放当前页引导。
+ */
+async function handleReplayPageGuide() {
+  const currentPath = normalizeWorkspacePath(route.fullPath || route.path)
+  if (!hasSystemPageGuide(currentPath)) {
+    return
+  }
+  const config = resolveSystemPageGuide(currentPath)
+  await startSystemGuide(config)
 }
 
 /**
@@ -2700,6 +2827,11 @@ function onUserMenuClick(key: string) {
     messageSendOpen.value = true
     return
   }
+
+  if (key === 'refreshPermissions') {
+    void refreshMenuPermissions(true)
+    return
+  }
   
   if (key === 'resetPassword') {
     message.info(t('layout.user.resetPasswordNotReady'))
@@ -2945,6 +3077,29 @@ function openMessageNotification(m: SysMessageVO) {
   })
 }
 
+async function checkLicenseGracePeriod() {
+  try {
+    const status = await getLicenseStatus()
+    if (!status || (status.status !== 'GRACE' && status.status !== 'EXPIRING_SOON')) return
+    const noticeKey = `${status.status}:${status.expireAt || ''}`
+    if (sessionStorage.getItem(licenseGraceNoticeKey) === noticeKey) return
+    sessionStorage.setItem(licenseGraceNoticeKey, noticeKey)
+    const isChinese = String(locale.value).toLowerCase().startsWith('zh')
+    const inGrace = status.status === 'GRACE'
+    notification.warning({
+      key: 'fx-license-grace',
+      message: isChinese ? (inGrace ? '授权已进入宽限期' : '授权即将到期') : (inGrace ? 'License is in the grace period' : 'License is expiring soon'),
+      description: status.expireAt
+        ? (isChinese ? `到期时间：${status.expireAt}` : `Expires at: ${status.expireAt}`)
+        : (isChinese ? '请联系授权人续期' : 'Please contact the issuer for renewal'),
+      placement: 'bottomRight',
+      duration: 0,
+    })
+  } catch (_) {
+    // 授权状态检查失败不影响主业务页面加载。
+  }
+}
+
 async function handleMessageSend() {
   if (!messageSendForm.value.receiverUserId) {
     message.warning(t('layout.messageCenter.selectReceiverWarning'))
@@ -3058,6 +3213,10 @@ function confirmUserSelect() {
 const { connect: connectMessageSse, close: closeMessageSse } = useSse<SysMessageVO>({
   url: '/api/sys/message/stream',
   onEvent: (name, data) => {
+    if (name === 'permission-changed') {
+      void refreshMenuPermissions(false)
+      return
+    }
     if (name !== 'message') return
     if ((data as any)?.category === 'SYSTEM_NOTICE_REFRESH') {
       window.dispatchEvent(new CustomEvent('fx:system-notice-refresh', { detail: data }))
@@ -3079,6 +3238,7 @@ onMounted(async () => {
     window.addEventListener('fx:open-global-search', handleOpenGlobalSearchEvent)
     window.addEventListener('fx:message-received', handleMessageReceivedEvent as EventListener)
     window.addEventListener('fx:system-notice-refresh', handleSystemNoticeRefreshEvent as EventListener)
+    window.addEventListener('fx:replay-page-guide', handleReplayPageGuide)
   }
   try {
     if (isFallbackRoute.value) {
@@ -3106,6 +3266,7 @@ onMounted(async () => {
     } catch (_) {}
 
     await refreshMessageCounts()
+    await checkLicenseGracePeriod()
 
     try {
       const normalUnread = await listUnreadMessages(10, 'MESSAGE')
@@ -3137,6 +3298,7 @@ onUnmounted(() => {
     window.removeEventListener('fx:open-global-search', handleOpenGlobalSearchEvent)
     window.removeEventListener('fx:message-received', handleMessageReceivedEvent as EventListener)
     window.removeEventListener('fx:system-notice-refresh', handleSystemNoticeRefreshEvent as EventListener)
+    window.removeEventListener('fx:replay-page-guide', handleReplayPageGuide)
   }
   pageScrollEl?.removeEventListener('scroll', handlePageScroll)
   pageScrollEl = null

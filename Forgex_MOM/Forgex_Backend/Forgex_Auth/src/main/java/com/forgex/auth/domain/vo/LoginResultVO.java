@@ -22,4 +22,24 @@ public class LoginResultVO {
 
     /** 当前用户绑定的租户列表。 */
     private List<TenantVO> tenants;
+
+    /** 登录后续动作：MFA / FORCE_CHANGE_PASSWORD。 */
+    private String nextStep;
+
+    /** MFA 挑战票据。 */
+    private String challengeId;
+
+    /** 强制改密一次性票据。 */
+    private String passwordTicket;
+
+    /**
+     * 仅含交互码与租户列表的结果。
+     *
+     * @param interactionCode 交互码
+     * @param tenants         租户列表
+     */
+    public LoginResultVO(String interactionCode, List<TenantVO> tenants) {
+        this.interactionCode = interactionCode;
+        this.tenants = tenants;
+    }
 }

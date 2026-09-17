@@ -73,6 +73,7 @@
     </a-table>
 
     <!-- 搴曢儴缁熻淇℃伅 -->
+    <a-alert type="info" show-icon style="margin-bottom: 12px" :message="t('system.user.roleAssign.threeRoleHint')" />
     <div class="role-summary">
       {{ t('system.user.roleAssign.summary', { total: allRoleList.length, selected: selectedRoleIds.length }) }}
     </div>

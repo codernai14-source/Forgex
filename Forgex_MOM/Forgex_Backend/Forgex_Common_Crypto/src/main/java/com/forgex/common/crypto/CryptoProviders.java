@@ -60,4 +60,20 @@ public final class CryptoProviders {
                 return new BCryptPasswordProvider();
         }
     }
+
+    /**
+     * 解析密码存储 Provider。密码只能使用不可逆派生算法，禁止 SM2/RSA/AES/SM4 等可逆算法。
+     *
+     * @param store 策略键
+     * @param cfg 配置服务
+     * @return 不可逆密码 Provider
+     * @throws IllegalArgumentException 配置了可逆或未知算法时抛出
+     */
+    public static CryptoPasswordProvider resolvePassword(String store, ConfigService cfg) {
+        String value = store == null ? "bcrypt" : store.trim().toLowerCase();
+        if (!java.util.Set.of("bcrypt", "argon2", "scrypt", "pbkdf2").contains(value)) {
+            throw new IllegalArgumentException("Password storage algorithm must be one-way: " + value);
+        }
+        return resolve(value, cfg);
+    }
 }

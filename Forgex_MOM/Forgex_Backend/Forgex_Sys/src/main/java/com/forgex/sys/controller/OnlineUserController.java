@@ -67,10 +67,12 @@ public class OnlineUserController {
      * @param body 请求体，包含 token
      * @return 是否成功
      */
+    @com.forgex.common.audit.OperationLog(module = "sys", menuPath = "/system/online", operationType = com.forgex.common.audit.OperationType.UPDATE, detailTemplateCode = "ONLINE_KICKOUT")
     @RequirePerm("sys:online:kickout")
     @PostMapping("/kickout")
     public R<Boolean> kickout(@RequestBody Map<String, Object> body) {
         String token = body == null ? null : (String) body.get("token");
-        return R.ok(CommonPrompt.STOP_SUCCESS, onlineUserService.kickout(token));
+        boolean disableUser = body != null && Boolean.parseBoolean(String.valueOf(body.getOrDefault("disableUser", false)));
+        return R.ok(CommonPrompt.STOP_SUCCESS, onlineUserService.kickout(token, disableUser));
     }
 }
