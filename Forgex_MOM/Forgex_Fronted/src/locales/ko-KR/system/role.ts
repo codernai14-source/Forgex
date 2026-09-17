@@ -85,6 +85,7 @@ export default {
     missingRoleInfo: '역할 정보가 없습니다',
     saveGrantSuccess: '권한이 저장되었습니다',
     saveGrantFailed: '권한 저장에 실패했습니다',
+    threeRoleHint: 'L3에서는 감사 관리자에게 업무 쓰기 권한을, 시스템 관리자에게 감사 조회 권한을 부여할 수 없습니다.',
     loadGrantedFailed: '부여 목록을 불러오지 못했습니다',
     selectToGrant: '권한을 부여할 대상을 선택하세요',
     grantSuccess: '권한 부여 성공',

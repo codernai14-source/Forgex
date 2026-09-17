@@ -36,7 +36,7 @@ public class InitApplyParam {
 
     /** 安全策略：high/normal/low */
     private String pwdStrength;
-    /** 初始密码：默认 Aa123456 */
+    /** 初始密码：必须显式提供，并满足当前密码策略 */
     private String initialPassword;
     /** 是否开启验证码 */
     private Boolean captchaEnabled;

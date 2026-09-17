@@ -55,4 +55,7 @@ public class SysTenantSaveParam {
     
     /** 状态：false=禁用，true=启用 */
     private Boolean status;
+
+    /** 父租户 ID；非主租户必填且只能指向主租户 */
+    private Long parentTenantId;
 }

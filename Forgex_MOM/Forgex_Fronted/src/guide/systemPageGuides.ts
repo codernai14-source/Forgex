@@ -357,6 +357,17 @@ function createSteps(meta: PageGuideMeta): FxGuideStep[] {
   return steps
 }
 
+/**
+ * 当前页是否配置了专属引导。
+ *
+ * @param path 工作区路径
+ * @returns 有专属配置返回 true
+ */
+export function hasSystemPageGuide(path: string): boolean {
+  const key = normalizeSystemGuidePath(path)
+  return Object.prototype.hasOwnProperty.call(pageGuides, key)
+}
+
 export function resolveSystemPageGuide(path: string): SystemPageGuideConfig {
   const key = normalizeSystemGuidePath(path)
   const meta = pageGuides[key] || buildFallbackMeta()

@@ -24,7 +24,11 @@ import com.forgex.common.config.ConfigService;
 import com.forgex.common.crypto.CryptoPasswordProvider;
 import com.forgex.common.crypto.CryptoProviders;
 import com.forgex.common.domain.config.PasswordPolicyConfig;
+import com.forgex.common.security.password.PasswordPolicyValidator;
+import com.forgex.common.security.LoginSessionKeys;
+import com.forgex.common.security.LoginSessionSupport;
 import com.forgex.common.enums.UserSourceEnum;
+import com.forgex.common.license.LicenseManager;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.util.CurrentUserUtils;
 import com.forgex.sys.domain.dto.SysUserDTO;
@@ -44,6 +48,8 @@ import com.forgex.sys.mapper.SysUserMapper;
 import com.forgex.sys.mapper.SysUserProfileMapper;
 import com.forgex.sys.mapper.SysUserRoleMapper;
 import com.forgex.sys.mapper.SysUserTenantMapper;
+import com.forgex.sys.service.IPasswordLifecycleService;
+import com.forgex.sys.service.ThreeRoleSeparationValidator;
 import com.forgex.sys.service.ISysUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
@@ -126,6 +132,15 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      */
     private final SysUserProfileMapper userProfileMapper;
 
+    /** 当前实例授权管理器。 */
+    private final LicenseManager licenseManager;
+
+    /** 口令生命周期服务。 */
+    private final IPasswordLifecycleService passwordLifecycleService;
+
+    /** 三员分立校验器，用于密级维护权限判断。 */
+    private final ThreeRoleSeparationValidator threeRoleSeparationValidator;
+
     /**
      * 分页查询用户 DTO。
      *
@@ -201,7 +216,13 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         } else {
             user.setPassword(encryptPassword(user.getPassword()));
         }
+        user.setMustChangePwd(true);
+        user.setPwdUpdateTime(java.time.LocalDateTime.now());
+        if (user.getSecurityLevel() == null) {
+            user.setSecurityLevel(0);
+        }
 
+        checkUserLimitBeforeInsert();
         userMapper.insert(user);
         createUserTenantBinding(user.getId(), effectiveTenantId);
 
@@ -234,6 +255,10 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         }
         if (userDTO.getTenantId() == null) {
             user.setTenantId(existing.getTenantId());
+        }
+        // 非安全管理员不得改密级，避免越权提升。
+        if (!threeRoleSeparationValidator.currentUserIsSecAdmin()) {
+            user.setSecurityLevel(existing.getSecurityLevel());
         }
         userMapper.updateById(user);
 
@@ -387,6 +412,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         SysUser user = new SysUser();
         user.setId(id);
         user.setPassword(encryptPassword(resolveDefaultPassword()));
+        user.setMustChangePwd(true);
+        user.setPwdUpdateTime(java.time.LocalDateTime.now());
         userMapper.updateById(user);
     }
 
@@ -426,10 +453,25 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         if (!verifyPassword(oldPassword, user.getPassword())) {
             return false;
         }
+        PasswordPolicyConfig policy = getPasswordPolicy();
+        if (!PasswordPolicyValidator.isValid(newPassword, user.getAccount(), policy)) {
+            return false;
+        }
+        CryptoPasswordProvider provider = CryptoProviders.resolvePassword(
+                policy == null || policy.getStore() == null ? "bcrypt" : policy.getStore(), configService);
+        if (!passwordLifecycleService.assertNotReusedAndRecord(user, newPassword, provider, policy)) {
+            return false;
+        }
         SysUser updateUser = new SysUser();
         updateUser.setId(id);
         updateUser.setPassword(encryptPassword(newPassword));
+        updateUser.setMustChangePwd(false);
+        updateUser.setPwdUpdateTime(java.time.LocalDateTime.now());
         userMapper.updateById(updateUser);
+        cn.dev33.satoken.session.SaSession session = LoginSessionSupport.getCurrentTokenSession();
+        if (session != null) {
+            session.set(LoginSessionKeys.KEY_PASSWORD_EXPIRED, false);
+        }
         return true;
     }
 
@@ -661,7 +703,11 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     private PasswordPolicyConfig getPasswordPolicy() {
         PasswordPolicyConfig defaults = new PasswordPolicyConfig();
         defaults.setStore("bcrypt");
-        defaults.setDefaultPassword("Aa123456");
+        defaults.setMinLength(8);
+        defaults.setRequireNumbers(true);
+        defaults.setRequireUppercase(true);
+        defaults.setRequireLowercase(true);
+        defaults.setRequireSymbols(true);
         PasswordPolicyConfig policy = configService.getJson(KEY_SECURITY_PASSWORD_POLICY, PasswordPolicyConfig.class, defaults);
         return policy == null ? defaults : policy;
     }
@@ -673,7 +719,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      */
     private String resolveDefaultPassword() {
         PasswordPolicyConfig policy = getPasswordPolicy();
-        return StringUtils.hasText(policy.getDefaultPassword()) ? policy.getDefaultPassword() : "Aa123456";
+        return PasswordPolicyValidator.requireConfiguredDefaultPassword(policy);
     }
 
     /**
@@ -693,7 +739,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      * @return 加密或哈希后的密码
      */
     private String encryptPassword(String rawPassword) {
-        CryptoPasswordProvider provider = CryptoProviders.resolve(resolvePasswordStore(), configService);
+        CryptoPasswordProvider provider = CryptoProviders.resolvePassword(resolvePasswordStore(), configService);
         if (provider.supportsEncrypt()) {
             return provider.encrypt(rawPassword);
         }
@@ -711,7 +757,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      * @return true 表示校验通过
      */
     private boolean verifyPassword(String rawPassword, String encodedPassword) {
-        CryptoPasswordProvider provider = CryptoProviders.resolve(resolvePasswordStore(), configService);
+        CryptoPasswordProvider provider = CryptoProviders.resolvePassword(resolvePasswordStore(), configService);
         return provider.verify(rawPassword, encodedPassword);
     }
 
@@ -1116,6 +1162,14 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         userTenantMapper.insert(userTenant);
     }
 
+    /** 按当前管理库中的有效用户数校验授权上限。 */
+    private void checkUserLimitBeforeInsert() {
+        LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<SysUser>()
+                .eq(SysUser::getDeleted, false)
+                .eq(SysUser::getStatus, true);
+        licenseManager.checkUserLimit(userMapper.selectCount(wrapper));
+    }
+
     /**
      * 根据用户 ID 查询用户档案。
      *
@@ -1182,6 +1236,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
             applyThirdPartyFields(user, syncUser);
             user.setTenantId(tenantId);
             user.setPassword(encryptPassword(resolveDefaultPassword()));
+            user.setPwdUpdateTime(java.time.LocalDateTime.now());
             fillUserSourceIfAbsent(user, UserSourceEnum.THIRD_PARTY_SYNC);
             if (user.getStatus() == null) {
                 user.setStatus(Boolean.TRUE);

@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 /**
- * File service interface.
+ * 本地文件上传与公开读取服务。
  *
  * @author Forgex Team
  * @version 1.0.0
@@ -28,22 +28,50 @@ import java.nio.file.Path;
 public interface FileService {
 
     /**
-     * Upload file and return its public access URL.
+     * 上传文件并返回可访问 URL。
+     *
+     * @param file 上传文件
+     * @param moduleCode 模块编码
+     * @param moduleName 模块名称
+     * @return 访问 URL
+     * @throws IOException 存储失败时抛出
      */
     String upload(MultipartFile file, String moduleCode, String moduleName) throws IOException;
 
     /**
-     * Resolve file resource by relative path.
+     * 按指定体积上限上传文件并写入文件记录。
+     *
+     * @param file 上传文件
+     * @param moduleCode 模块编码
+     * @param moduleName 模块名称
+     * @param maxSizeMbOverride 覆盖体积上限（MB）；为空时使用全局配置
+     * @return 访问 URL
+     * @throws IOException 存储失败时抛出
+     */
+    String upload(MultipartFile file, String moduleCode, String moduleName, Long maxSizeMbOverride) throws IOException;
+
+    /**
+     * 按相对路径读取本地文件资源。
+     *
+     * @param filename 相对文件名
+     * @return 文件资源；不存在时返回 {@code null}
+     * @throws IOException 路径非法时抛出
      */
     Resource getFile(String filename) throws IOException;
 
     /**
-     * Resolve base upload directory.
+     * 解析当前存储根目录。
+     *
+     * @return 上传根路径
      */
     Path getBaseDir();
 
     /**
-     * Resolve media type for a file.
+     * 解析文件媒体类型。
+     *
+     * @param filename 相对文件名
+     * @return MIME 类型
+     * @throws IOException 路径非法时抛出
      */
     String getMediaType(String filename) throws IOException;
 }

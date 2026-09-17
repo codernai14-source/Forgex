@@ -205,9 +205,9 @@
               </span>
             </template>
             <template #extra>
-              <a-button type="link" size="small" @click="goMore('pending')">
+              <a-button type="link" size="small" @click="goMore('cc')">
                 <template #icon><ArrowRightOutlined /></template>
-                {{ t('workflow.dashboard.ccHint') }}
+                {{ t('workflow.dashboard.more') }}
               </a-button>
             </template>
             <div v-if="!summary.cc?.length" class="empty-hint">{{ t('workflow.dashboard.empty') }}</div>
@@ -219,12 +219,16 @@
                 @click="openDetail(item)"
               >
                 <div class="task-main">
-                  <span class="task-name">{{ item.taskName }}</span>
+                  <span class="task-name">
+                    <span v-if="item.ccUnread" class="unread-dot" />
+                    {{ item.taskName }}
+                  </span>
                   <a-tag color="blue" size="small">{{ t('workflow.dashboard.ccTag') }}</a-tag>
                 </div>
                 <div class="task-meta">
                   <span>{{ item.initiatorName }}</span>
-                  <span>{{ formatDateTime(item.startTime) }}</span>
+                  <span v-if="item.ccNodeName">{{ item.ccNodeName }}</span>
+                  <span>{{ formatDateTime(item.ccTime || item.startTime) }}</span>
                 </div>
               </li>
             </ul>
@@ -310,6 +314,7 @@ import {
   getExecutionDetail,
   loadDashboardAnalytics,
   loadDashboardSummary,
+  markReadCc,
   type WfDashboardAnalyticsVO,
   type WfDashboardSummaryVO,
   type WfDashboardWeeklyResultDTO,
@@ -594,8 +599,16 @@ async function loadDashboardData() {
   refreshCharts()
 }
 
-const goMore = (target: 'pending' | 'processed') => {
-  router.push(target === 'pending' ? approvalRoutePaths.myPending : approvalRoutePaths.myProcessed)
+const goMore = (target: 'pending' | 'processed' | 'cc') => {
+  if (target === 'pending') {
+    router.push(approvalRoutePaths.myPending)
+    return
+  }
+  if (target === 'processed') {
+    router.push(approvalRoutePaths.myProcessed)
+    return
+  }
+  router.push(approvalRoutePaths.myCc)
 }
 
 const goToStartCenter = () => router.push(approvalRoutePaths.executionStartList)
@@ -605,6 +618,9 @@ const openDetail = async (record: WfExecutionDTO) => {
   detailDrawerVisible.value = true
   try {
     currentRecord.value = await getExecutionDetail({ executionId: record.id })
+    if (record.ccUnread) {
+      await markReadCc({ executionId: record.id })
+    }
   } catch (error: any) {
     message.error(error.message || t('workflow.myTask.loadHistoryFailed'))
   }

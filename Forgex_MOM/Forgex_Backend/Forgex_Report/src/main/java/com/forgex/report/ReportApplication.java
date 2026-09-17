@@ -24,7 +24,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
  */
 @SpringBootApplication(scanBasePackages = "com.forgex", exclude = {DataSourceAutoConfiguration.class})
 @EnableDiscoveryClient
-@EnableFeignClients(basePackages = "com.forgex.common.feign.client")
+@EnableFeignClients(basePackages = {"com.forgex.common.feign.client", "com.forgex.common.audit"})
 @EnableAsync
 @Import(DynamicDataSourceAutoConfiguration.class)
 @MapperScan({"com.forgex.report.mapper", "com.forgex.common.mapper"})

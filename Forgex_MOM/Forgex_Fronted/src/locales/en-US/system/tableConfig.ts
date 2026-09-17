@@ -27,6 +27,21 @@ export default {
   addColumn: 'Add Column',
   columnRequired: 'Please add at least one column',
   loadDetailFailed: 'Failed to load config detail',
+  userColumnSetting: {
+    title: 'Edit User Column Settings',
+    descriptionTitle: 'Description',
+    description: 'Maintain the current user\'s column preferences. Page and button visibility still depends on role menu grants.',
+    configured: 'Configured',
+    notConfigured: 'Not configured',
+    pageSize: 'Page Size',
+    userPageSize: 'User Page Size',
+    configStatus: 'Config Status',
+    version: 'Config Version',
+    updateTime: 'Last Updated',
+    visible: 'Visible',
+    order: 'Order',
+    move: 'Move',
+  },
   
   /**
    * Column Setting
@@ -37,7 +52,10 @@ export default {
     resetSuccess: 'Reset to default config',
     hint: 'Check to show columns, drag to reorder',
     dragSort: 'Drag to sort',
-    dragResize: 'Drag to resize column'
+    dragResize: 'Drag to resize column',
+    fixedUnset: 'No fixed position',
+    fixedLeft: 'Fix to left',
+    fixedRight: 'Fix to right'
   },
   
   form: {

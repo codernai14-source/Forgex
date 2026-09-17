@@ -27,6 +27,24 @@
               </div>
             </a-form-item>
 
+            <a-form-item :label="t('system.config.browserTitle')" name="browserTitle">
+              <a-input
+                v-model:value="basicConfig.browserTitle"
+                :placeholder="t('system.config.browserTitlePlaceholder')"
+              />
+            </a-form-item>
+
+            <a-form-item :label="t('system.config.browserIcon')" name="browserIcon">
+              <div class="system-logo-upload">
+                <AvatarUpload
+                  v-model="basicConfig.browserIcon"
+                  module-code="sys_config_browser_icon"
+                  :module-name="t('system.config.browserIcon')"
+                  @success="handleBrowserIconUploadSuccess"
+                />
+              </div>
+            </a-form-item>
+
             <a-form-item :label="t('system.config.systemVersion')" name="systemVersion">
               <a-input
                 v-model:value="basicConfig.systemVersion"
@@ -67,34 +85,30 @@
             layout="horizontal"
           >
             <a-form-item :label="t('system.config.loginTitle')" name="loginPageTitle">
-              <a-input
-                v-model:value="basicConfig.loginPageTitle"
-                :placeholder="t('system.config.loginTitlePlaceholder')"
-              />
+              <div class="portal-style-row"><a-input v-model:value="basicConfig.loginPageTitle" :placeholder="t('system.config.loginTitlePlaceholder')" /><a-button @click="openTitleStyle('title')">{{ t('system.config.configureStyle') }}</a-button></div>
             </a-form-item>
 
             <a-form-item :label="t('system.config.loginSubtitle')" name="loginPageSubtitle">
-              <a-input
-                v-model:value="basicConfig.loginPageSubtitle"
-                :placeholder="t('system.config.loginSubtitlePlaceholder')"
-              />
+              <div class="portal-style-row"><a-input v-model:value="basicConfig.loginPageSubtitle" :placeholder="t('system.config.loginSubtitlePlaceholder')" /><a-button @click="openTitleStyle('subtitle')">{{ t('system.config.configureStyle') }}</a-button></div>
             </a-form-item>
 
             <a-form-item :label="t('system.config.loginLayout')" name="loginLayout">
-              <a-radio-group v-model:value="basicConfig.loginLayout">
-                <a-radio value="center">{{ t('system.config.layoutCenter') }}</a-radio>
-                <a-radio value="split">{{ t('system.config.layoutSplit') }}</a-radio>
-                <a-radio value="compact">{{ t('system.config.layoutCompact') }}</a-radio>
-              </a-radio-group>
+              <div class="login-layout-picker">
+                <button v-for="layout in loginLayoutOptions" :key="layout.value" type="button" class="login-layout-card" :class="{ active: basicConfig.loginLayout === layout.value }" @click="basicConfig.loginLayout = layout.value">
+                  <span class="login-layout-card__preview" :class="`preview-${layout.value}`"><i></i><i></i></span>
+                  <strong>{{ t(layout.labelKey) }}</strong><small>{{ t(layout.descKey) }}</small>
+                </button>
+              </div>
+            </a-form-item>
+            <a-form-item v-if="basicConfig.loginLayout === 'form-left' || basicConfig.loginLayout === 'form-right'" :label="t('system.config.loginSplitBackgroundMode')">
+              <a-radio-group v-model:value="basicConfig.loginSplitBackgroundMode"><a-radio value="fullscreen">{{ t('system.config.backgroundFullscreen') }}</a-radio><a-radio value="separated">{{ t('system.config.backgroundSeparated') }}</a-radio></a-radio-group>
             </a-form-item>
 
-            <a-form-item :label="t('system.config.loginStyle')" name="loginStyle">
-              <a-radio-group v-model:value="basicConfig.loginStyle">
-                <a-radio value="cyber">{{ t('system.config.styleCyber') }}</a-radio>
-                <a-radio value="simple">{{ t('system.config.styleSimple') }}</a-radio>
-                <a-radio value="classic">{{ t('system.config.styleClassic') }}</a-radio>
-              </a-radio-group>
-            </a-form-item>
+            <a-form-item :label="t('system.config.loginFormStyle')"><a-radio-group v-model:value="basicConfig.loginFormStyle"><a-radio value="glass-dark">{{ t('system.config.formGlassDark') }}</a-radio><a-radio value="glass-light">{{ t('system.config.formGlassLight') }}</a-radio><a-radio value="solid">{{ t('system.config.formSolid') }}</a-radio></a-radio-group></a-form-item>
+            <a-form-item :label="t('system.config.loginFormOpacity')"><a-slider v-model:value="basicConfig.loginFormOpacity" :min="20" :max="100" /><span class="slider-value">{{ basicConfig.loginFormOpacity }}%</span></a-form-item>
+            <a-form-item :label="t('system.config.loginFormRadius')"><a-input-number v-model:value="basicConfig.loginFormRadius" :min="0" :max="48" addon-after="px" /></a-form-item>
+            <a-form-item :label="t('system.config.loginFormShadow')"><div class="shadow-config-row"><a-switch v-model:checked="basicConfig.loginFormShadow.enabled" /><a-input type="color" v-model:value="basicConfig.loginFormShadow.color" /><a-slider v-model:value="basicConfig.loginFormShadow.blur" :min="0" :max="60" /><span>{{ basicConfig.loginFormShadow.blur }}px</span></div></a-form-item>
+            <a-form-item :label="t('system.config.loginMediaShadow')"><div class="shadow-config-row"><a-switch v-model:checked="basicConfig.loginMediaShadow.enabled" /><a-input type="color" v-model:value="basicConfig.loginMediaShadow.color" /><a-slider v-model:value="basicConfig.loginMediaShadow.blur" :min="0" :max="80" /><span>{{ basicConfig.loginMediaShadow.blur }}px</span></div></a-form-item>
 
             <a-form-item :label="t('system.config.backgroundType')" name="loginBackgroundType">
               <a-radio-group v-model:value="basicConfig.loginBackgroundType">
@@ -339,6 +353,46 @@
                 </a-form-item>
                 <a-form-item :label="t('system.config.passwordRequireSymbols')" name="passwordPolicy.requireSymbols">
                   <a-switch v-model:checked="securityConfig.passwordPolicy.requireSymbols" />
+                </a-form-item>
+                <a-form-item
+                  :label="t('system.config.passwordMaxAgeDays')"
+                  name="passwordPolicy.maxAgeDays"
+                  :extra="t('system.config.passwordMaxAgeDaysHint')"
+                >
+                  <a-input-number
+                    v-model:value="securityConfig.passwordPolicy.maxAgeDays"
+                    :min="0"
+                    :max="3650"
+                    :style="{ width: '100%' }"
+                  />
+                </a-form-item>
+                <a-form-item label="启用密码有效期" name="passwordPolicy.expireEnabled">
+                  <a-switch v-model:checked="securityConfig.passwordPolicy.expireEnabled" />
+                </a-form-item>
+                <a-form-item label="密码有效天数" name="passwordPolicy.expireDays">
+                  <a-input-number v-model:value="securityConfig.passwordPolicy.expireDays" :min="1" :max="3650" :disabled="!securityConfig.passwordPolicy.expireEnabled" />
+                </a-form-item>
+                <a-form-item label="到期前提醒天数" name="passwordPolicy.expireWarnDays">
+                  <a-input-number v-model:value="securityConfig.passwordPolicy.expireWarnDays" :min="0" :max="365" :disabled="!securityConfig.passwordPolicy.expireEnabled" />
+                </a-form-item>
+                <a-form-item
+                  :label="t('system.config.passwordHistoryCount')"
+                  name="passwordPolicy.historyCount"
+                  :extra="t('system.config.passwordHistoryCountHint')"
+                >
+                  <a-input-number
+                    v-model:value="securityConfig.passwordPolicy.historyCount"
+                    :min="0"
+                    :max="24"
+                    :style="{ width: '100%' }"
+                  />
+                </a-form-item>
+                <a-form-item
+                  :label="t('system.config.passwordForceChangeOnFirstLogin')"
+                  name="passwordPolicy.forceChangeOnFirstLogin"
+                  :extra="t('system.config.passwordForceChangeOnFirstLoginHint')"
+                >
+                  <a-switch v-model:checked="securityConfig.passwordPolicy.forceChangeOnFirstLogin" />
                 </a-form-item>
                 <a-form-item :wrapper-col="{ span: 24 }">
                   <a-space>
@@ -831,13 +885,30 @@
               />
               <span v-else class="preview-system-name">{{ basicConfig.systemName }}</span>
             </div>
-            <div class="preview-title">{{ basicConfig.loginPageTitle }}</div>
-            <div class="preview-subtitle">{{ basicConfig.loginPageSubtitle }}</div>
+            <div class="preview-title" :style="portalTitlePreviewStyle">{{ basicConfig.loginPageTitle }}</div>
+            <div class="preview-subtitle" :style="portalSubtitlePreviewStyle">{{ basicConfig.loginPageSubtitle }}</div>
             <div class="preview-copyright">{{ basicConfig.copyright }}</div>
           </div>
         </div>
       </div>
     </a-modal>
+    <BaseFormDialog v-model:open="titleStyleVisible" :title="t('system.config.configureStyle')" :width="560" @ok="confirmTitleStyle">
+      <LoginTitleStyleEditor
+        v-if="titleStyleTarget === 'title'"
+        v-model="titleStyleDraft"
+        allow-gradient
+        :preview-text="basicConfig.loginPageTitle || t('system.config.loginTitle')"
+        :min-size="12"
+        :max-size="96"
+      />
+      <LoginTitleStyleEditor
+        v-else
+        v-model="subtitleStyleDraft"
+        :preview-text="basicConfig.loginPageSubtitle || t('system.config.loginSubtitle')"
+        :min-size="10"
+        :max-size="48"
+      />
+    </BaseFormDialog>
 
     <a-modal
       v-model:open="folderPickerVisible"
@@ -902,6 +973,7 @@ import {
 import AvatarUpload from '@/components/AvatarUpload.vue'
 import ModuleHomepageDesigner from '@/components/module-homepage/ModuleHomepageDesigner.vue'
 import PersonalHomepageDesigner from '@/components/personal-homepage/PersonalHomepageDesigner.vue'
+import BaseFormDialog from '@/components/common/BaseFormDialog.vue'
 import { uploadFile } from '@/api/system/file'
 import {
   createDefaultEmailConfig,
@@ -933,11 +1005,15 @@ import {
   type FileUploadFolderNode,
   type FileUploadRuntimeDefaults,
   type SecurityConfig,
+  type LoginSubtitleStyle,
+  type LoginTitleStyle,
   type SystemBasicConfig,
   type CryptoConfig,
   type TdeStatus,
 } from '@/api/system/config'
 import { normalizeMediaUrl } from '@/utils/media'
+import { buildLoginSubtitleCss, buildLoginTitleCss } from '@/utils/loginTitleStyle'
+import LoginTitleStyleEditor from '@/components/system/LoginTitleStyleEditor.vue'
 
 const { t } = useI18n()
 
@@ -947,6 +1023,16 @@ const cryptoSubTab = ref('symmetric')
 const activeHomepageModule = ref<'personal' | 'basic' | 'approval' | 'sys' | 'integration'>('personal')
 const loading = ref(false)
 const previewVisible = ref(false)
+const titleStyleVisible = ref(false)
+const titleStyleTarget = ref<'title' | 'subtitle'>('title')
+const titleStyleDraft = ref<LoginTitleStyle>({ ...createDefaultSystemBasicConfig().loginTitleStyle })
+const subtitleStyleDraft = ref<LoginSubtitleStyle>({ ...createDefaultSystemBasicConfig().loginSubtitleStyle })
+const portalTitlePreviewStyle = computed(() => buildLoginTitleCss(basicConfig.value.loginTitleStyle))
+const portalSubtitlePreviewStyle = computed(() => buildLoginSubtitleCss({
+  ...basicConfig.value.loginSubtitleStyle,
+  fontSize: basicConfig.value.loginSubtitleStyle?.fontSize || basicConfig.value.loginPageSubtitleFontSize,
+  color: basicConfig.value.loginSubtitleStyle?.color || basicConfig.value.loginPageSubtitleColor,
+}))
 
 const savingSystem = ref(false)
 const savingPortal = ref(false)
@@ -962,6 +1048,14 @@ const videoFileList = ref<UploadFile[]>([])
 const bgImageFileList = ref<UploadFile[]>([])
 
 const basicConfig = ref<SystemBasicConfig>(createDefaultSystemBasicConfig())
+const loginLayoutOptions = [
+  { value: 'center', labelKey: 'system.config.layoutCenter', descKey: 'system.config.layoutCenterDesc' },
+  { value: 'form-right', labelKey: 'system.config.layoutFormRight', descKey: 'system.config.layoutFormRightDesc' },
+  { value: 'form-left', labelKey: 'system.config.layoutFormLeft', descKey: 'system.config.layoutFormLeftDesc' },
+  { value: 'split-hero', labelKey: 'system.config.layoutSplitHero', descKey: 'system.config.layoutSplitHeroDesc' },
+  { value: 'form-row-left', labelKey: 'system.config.layoutFormRowLeft', descKey: 'system.config.layoutFormRowLeftDesc' },
+  { value: 'form-row-right', labelKey: 'system.config.layoutFormRowRight', descKey: 'system.config.layoutFormRowRightDesc' },
+] as const
 const securityConfig = ref<SecurityConfig>(createDefaultSecurityConfig())
 const emailConfig = ref<EmailConfig>(createDefaultEmailConfig())
 const fileUploadConfig = ref<FileUploadConfig>(createDefaultFileUploadConfig())
@@ -1124,10 +1218,32 @@ const fileUploadPreviewUrl = computed(() => {
 
 function normalizeSystemBasicConfig(config: Partial<SystemBasicConfig> | null | undefined): SystemBasicConfig {
   const defaults = createDefaultSystemBasicConfig()
+  const rawLayout = String(config?.loginLayout || defaults.loginLayout)
+  const loginLayout = rawLayout === 'split' ? 'form-left' : rawLayout === 'compact' ? 'center' : rawLayout
+  const titleStyle = { ...defaults.loginTitleStyle, ...(config?.loginTitleStyle || {}) }
+  const subtitleStyle = {
+    ...defaults.loginSubtitleStyle,
+    ...(config?.loginSubtitleStyle || {}),
+    fontSize: Number(config?.loginSubtitleStyle?.fontSize || config?.loginPageSubtitleFontSize || defaults.loginPageSubtitleFontSize),
+    color: config?.loginSubtitleStyle?.color || config?.loginPageSubtitleColor || defaults.loginPageSubtitleColor,
+  }
   return {
     ...defaults,
     ...(config || {}),
-    loginLayout: (config?.loginLayout || defaults.loginLayout) as SystemBasicConfig['loginLayout'],
+    loginLayout: (['center', 'form-right', 'form-left', 'split-hero'] as string[]).includes(loginLayout)
+      ? loginLayout as SystemBasicConfig['loginLayout'] : defaults.loginLayout,
+    loginSplitBackgroundMode: config?.loginSplitBackgroundMode === 'separated' ? 'separated' : 'fullscreen',
+    loginTitleStyle: titleStyle,
+    loginSubtitleStyle: subtitleStyle,
+    loginPageSubtitleFontSize: subtitleStyle.fontSize,
+    loginPageSubtitleColor: subtitleStyle.color,
+    loginHeroSlides: Array.isArray(config?.loginHeroSlides) ? config!.loginHeroSlides! : defaults.loginHeroSlides,
+    loginHeroIntervalSeconds: Number(config?.loginHeroIntervalSeconds || defaults.loginHeroIntervalSeconds),
+    loginFormStyle: config?.loginFormStyle || defaults.loginFormStyle,
+    loginFormOpacity: Number(config?.loginFormOpacity ?? defaults.loginFormOpacity),
+    loginFormRadius: Number(config?.loginFormRadius ?? defaults.loginFormRadius),
+    loginFormShadow: { ...defaults.loginFormShadow, ...(config?.loginFormShadow || {}) },
+    loginMediaShadow: { ...defaults.loginMediaShadow, ...(config?.loginMediaShadow || {}) },
   }
 }
 
@@ -1188,6 +1304,7 @@ function normalizeSystemBasicMedia(config: SystemBasicConfig): SystemBasicConfig
   return {
     ...config,
     systemLogo: normalizeConfigMediaUrl(config.systemLogo),
+    browserIcon: normalizeConfigMediaUrl(config.browserIcon),
     loginBackgroundImage: normalizeConfigMediaUrl(config.loginBackgroundImage),
     loginBackgroundVideo: normalizeConfigMediaUrl(config.loginBackgroundVideo),
   }
@@ -1455,6 +1572,8 @@ function resetSystemConfig() {
     ...basicConfig.value,
     systemName: defaults.systemName,
     systemLogo: defaults.systemLogo,
+    browserTitle: defaults.browserTitle,
+    browserIcon: defaults.browserIcon,
     systemVersion: defaults.systemVersion,
     copyright: defaults.copyright,
     copyrightLink: defaults.copyrightLink,
@@ -1474,6 +1593,18 @@ function resetPortalConfig() {
     loginBackgroundColor: defaults.loginBackgroundColor,
     loginStyle: defaults.loginStyle,
     loginLayout: defaults.loginLayout,
+    loginSplitBackgroundMode: defaults.loginSplitBackgroundMode,
+    loginTitleStyle: defaults.loginTitleStyle,
+    loginSubtitleStyle: defaults.loginSubtitleStyle,
+    loginPageSubtitleFontSize: defaults.loginPageSubtitleFontSize,
+    loginPageSubtitleColor: defaults.loginPageSubtitleColor,
+    loginHeroSlides: defaults.loginHeroSlides,
+    loginHeroIntervalSeconds: defaults.loginHeroIntervalSeconds,
+    loginFormStyle: defaults.loginFormStyle,
+    loginFormOpacity: defaults.loginFormOpacity,
+    loginFormRadius: defaults.loginFormRadius,
+    loginFormShadow: defaults.loginFormShadow,
+    loginMediaShadow: defaults.loginMediaShadow,
     showOAuthLogin: defaults.showOAuthLogin,
     showRegisterEntry: defaults.showRegisterEntry,
     registerUrl: defaults.registerUrl,
@@ -1667,6 +1798,29 @@ function openPreview() {
   previewVisible.value = true
 }
 
+function openTitleStyle(target: 'title' | 'subtitle') {
+  titleStyleTarget.value = target
+  titleStyleDraft.value = { ...createDefaultSystemBasicConfig().loginTitleStyle, ...basicConfig.value.loginTitleStyle }
+  subtitleStyleDraft.value = {
+    ...createDefaultSystemBasicConfig().loginSubtitleStyle,
+    ...basicConfig.value.loginSubtitleStyle,
+    fontSize: basicConfig.value.loginSubtitleStyle?.fontSize || basicConfig.value.loginPageSubtitleFontSize,
+    color: basicConfig.value.loginSubtitleStyle?.color || basicConfig.value.loginPageSubtitleColor,
+  }
+  titleStyleVisible.value = true
+}
+
+function confirmTitleStyle() {
+  if (titleStyleTarget.value === 'title') {
+    basicConfig.value.loginTitleStyle = { ...titleStyleDraft.value }
+  } else {
+    basicConfig.value.loginSubtitleStyle = { ...subtitleStyleDraft.value }
+    basicConfig.value.loginPageSubtitleFontSize = subtitleStyleDraft.value.fontSize
+    basicConfig.value.loginPageSubtitleColor = subtitleStyleDraft.value.color
+  }
+  titleStyleVisible.value = false
+}
+
 function handleVideoRemove() {
   basicConfig.value.loginBackgroundVideo = ''
   videoFileList.value = []
@@ -1745,6 +1899,11 @@ async function handleBgImageUpload(options: any) {
 
 function handleLogoUploadSuccess(url?: string) {
   basicConfig.value.systemLogo = normalizeConfigMediaUrl(url || basicConfig.value.systemLogo)
+  message.success(t('common.uploadSuccess'))
+}
+
+function handleBrowserIconUploadSuccess(url?: string) {
+  basicConfig.value.browserIcon = normalizeConfigMediaUrl(url || basicConfig.value.browserIcon)
   message.success(t('common.uploadSuccess'))
 }
 

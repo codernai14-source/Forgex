@@ -30,6 +30,11 @@ public sealed class LicenseIssueOptions
     public string? CustomerName { get; set; }
 
     /// <summary>
+    /// 授权人（签发人），正式授权必填。
+    /// </summary>
+    public string? Issuer { get; set; }
+
+    /// <summary>
     /// 授权模块。
     /// </summary>
     public List<string>? Modules { get; set; }

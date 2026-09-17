@@ -57,4 +57,7 @@ public class UserColumnItemParam {
      * <p>用于用户个性化配置，单位为 px。</p>
      */
     private Integer width;
+
+    /** 固定方向：left/right；为空时沿用公共表格配置。 */
+    private String fixed;
 }

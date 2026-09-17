@@ -30,6 +30,8 @@ export interface User {
   lastLoginTime?: string
   lastLoginIp?: string
   lastLoginRegion?: string
+  /** 用户密级：0 公开 / 1 内部 / 2 秘密 / 3 机密 */
+  securityLevel?: number
   tenantList?: UserTenant[]
   profile?: UserProfile
 }

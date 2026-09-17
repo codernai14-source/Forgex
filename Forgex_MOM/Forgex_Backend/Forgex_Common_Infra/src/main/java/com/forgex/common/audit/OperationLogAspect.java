@@ -1,6 +1,7 @@
 package com.forgex.common.audit;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.forgex.common.security.desensitize.DesensitizeModule;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.tenant.UserContext;
 import com.forgex.common.web.R;
@@ -63,6 +64,11 @@ public class OperationLogAspect {
      * JSON序列化工具
      */
     private final ObjectMapper objectMapper;
+
+    /**
+     * 专用于审计入库的脱敏序列化器。
+     */
+    private final ObjectMapper desensitizeMapper = new ObjectMapper().registerModule(new DesensitizeModule());
 
     /**
      * 操作日志记录器提供者
@@ -186,6 +192,7 @@ public class OperationLogAspect {
             // ??????
             r.setErrorStack(stack(error));
         }
+        r.setSuccess(error == null && (r.getResponseStatus() == null || r.getResponseStatus() < 400));
 
         // ??????
         if (StringUtils.hasText(op.detailTemplateCode())) {
@@ -360,7 +367,9 @@ public class OperationLogAspect {
         
         try {
             // 序列化为JSON字符串
-            String s = objectMapper.writeValueAsString(obj);
+            com.fasterxml.jackson.databind.JsonNode tree = desensitizeMapper.valueToTree(obj);
+            maskSensitiveNodes(tree);
+            String s = desensitizeMapper.writeValueAsString(tree);
             
             // 限制最大长度为8000字符
             if (s.length() > 8000) {
@@ -371,6 +380,25 @@ public class OperationLogAspect {
         } catch (Exception e) {
             // 序列化失败，返回toString结果
             return String.valueOf(obj);
+        }
+    }
+
+    private void maskSensitiveNodes(com.fasterxml.jackson.databind.JsonNode node) {
+        if (node == null) return;
+        if (node.isObject()) {
+            java.util.Iterator<java.util.Map.Entry<String, com.fasterxml.jackson.databind.JsonNode>> fields = node.fields();
+            while (fields.hasNext()) {
+                java.util.Map.Entry<String, com.fasterxml.jackson.databind.JsonNode> field = fields.next();
+                String name = field.getKey().toLowerCase(java.util.Locale.ROOT);
+                if (name.contains("password") || name.contains("privatekey") || name.contains("keyhex")
+                        || name.contains("masterkey") || name.equals("secret") || name.contains("accesskey")) {
+                    ((com.fasterxml.jackson.databind.node.ObjectNode) node).put(field.getKey(), "***");
+                } else {
+                    maskSensitiveNodes(field.getValue());
+                }
+            }
+        } else if (node.isArray()) {
+            node.forEach(this::maskSensitiveNodes);
         }
     }
 

@@ -52,6 +52,21 @@
                   @change="value => handleWidthInput(col, value)"
                 />
               </div>
+              <a-select
+                v-model:value="col.fixed"
+                size="small"
+                allow-clear
+                class="column-fixed-control"
+                :disabled="col.field === ACTION_FIELD"
+                :placeholder="t('system.tableConfig.columnSetting.fixedUnset')"
+              >
+                <a-select-option value="left">
+                  {{ t('system.tableConfig.columnSetting.fixedLeft') }}
+                </a-select-option>
+                <a-select-option value="right">
+                  {{ t('system.tableConfig.columnSetting.fixedRight') }}
+                </a-select-option>
+              </a-select>
             </div>
           </VueDraggableNext>
         </div>
@@ -96,6 +111,7 @@ type LocalColumn = {
   visible: boolean
   order: number
   width?: number
+  fixed?: 'left' | 'right'
 }
 
 const popoverOverlayInnerStyle: CSSProperties = {
@@ -159,6 +175,7 @@ function toLocalColumn(col: FxTableColumn, index: number): LocalColumn {
     visible: col.field === ACTION_FIELD ? true : col.visible !== false,
     order: col.order ?? index,
     width: normalizeColumnWidth(col.width),
+    fixed: col.field === ACTION_FIELD ? 'right' : col.fixed,
   }
 }
 
@@ -204,6 +221,7 @@ async function handleSave() {
       visible: col.field === ACTION_FIELD ? true : col.visible,
       order: index,
       width: col.field === ACTION_FIELD ? undefined : normalizeColumnWidth(col.width),
+      fixed: col.field === ACTION_FIELD ? 'right' : col.fixed,
     }))
 
     await saveUserColumns({
@@ -223,6 +241,7 @@ async function handleSave() {
           width: localCol?.field === ACTION_FIELD
             ? baseCol.width
             : (normalizeColumnWidth(localCol?.width) ?? baseCol.width),
+          fixed: localCol?.field === ACTION_FIELD ? 'right' : localCol?.fixed,
         }
       })
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))

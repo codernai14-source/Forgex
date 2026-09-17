@@ -67,7 +67,7 @@
       v-model:open="approveDialogVisible"
       :title="$t('workflow.myTask.processApproval')"
       :loading="approving"
-      :width="720"
+      :width="800"
       :ok-text="processSubmitText"
       @submit="handleApproveSubmit"
       @cancel="handleApproveCancel"
@@ -140,6 +140,14 @@
           </div>
         </a-form-item>
       </a-form>
+
+      <WorkflowTracePanel
+        class="process-trace"
+        :record="currentRecord"
+        :instances="currentInstances.length ? currentInstances : (currentRecord?.currentApprovalInstances || [])"
+        :action-logs="currentActionLogs"
+        :show-action-logs="false"
+      />
     </BaseFormDialog>
 
     <BaseFormDialog
@@ -223,6 +231,7 @@ import { getDictItemLabel, useDict } from '@/hooks/useDict'
 import { useUserStore } from '@/stores/user'
 import { usePermissionStore } from '@/stores/permission'
 import WorkflowDetailDrawer from './WorkflowDetailDrawer.vue'
+import WorkflowTracePanel from './WorkflowTracePanel.vue'
 import WorkflowFormPreview from './WorkflowFormPreview.vue'
 import {
   idsEqual,
@@ -410,6 +419,7 @@ function openProcessDialog(record: WfExecutionDTO) {
   approveFormData.rejectType = undefined
   processReceiverModel.value = { receiverType: 'USER', receiverIds: [] }
   approveDialogVisible.value = true
+  loadExecutionTrace(record.id)
 }
 
 function handleViewDetail(record: WfExecutionDTO) {

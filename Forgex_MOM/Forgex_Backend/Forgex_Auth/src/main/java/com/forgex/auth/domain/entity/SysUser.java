@@ -112,6 +112,31 @@ public class SysUser extends BaseEntity {
     private java.time.LocalDateTime lastLoginTime;
 
     /**
+     * 最近一次口令更新时间。
+     */
+    private java.time.LocalDateTime pwdUpdateTime;
+
+    /**
+     * 是否必须在下次登录时修改口令。
+     */
+    private Boolean mustChangePwd;
+
+    /**
+     * 是否已启用 MFA。
+     */
+    private Boolean mfaEnabled;
+
+    /**
+     * 用户密级。
+     */
+    private Integer securityLevel;
+
+    /**
+     * 用户档案安全标记。
+     */
+    private Integer securityLabel;
+
+    /**
      * 租户 ID（非持久化字段）
      * <p>
      * 该字段不映射到数据库，用于在内存中存储当前登录用户选择的租户 ID

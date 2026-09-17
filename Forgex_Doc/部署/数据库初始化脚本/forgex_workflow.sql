@@ -537,4 +537,43 @@ INSERT INTO `wf_task_node_rule` VALUES (4, 34, '默认规则', 1, 2, NULL, 1, NU
 INSERT INTO `wf_task_node_rule` VALUES (5, 37, '默认规则', 1, 2, NULL, 1, NULL, NULL, 0, 1, 0, 0, 0, 1, '[]', NULL, 1993479636925403138, '2026-04-22 10:46:59', '2026-04-22 10:46:59', 0);
 INSERT INTO `wf_task_node_rule` VALUES (6, 40, '默认规则', 1, 2, NULL, 1, NULL, NULL, 0, 1, 0, 0, 0, 1, '[]', NULL, 1993479636925403138, '2026-04-22 10:47:06', '2026-04-22 10:47:06', 0);
 
+-- 审批节点独立抄送：首次部署补字段与表（不改上方无列清单 INSERT）
+ALTER TABLE `wf_task_node_config`
+  ADD COLUMN `cc_enabled` tinyint NOT NULL DEFAULT 0 COMMENT '是否启用节点抄送：0=否，1=是' AFTER `approve_type`;
+
+CREATE TABLE IF NOT EXISTS `wf_task_node_cc` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `node_config_id` bigint NOT NULL COMMENT '审批任务节点配置表ID',
+  `cc_type` int NOT NULL COMMENT '抄送对象类型：1=用户，2=部门，3=角色，4=岗位',
+  `cc_ids` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '抄送对象ID集合（JSON字符串数组）',
+  `tenant_id` bigint NULL DEFAULT NULL COMMENT '租户ID',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `deleted` tinyint NOT NULL DEFAULT 0 COMMENT '逻辑删除：0=未删除，1=已删除',
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_wf_task_node_cc_node` (`tenant_id` ASC, `node_config_id` ASC, `deleted` ASC) USING BTREE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '审批节点抄送配置' ROW_FORMAT = Dynamic;
+
+CREATE TABLE IF NOT EXISTS `wf_task_cc_record` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `execution_id` bigint NOT NULL COMMENT '审批执行单ID',
+  `execution_detail_id` bigint NOT NULL COMMENT '本轮节点进入对应的执行明细ID',
+  `node_id` bigint NOT NULL COMMENT '节点配置ID',
+  `node_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '抄送节点名称快照',
+  `cc_user_id` bigint NOT NULL COMMENT '被抄送用户ID',
+  `cc_user_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '被抄送用户名称快照',
+  `cc_source_type` int NULL DEFAULT NULL COMMENT '来源类型：1=用户，2=部门，3=角色，4=岗位',
+  `source_snapshot` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '解析来源快照JSON',
+  `read_status` tinyint NOT NULL DEFAULT 0 COMMENT '已读状态：0=未读，1=已读',
+  `read_time` datetime NULL DEFAULT NULL COMMENT '已读时间',
+  `notify_status` tinyint NOT NULL DEFAULT 0 COMMENT '通知状态：0=未发送，1=成功，2=失败',
+  `tenant_id` bigint NULL DEFAULT NULL COMMENT '租户ID',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `deleted` tinyint NOT NULL DEFAULT 0 COMMENT '逻辑删除：0=未删除，1=已删除',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_wf_task_cc_detail_user` (`execution_detail_id` ASC, `cc_user_id` ASC, `deleted` ASC) USING BTREE,
+  INDEX `idx_wf_task_cc_user_time` (`tenant_id` ASC, `cc_user_id` ASC, `deleted` ASC, `create_time` ASC) USING BTREE,
+  INDEX `idx_wf_task_cc_execution` (`tenant_id` ASC, `execution_id` ASC, `deleted` ASC) USING BTREE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '审批节点抄送运行时记录' ROW_FORMAT = Dynamic;
+
 SET FOREIGN_KEY_CHECKS = 1;

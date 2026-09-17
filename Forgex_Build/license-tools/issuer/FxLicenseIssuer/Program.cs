@@ -44,6 +44,7 @@ internal sealed class IssuerForm : Form
     private readonly TextBox _productTextBox = new();
     private readonly ComboBox _editionComboBox = new();
     private readonly TextBox _customerNameTextBox = new();
+    private readonly TextBox _issuerTextBox = new();
     private readonly TextBox _remarkTextBox = new();
     private readonly TextBox _customerCodeTextBox = new();
     private readonly TextBox _machineCodeTextBox = new();
@@ -177,7 +178,7 @@ internal sealed class IssuerForm : Form
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 62));
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 38));
 
-        var optionsTable = CreateTwoColumnTable(8);
+        var optionsTable = CreateTwoColumnTable(9);
         optionsTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         optionsTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
@@ -206,11 +207,12 @@ internal sealed class IssuerForm : Form
         AddLabeledControl(optionsTable, 0, "产品名称", _productTextBox);
         AddLabeledControl(optionsTable, 1, "版本类型", _editionComboBox);
         AddLabeledControl(optionsTable, 2, "客户名称", _customerNameTextBox);
-        AddLabeledControl(optionsTable, 3, "生效时间", _effectiveAtPicker);
-        AddLabeledControl(optionsTable, 4, "授权天数", CreateCheckNumericPanel(_enableDurationCheckBox, _durationDaysNumeric));
-        AddLabeledControl(optionsTable, 5, "用户/租户", CreateDualLimitPanel());
-        AddLabeledControl(optionsTable, 6, "宽限/序号", CreateTwoNumericPanel("宽限期", _graceDaysNumeric, "签发序号", _issueSerialNumeric));
-        AddLabeledControl(optionsTable, 7, "备注", _remarkTextBox);
+        AddLabeledControl(optionsTable, 3, "授权人 *", _issuerTextBox);
+        AddLabeledControl(optionsTable, 4, "生效时间", _effectiveAtPicker);
+        AddLabeledControl(optionsTable, 5, "授权天数", CreateCheckNumericPanel(_enableDurationCheckBox, _durationDaysNumeric));
+        AddLabeledControl(optionsTable, 6, "用户/租户", CreateDualLimitPanel());
+        AddLabeledControl(optionsTable, 7, "宽限/序号", CreateTwoNumericPanel("宽限期", _graceDaysNumeric, "签发序号", _issueSerialNumeric));
+        AddLabeledControl(optionsTable, 8, "备注", _remarkTextBox);
 
         var modulesPanel = new TableLayoutPanel
         {
@@ -347,6 +349,13 @@ internal sealed class IssuerForm : Form
             return;
         }
 
+        if (string.IsNullOrWhiteSpace(_issuerTextBox.Text))
+        {
+            ShowError("授权人不能为空，请填写后再生成授权。");
+            _issuerTextBox.Focus();
+            return;
+        }
+
         try
         {
             var requestInfo = _requestInfoPathTextBox.Text.Equals(requestInfoPath, StringComparison.OrdinalIgnoreCase) && _requestInfo is not null
@@ -358,6 +367,7 @@ internal sealed class IssuerForm : Form
                 Product = NullIfWhiteSpace(_productTextBox.Text),
                 Edition = NullIfWhiteSpace(_editionComboBox.Text),
                 CustomerName = NullIfWhiteSpace(_customerNameTextBox.Text),
+                Issuer = NullIfWhiteSpace(_issuerTextBox.Text),
                 Modules = modules,
                 MaxUsers = _limitUsersCheckBox.Checked ? (int)_maxUsersNumeric.Value : null,
                 MaxTenants = _limitTenantsCheckBox.Checked ? (int)_maxTenantsNumeric.Value : null,

@@ -40,7 +40,14 @@
 | `20260812_sys_user_superior_user_id.sql` | `forgex_admin` | 幂等为 `sys_user` 补齐直属上级字段 `superior_user_id`，支撑工作流 `ApproverType.SUPERIOR`。位置：`sql_fix/` |
 | `20260812_sys_user_superior_user_id_rollback.sql` | `forgex_admin` | 回滚直属上级字段。位置：`sql_fix/` |
 | `20260812_workflow_pending_action_permissions.sql` | `forgex_admin` | 幂等为待办页 `ApprovalMyPending` 补齐加签/转交/委托按钮权限，并同步给已有审批/驳回权限角色。位置：`sql_fix/` |
-| `20260812_workflow_pending_action_permissions_rollback.sql` | `forgex_admin` | 回滚待办动作按钮权限种子。位置：`sql_fix/` |
+| `20260911_dengbao_l3_schema.sql` | `forgex_admin`、`forgex_history` | 幂等补齐等保三级登录依赖字段：`sys_user.pwd_update_time` / `must_change_pwd` / `mfa_enabled` / `security_level` / `security_label`，以及 MFA/口令历史表、操作日志哈希链字段。位置：`20260911/` |
+| `20260911_dengbao_l3_schema_rollback.sql` | `forgex_admin`、`forgex_history` | 回滚上述等保三级 schema。位置：`20260911/` |
+| `20260911_sys_help_resource.sql` | `forgex_admin`、`forgex_common` | 幂等补齐帮助中心表 `sys_help_resource`、联系配置 `system.help.contact`、上传限制 `system.help.upload`、菜单/按钮权限、`SystemHelpResourceTable` 动态表格，并为已有 `file.upload.settings` 追加 `md`/`mp4` 扩展名。位置：`20260911/` |
+| `20260911_sys_help_resource_rollback.sql` | `forgex_admin`、`forgex_common` | 回滚帮助中心表、菜单权限、配置和动态表格。位置：`20260911/` |
+| `20260911_help_resource_table_columns.sql` | `forgex_common` | 幂等为 `SystemHelpResourceTable` 追加 `fileExt` / `fileSize` 列配置，供帮助中心维护页展示格式和大小。位置：`20260911/` |
+| `20260911_help_resource_table_columns_rollback.sql` | `forgex_common` | 回滚上述格式、大小列配置。位置：`20260911/` |
+| `20260911_workflow_node_cc.sql` | `forgex_workflow`、`forgex_admin`、`forgex_common` | 幂等补齐审批节点独立抄送：`wf_task_node_config.cc_enabled`、`wf_task_node_cc`、`wf_task_cc_record`、菜单 `ApprovalMyCc` / 权限 `wf:myTask:cc`、消息模板 `WF_CC`、动态表 `WfMyCcTaskTable`。位置：`20260911/` |
+| `20260911_workflow_node_cc_rollback.sql` | `forgex_workflow`、`forgex_admin`、`forgex_common` | 回滚审批节点独立抄送字段、表、菜单权限、模板和动态表格。位置：`20260911/` |
 
 ## 四、推荐阅读方式
 

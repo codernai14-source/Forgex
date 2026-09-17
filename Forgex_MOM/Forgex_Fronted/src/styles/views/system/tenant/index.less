@@ -6,10 +6,115 @@
   min-height: 0;
   overflow: hidden;
   box-sizing: border-box;
+  color: var(--fx-text-primary, #111827);
+}
+
+// The tenant list is rendered by FxDynamicTable, so its cells are outside
+// the form's scoped styles. Explicitly bind table text to theme tokens to
+// keep tenant names and metadata readable when the dark theme is active.
+.page-wrap :deep(.ant-table),
+.page-wrap :deep(.ant-table-thead > tr > th),
+.page-wrap :deep(.ant-table-tbody > tr > td) {
+  color: var(--fx-text-primary, #111827);
+}
+
+.page-wrap :deep(.ant-table-thead > tr > th) {
+  color: var(--fx-text-secondary, #4b5563);
+}
+
+.page-wrap :deep(.ant-table-tbody > tr:hover > td),
+.page-wrap :deep(.ant-table-tbody > tr.ant-table-row-selected > td) {
+  color: var(--fx-text-primary, #111827);
+}
+
+.tenant-parent-name {
+  color: var(--fx-text-primary, #111827);
+}
+
+.tenant-parent-empty {
+  color: var(--fx-text-tertiary, #9ca3af);
 }
 
 .tenant-logo-upload {
   display: inline-block;
+}
+
+.tenant-form {
+  width: 100%;
+}
+
+.form-section {
+  padding: 0 0 18px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--ant-color-border-secondary, #f0f0f0);
+}
+
+.form-section--last {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: 0;
+}
+
+.form-section__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  margin-bottom: 14px;
+  color: var(--fx-text-primary, var(--ant-color-text-heading, rgba(0, 0, 0, 0.88)));
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.tenant-form :deep(.ant-form-item-label > label),
+.tenant-form :deep(.ant-form-item-required::before) {
+  color: var(--fx-text-primary, var(--ant-color-text, rgba(0, 0, 0, 0.88)));
+}
+
+.tenant-form :deep(.ant-form-item-explain),
+.tenant-form :deep(.ant-form-item-extra) {
+  color: var(--fx-text-secondary, var(--ant-color-text-secondary, rgba(0, 0, 0, 0.65)));
+}
+
+.form-section__title :deep(.anticon) {
+  color: var(--ant-color-primary, #1677ff);
+  font-size: 16px;
+}
+
+.form-grid {
+  display: grid;
+  gap: 0 20px;
+}
+
+.form-grid--two {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.form-grid--brand {
+  grid-template-columns: minmax(200px, 1fr) minmax(200px, 1fr);
+  align-items: start;
+}
+
+.tenant-form :deep(.ant-form-item) {
+  margin-bottom: 16px;
+}
+
+.tenant-form :deep(.ant-input),
+.tenant-form :deep(.ant-input-affix-wrapper),
+.tenant-form :deep(.ant-select-selector) {
+  min-height: 38px;
+}
+
+.status-field :deep(.ant-radio-group) {
+  display: flex;
+  width: 100%;
+}
+
+.status-field :deep(.ant-radio-button-wrapper) {
+  flex: 1;
+  min-height: 38px;
+  line-height: 36px;
+  text-align: center;
 }
 
 .tenant-logo-upload :deep(.avatar-upload) {
@@ -33,4 +138,11 @@
 .tenant-logo-upload :deep(.avatar-upload .upload-tips) {
   margin-top: 8px;
   text-align: left;
+}
+
+@media (max-width: 640px) {
+  .form-grid--two,
+  .form-grid--brand {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

@@ -47,6 +47,7 @@ public class CryptoTransportConfig {
      * <p>解密使用的私钥，采用 Base64 编码，需妥善保管。</p>
      */
     private String privateKey;
+    private boolean privateKeyConfigured;
     
     /**
      * 密文格式

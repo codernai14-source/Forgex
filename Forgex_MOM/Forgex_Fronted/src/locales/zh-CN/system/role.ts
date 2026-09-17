@@ -94,6 +94,7 @@ export default {
     missingRoleInfo: '缺少角色信息',
     saveGrantSuccess: '保存授权成功',
     saveGrantFailed: '保存授权失败',
+    threeRoleHint: '等保三级下，审计管理员不得授予业务写权限，系统管理员不得授予审计查看权限。',
     loadGrantedFailed: '加载已授权列表失败',
     selectToGrant: '请选择要授权的对象',
     grantSuccess: '授权成功',

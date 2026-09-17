@@ -15,6 +15,8 @@ package com.forgex.sys.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.forgex.common.audit.OperationLog;
+import com.forgex.common.audit.OperationType;
 import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
@@ -228,6 +230,7 @@ public class SysRoleController {
      * @return 操作结果
      * @see SysRoleDTO
      */
+    @OperationLog(module = "sys", menuPath = "/system/role", operationType = OperationType.ADD, detailTemplateCode = "ROLE_CREATE")
     @RequirePerm("sys:role:add")
     @PostMapping("/create")
     public R<Void> create(@RequestBody @Validated SysRoleDTO roleDTO) {
@@ -284,6 +287,7 @@ public class SysRoleController {
      * @see SysRoleDTO
      */
     @RequirePerm("sys:role:edit")
+    @OperationLog(module = "sys", menuPath = "/system/role", operationType = OperationType.UPDATE, detailTemplateCode = "ROLE_UPDATE")
     @PostMapping("/update")
     public R<Void> update(@RequestBody @Validated SysRoleDTO roleDTO) {
         // 1. 数据校验
@@ -333,6 +337,7 @@ public class SysRoleController {
      * @return 操作结果
      */
     @RequirePerm("sys:role:delete")
+    @OperationLog(module = "sys", menuPath = "/system/role", operationType = OperationType.DELETE, detailTemplateCode = "ROLE_DELETE")
     @PostMapping("/delete")
     public R<Void> delete(@RequestBody Map<String, Object> body) {
         // 1. 解析参数

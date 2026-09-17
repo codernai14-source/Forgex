@@ -114,7 +114,7 @@ public interface AuthService {
     /**
      * 根据用户ID重置密码
      * <p>
-     * 将指定用户的密码重置为默认密码（123456）
+     * 将指定用户的密码重置为安全策略中显式配置的初始密码。
      * </p>
      * <p>详细流程：</p>
      * <ul>
@@ -128,6 +128,15 @@ public interface AuthService {
      * @return {@link R} 重置是否成功
      */
     R<Boolean> resetPasswordById(Long userId);
+
+    /**
+     * 使用一次性票据强制修改过期或初始口令。
+     *
+     * @param ticket      一次性票据
+     * @param newPassword 传输加密后的新口令
+     * @return 登录结果
+     */
+    R<LoginResultVO> forceChangePassword(String ticket, String newPassword);
 
     /**
      * 用户登出

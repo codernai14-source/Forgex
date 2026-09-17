@@ -17,6 +17,7 @@ import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.handler.TenantLineHandler;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.TenantLineInnerInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.inner.BlockAttackInnerInterceptor;
 import com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean;
 import com.forgex.common.crypto.FieldEncryptInterceptor;
 import com.forgex.common.dataperm.DataPermissionInterceptor;
@@ -100,7 +101,10 @@ public class MybatisPlusConfig {
         }));
         
         // 2. 数据权限拦截器（根据用户角色自动过滤数据）
-        interceptor.addInnerInterceptor(new DataPermissionInterceptor(applicationContext));
+        interceptor.addInnerInterceptor(applicationContext.getBean(DataPermissionInterceptor.class));
+
+        // Block accidental full-table UPDATE/DELETE statements globally.
+        interceptor.addInnerInterceptor(new BlockAttackInnerInterceptor());
         
         // 3. 分页拦截器
         interceptor.addInnerInterceptor(new PaginationInnerInterceptor());

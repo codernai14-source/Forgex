@@ -15,6 +15,8 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.UUID;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Local file storage service.
@@ -118,13 +120,38 @@ public class LocalStorageService implements FileStorageService {
      */
     @Override
     public String upload(MultipartFile file) throws IOException {
+        return upload(file, null);
+    }
+
+    /**
+     * 按可选体积上限上传本地文件。
+     *
+     * @param file 上传文件
+     * @param maxSizeMbOverride 覆盖体积上限（MB）；为空时使用全局配置
+     * @return 相对路径
+     * @throws IOException 文件为空、超限或扩展名不在白名单时抛出
+     */
+    @Override
+    public String upload(MultipartFile file, Long maxSizeMbOverride) throws IOException {
         if (file == null || file.isEmpty()) {
             return null;
+        }
+        FileUploadConfig cfg = loadConfig();
+        long configuredMb = cfg == null ? 20L : Math.max(1L, cfg.getMaxSizeMb());
+        long maxMb = maxSizeMbOverride != null && maxSizeMbOverride > 0 ? maxSizeMbOverride : configuredMb;
+        long maxBytes = maxMb * 1024L * 1024L;
+        if (file.getSize() > maxBytes) {
+            throw new IOException("file exceeds configured size limit");
         }
         String originalFilename = file.getOriginalFilename();
         String fileExtension = "";
         if (originalFilename != null && originalFilename.contains(".")) {
             fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        }
+        String extension = fileExtension.startsWith(".") ? fileExtension.substring(1).toLowerCase(java.util.Locale.ROOT) : "";
+        java.util.Set<String> allowed = cfg == null ? java.util.Set.of("jpg", "jpeg", "png", "gif", "pdf", "doc", "docx", "xls", "xlsx", "txt", "zip") : cfg.getAllowedExtensions();
+        if (!allowed.isEmpty() && !allowed.stream().map(v -> v.toLowerCase(java.util.Locale.ROOT)).collect(java.util.stream.Collectors.toSet()).contains(extension)) {
+            throw new IOException("file extension is not allowed");
         }
         String fileName = UUID.randomUUID().toString().replace("-", "") + fileExtension;
         String relativePath = fileName;
@@ -150,7 +177,12 @@ public class LocalStorageService implements FileStorageService {
         if (!StringUtils.hasText(filePath)) {
             throw new IOException("filePath must not be empty");
         }
-        File file = new File(resolveUploadPath(), filePath);
+        Path root = Paths.get(resolveUploadPath()).toAbsolutePath().normalize();
+        Path resolved = root.resolve(filePath).normalize();
+        if (!resolved.startsWith(root)) {
+            throw new IOException("invalid file path");
+        }
+        File file = resolved.toFile();
         if (!file.exists() || !file.isFile()) {
             throw new IOException("file does not exist");
         }
@@ -180,7 +212,12 @@ public class LocalStorageService implements FileStorageService {
         if (!StringUtils.hasText(filePath)) {
             return false;
         }
-        File file = new File(resolveUploadPath(), filePath);
+        Path root = Paths.get(resolveUploadPath()).toAbsolutePath().normalize();
+        Path resolved = root.resolve(filePath).normalize();
+        if (!resolved.startsWith(root)) {
+            return false;
+        }
+        File file = resolved.toFile();
         return file.exists() && file.delete();
     }
 

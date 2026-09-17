@@ -1,5 +1,15 @@
 <template>
   <div class="workflow-trace-panel">
+    <div
+      v-if="waitSummary"
+      class="wait-summary"
+      :class="{ 'is-overdue': waitSummary.overdue }"
+    >
+      <span>{{ t('workflow.myTask.currentWaiting', { name: waitSummary.names }) }}</span>
+      <span>{{ t('workflow.myTask.waitedFor', { duration: waitSummary.waited }) }}</span>
+      <span v-if="waitSummary.remainText">{{ waitSummary.remainText }}</span>
+    </div>
+
     <div class="form-content-detail">
       <h4>{{ t('workflow.myTask.instanceTraceTitle') }}</h4>
       <a-empty v-if="!timelineItems.length" :description="t('workflow.myTask.instanceTraceEmpty')" />
@@ -22,16 +32,35 @@
                 {{ item.statusText }}
               </span>
             </div>
-            <div class="history-content">
+            <div class="history-content" :class="{ 'is-waiting': item.waiting, 'is-overdue': item.overdue }">
               <div class="history-info">
                 <span>{{ item.operatorLabel }}: {{ item.operatorName || '-' }}</span>
                 <span>{{ item.timeLabel }}: {{ formatDateTime(item.time) }}</span>
+              </div>
+              <div v-if="item.ccUsers?.length" class="history-cc">
+                <strong>{{ t('workflow.myTask.ccUsers') }}: </strong>
+                <a-tag v-for="user in item.ccUsers" :key="String(user.ccUserId)" color="cyan">
+                  {{ user.ccUserName || t('workflow.myTask.userFallback') }}
+                </a-tag>
               </div>
               <div class="history-comment" v-if="item.instanceNo">
                 <strong>{{ t('workflow.myTask.instanceNo') }}: </strong>{{ item.instanceNo }}
               </div>
               <div class="history-comment" v-if="item.targetUserName">
                 <strong>{{ t('workflow.myTask.targetUser') }}: </strong>{{ item.targetUserName }}
+              </div>
+              <div class="history-comment" v-if="item.waitedText">
+                <strong>{{ t('workflow.myTask.waitedFor', { duration: item.waitedText }) }}</strong>
+              </div>
+              <div class="history-comment" v-if="item.deadlineTime">
+                <strong>{{ t('workflow.myTask.deadlineTime') }}: </strong>{{ formatDateTime(item.deadlineTime) }}
+              </div>
+              <div
+                class="history-comment"
+                :class="{ 'is-overdue-text': item.overdue }"
+                v-if="item.remainText"
+              >
+                <strong>{{ item.remainText }}</strong>
               </div>
               <div class="history-comment" v-if="item.comment">
                 <strong>{{ t('workflow.myTask.comment') }}: </strong>{{ item.comment }}
@@ -86,17 +115,25 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import { useI18n } from 'vue-i18n'
 import type { Component } from 'vue'
-import type { WfApprovalActionLogDTO, WfApprovalInstanceDTO, WfExecutionDTO } from '@/api/workflow/execution'
+import { listCcByExecution, type WfApprovalActionLogDTO, type WfApprovalInstanceDTO, type WfCcRecordDTO, type WfExecutionDTO } from '@/api/workflow/execution'
 import {
   getWorkflowInstanceStatusText,
   getWorkflowTraceColor,
   getWorkflowTraceIcon,
   getWorkflowTraceText,
 } from './traceHelper'
+import {
+  formatRemainOrOverdue,
+  formatWaitDuration,
+  isWaitingInstance,
+  resolveDeadlineTime,
+  resolveWaitingNames,
+  resolveWaitStartTime,
+} from './traceDisplay.mjs'
 
 interface Props {
   record?: WfExecutionDTO | null
@@ -113,6 +150,8 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const { t } = useI18n({ useScope: 'global' })
+const nowMs = ref(Date.now())
+let waitTimer: ReturnType<typeof setInterval> | undefined
 
 interface TimelineItem {
   key: string
@@ -127,11 +166,55 @@ interface TimelineItem {
   instanceNo?: string
   targetUserName?: string
   comment?: string
+  waiting?: boolean
+  overdue?: boolean
+  waitedText?: string
+  deadlineTime?: string
+  remainText?: string
+  ccUsers?: WfCcRecordDTO[]
   order: number
 }
 
+const ccRecords = ref<WfCcRecordDTO[]>([])
+
+watch(
+  () => props.record?.id,
+  async (executionId) => {
+    ccRecords.value = []
+    if (executionId == null || executionId === '') {
+      return
+    }
+    try {
+      ccRecords.value = (await listCcByExecution({ executionId })) || []
+    } catch {
+      ccRecords.value = []
+    }
+  },
+  { immediate: true },
+)
+
+const hasWaiting = computed(() => (props.instances || []).some(isWaitingInstance))
+
+const waitSummary = computed(() => {
+  if (!hasWaiting.value) {
+    return null
+  }
+  const names = resolveWaitingNames(props.instances)
+  const waitStartTime = resolveWaitStartTime(props.record, props.instances)
+  const deadlineTime = resolveDeadlineTime(props.record, props.instances)
+  const remain = formatRemainOrOverdue(deadlineTime, nowMs.value, t)
+  return {
+    names: names || t('workflow.myTask.userFallback'),
+    waited: formatWaitDuration(waitStartTime, nowMs.value, t),
+    remainText: remain?.text,
+    overdue: Boolean(remain?.overdue),
+  }
+})
+
 const timelineItems = computed<TimelineItem[]>(() => {
   const items: TimelineItem[] = []
+  const waitStartTime = resolveWaitStartTime(props.record, props.instances)
+  const nodeDeadlineTime = resolveDeadlineTime(props.record, props.instances)
 
   if (props.record?.startTime) {
     items.push({
@@ -150,19 +233,35 @@ const timelineItems = computed<TimelineItem[]>(() => {
   }
 
   props.instances.forEach((item, index) => {
+    const waiting = isWaitingInstance(item)
     const actionType = item.actionType || instanceStatusToActionType(item.status)
+    const arriveTime = waiting
+      ? (waitStartTime || item.waitingSinceTime)
+      : item.approveTime
+    const remain = waiting
+      ? formatRemainOrOverdue(item.deadlineTime || nodeDeadlineTime, nowMs.value, t)
+      : null
+    const overdue = Boolean(remain?.overdue)
     items.push({
       key: `instance-${item.id || index}`,
-      time: item.approveTime || item.deadlineTime,
+      time: arriveTime || item.approveTime || item.deadlineTime,
       title: props.record?.currentNodeName || t('workflow.myTask.historyCurrentNodeFallback'),
-      statusText: getWorkflowInstanceStatusText(item.status, t),
-      color: getWorkflowTraceColor(actionType),
-      icon: getWorkflowTraceIcon(actionType),
+      statusText: waiting
+        ? t('workflow.myTask.waitingApproval')
+        : getWorkflowInstanceStatusText(item.status, t),
+      color: waiting ? (overdue ? 'red' : 'blue') : getWorkflowTraceColor(actionType),
+      icon: getWorkflowTraceIcon(waiting ? 0 : actionType),
       operatorLabel: t('workflow.myTask.handler'),
       operatorName: item.approverName || t('workflow.myTask.userFallback'),
-      timeLabel: t('workflow.myTask.approveTime'),
+      timeLabel: waiting ? t('workflow.myTask.arriveTime') : t('workflow.myTask.approveTime'),
       instanceNo: item.instanceNo,
       comment: item.comment,
+      waiting,
+      overdue,
+      waitedText: waiting ? formatWaitDuration(arriveTime, nowMs.value, t) : undefined,
+      deadlineTime: waiting ? (item.deadlineTime || nodeDeadlineTime) : undefined,
+      remainText: remain?.text,
+      ccUsers: ccRecords.value.filter(user => String(user.nodeId) === String(item.nodeId)),
       order: 10 + index,
     })
   })
@@ -209,6 +308,31 @@ const timelineItems = computed<TimelineItem[]>(() => {
     return leftTime === rightTime ? left.order - right.order : leftTime - rightTime
   })
 })
+
+watch(
+  hasWaiting,
+  waiting => {
+    stopWaitTimer()
+    if (waiting) {
+      nowMs.value = Date.now()
+      waitTimer = setInterval(() => {
+        nowMs.value = Date.now()
+      }, 60 * 1000)
+    }
+  },
+  { immediate: true },
+)
+
+onUnmounted(() => {
+  stopWaitTimer()
+})
+
+function stopWaitTimer() {
+  if (waitTimer) {
+    clearInterval(waitTimer)
+    waitTimer = undefined
+  }
+}
 
 function formatDateTime(dateTime?: string) {
   if (!dateTime) return '-'

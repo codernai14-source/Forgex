@@ -2583,6 +2583,18 @@ const staticViewTextMessages: Record<string, StaticTextEntry> = {
     'ja-JP': '辞書を編集',
     'ko-KR': '사전 편집',
   },
+  '刷新缓存': {
+    'en-US': 'Refresh Cache',
+    'zh-TW': '刷新快取',
+    'ja-JP': 'キャッシュを更新',
+    'ko-KR': '캐시 새로고침',
+  },
+  '字典缓存刷新成功': {
+    'en-US': 'Dictionary cache refreshed successfully',
+    'zh-TW': '字典快取刷新成功',
+    'ja-JP': '辞書キャッシュを更新しました',
+    'ko-KR': '사전 캐시를 새로고침했습니다',
+  },
   '编辑客户': {
     'en-US': 'Edit Customer',
     'zh-TW': '編輯客戶',

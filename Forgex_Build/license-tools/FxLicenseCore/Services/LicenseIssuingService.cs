@@ -66,6 +66,11 @@ public sealed class LicenseIssuingService
     /// <returns>授权载荷。</returns>
     public LicensePayload BuildPayload(LicenseRequestInfo requestInfo, LicenseIssueOptions options)
     {
+        if (string.IsNullOrWhiteSpace(options.Issuer))
+        {
+            throw new ArgumentException("Issuer is required.", nameof(options));
+        }
+
         var now = DateTimeOffset.Now;
         var effectiveAt = ResolveDateTime(options.EffectiveAt, now);
         var expireAt = ResolveExpireAt(effectiveAt, options.ExpireAt, options.DurationDays);
@@ -84,6 +89,8 @@ public sealed class LicenseIssuingService
             MaxUsers = options.MaxUsers,
             MaxTenants = options.MaxTenants,
             IssuedAt = now.ToString("O"),
+            RequestAt = requestInfo.GeneratedAt,
+            Issuer = options.Issuer.Trim(),
             EffectiveAt = effectiveAt.ToString("O"),
             ExpireAt = expireAt?.ToString("O"),
             DurationDays = ResolveDurationDays(options.DurationDays, effectiveAt, expireAt),

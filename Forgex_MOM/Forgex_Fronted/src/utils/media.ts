@@ -21,18 +21,68 @@ function hasBackendMediaPrefix(url: string): boolean {
   return backendMediaPrefixes.some(prefix => normalized.startsWith(prefix))
 }
 
+/**
+ * 把历史绝对文件地址改写为当前前端同源路径。
+ *
+ * 后端常把 `publicBaseUrl` 写成局域网 IP。页面在 localhost 打开时，
+ * `<img>` / `<video>` 会跨域请求该 IP，既带不上当前站点登录 Cookie，
+ * 在未登录的登录页更没有任何会话。改写为 `/api/sys/files/**` 后走 Vite/Nginx 代理即可显示。
+ *
+ * @param url 原始媒体地址
+ * @returns 可给 `<img src>` / `<video src>` 使用的同源或原样外部地址
+ */
+function toSameOriginBackendFileUrl(url: string): string {
+  const value = url.trim()
+  if (!value) {
+    return ''
+  }
+
+  let absolute = value
+  if (absolute.startsWith('//')) {
+    const protocol = typeof window !== 'undefined' && window.location?.protocol
+      ? window.location.protocol
+      : 'http:'
+    absolute = `${protocol}${absolute}`
+  }
+
+  try {
+    const parsed = new URL(absolute)
+    const path = parsed.pathname || ''
+    const suffix = `${parsed.search || ''}${parsed.hash || ''}`
+    if (path.startsWith('/api/sys/files/')) {
+      return `${path}${suffix}`
+    }
+    if (path.startsWith('/sys/files/')) {
+      return `/api${path}${suffix}`
+    }
+    if (path.startsWith('/api/files/')) {
+      return `/api/sys${path.slice('/api'.length)}${suffix}`
+    }
+    if (path.startsWith('/files/')) {
+      return `/api/sys${path}${suffix}`
+    }
+  } catch {
+    return url
+  }
+  return url
+}
+
+/**
+ * 统一媒体地址，供登录页 Logo/背景、头像和配置预览使用。
+ *
+ * @param value 后端返回的相对路径、网关绝对地址或外部 URL
+ * @returns 浏览器可直接加载的地址；空值返回空串
+ */
 export function normalizeMediaUrl(value?: string | null): string {
   const url = String(value || '').trim().replace(/\\/g, '/')
   if (!url) return ''
 
-  if (
-    url.startsWith('data:') ||
-    url.startsWith('blob:') ||
-    url.startsWith('http://') ||
-    url.startsWith('https://') ||
-    url.startsWith('//')
-  ) {
+  if (url.startsWith('data:') || url.startsWith('blob:')) {
     return url
+  }
+
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('//')) {
+    return toSameOriginBackendFileUrl(url)
   }
 
   if (url.startsWith('/api')) {
@@ -49,4 +99,3 @@ export function normalizeMediaUrl(value?: string | null): string {
 
   return `/${url.replace(/^\/+/, '')}`
 }
-

@@ -117,6 +117,7 @@ if (!(message as any).__fxBackendToastPatched) {
  * 当后端返回这些错误码时，前端需要重新登录
  */
 const reloadCodes = [602] // 602: 未登录或登录过期
+const passwordExpiredCode = 606
 
 function isFallbackPage() {
   return typeof window !== 'undefined'
@@ -537,6 +538,11 @@ async function handleResponse(resp: any, httpInstance: any) {
   // 处理JSON响应
   const data = resp.data || {}
   const code = data.code
+
+  if (code === passwordExpiredCode) {
+    window.location.replace(new URL('/workspace/profile?tab=security', window.location.origin).toString())
+    return Promise.reject(data)
+  }
   
   // 检查是否需要重新登录
   if (needReload(code)) {

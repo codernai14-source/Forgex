@@ -144,6 +144,34 @@ public class WfExecutionDTO {
     private Boolean timeoutFlag;
 
     /**
+     * 当前节点到达时间。
+     * <p>
+     * 取当前节点最新一条 {@code wf_task_execution_detail.create_time}（按 {@code id DESC}）。
+     * 驳回退回会再插入一条明细，因此该时间表示本次停留起点，而不是整单发起时间。
+     * 无激活待办时为空。
+     * </p>
+     */
+    private LocalDateTime currentNodeArriveTime;
+
+    /**
+     * 当前节点等待起点时间。
+     * <p>
+     * 前端按本地时钟计算「已等待」时长。回退顺序：节点到达时间 → 激活待办最早
+     * {@code wf_my_task.create_time} → 最近动作日志时间 → 执行单 {@code startTime}。
+     * 无激活待办时为空，前端不展示「已等待」。
+     * </p>
+     */
+    private LocalDateTime currentWaitStartTime;
+
+    /**
+     * 当前激活待办中最早的截止时间。
+     * <p>
+     * 未配置节点超时时为空；前端仅在有值时展示剩余或已超时。
+     * </p>
+     */
+    private LocalDateTime currentDeadlineTime;
+
+    /**
      * 是否命中过委托链路。
      */
     private Boolean delegated;
@@ -157,4 +185,19 @@ public class WfExecutionDTO {
      * 最近一次动作摘要。
      */
     private String latestActionSummary;
+
+    /**
+     * 最近一次抄送节点名称，仅抄送列表 / 首页抄送卡使用。
+     */
+    private String ccNodeName;
+
+    /**
+     * 最近一次抄送时间，仅抄送列表 / 首页抄送卡使用。
+     */
+    private LocalDateTime ccTime;
+
+    /**
+     * 当前用户在该执行单下是否仍有未读抄送。
+     */
+    private Boolean ccUnread;
 }

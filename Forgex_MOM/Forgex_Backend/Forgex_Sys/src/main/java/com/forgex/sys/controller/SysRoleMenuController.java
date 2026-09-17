@@ -147,6 +147,7 @@ public class SysRoleMenuController {
      * @param body 请求体，包含 roleId 和 menuIds
      * @return 授权结果
      */
+    @com.forgex.common.audit.OperationLog(module = "sys", menuPath = "/system/role", operationType = com.forgex.common.audit.OperationType.UPDATE, detailTemplateCode = "ROLE_GRANT_MENU")
     @RequirePerm("sys:role:authMenu")
     @PostMapping("/grant")
     public R<Boolean> grant(@RequestBody Map<String, Object> body) {
@@ -170,6 +171,7 @@ public class SysRoleMenuController {
      * @param permissionDTO 角色权限授权参数
      * @return 授权结果
      */
+    @com.forgex.common.audit.OperationLog(module = "sys", menuPath = "/system/role", operationType = com.forgex.common.audit.OperationType.UPDATE, detailTemplateCode = "ROLE_GRANT_PERMISSION")
     @RequirePerm("sys:role:authMenu")
     @PostMapping
     public R<Void> grantPermission(@RequestBody RolePermissionDTO permissionDTO) {

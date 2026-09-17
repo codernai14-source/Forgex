@@ -2,10 +2,10 @@
   <div class="user-table-config-management">
     <a-card :bordered="false" class="query-card">
       <a-form layout="inline">
-        <a-form-item :label="$tl('表格编码')">
+        <a-form-item :label="t('system.tableConfig.tableCode')">
           <a-input
             v-model:value="queryForm.tableCode"
-            :placeholder="$tl('请输入表格编码')"
+            :placeholder="t('system.tableConfig.form.tableCode')"
             allow-clear
             style="width: 220px"
           />
@@ -26,9 +26,9 @@
 
     <a-card :bordered="false" class="table-card">
       <div class="card-tip">
-        <a-alert
-          :message="$tl('说明')"
-          :description="$tl('当前页面用于维护当前登录用户的列偏好设置。页面和按钮是否可见仍取决于角色菜单授权，这里仅负责保存已授权页面的个性化列显示。')"
+          <a-alert
+          :message="t('system.tableConfig.userColumnSetting.descriptionTitle')"
+          :description="t('system.tableConfig.userColumnSetting.description')"
           type="info"
           show-icon
         />
@@ -51,7 +51,7 @@
 
             <template v-else-if="column.key === 'userConfigured'">
               <a-tag :color="record.userConfigured ? 'green' : 'default'">
-                {{ record.userConfigured ? $tl('已配置') : $tl('未配置') }}
+                {{ record.userConfigured ? t('system.tableConfig.userColumnSetting.configured') : t('system.tableConfig.userColumnSetting.notConfigured') }}
               </a-tag>
             </template>
 
@@ -68,7 +68,7 @@
                   :style="{ color: record.userConfigured ? '#ff4d4f' : '#999999' }"
                   @click="handleResetUserConfig(record)"
                 >
-                  {{ $tl('重置') }}
+                  {{ t('common.reset') }}
                 </a>
               </a-space>
             </template>
@@ -79,18 +79,18 @@
 
     <a-modal
       v-model:open="dialogVisible"
-      :title="$tl('编辑用户列设置')"
+      :title="t('system.tableConfig.userColumnSetting.title')"
       width="960px"
       :confirm-loading="saving"
       @ok="handleSubmit"
       @cancel="handleCancel"
     >
       <a-form :model="formData" :label-col="{ span: 5 }" :wrapper-col="{ span: 17 }">
-        <a-form-item :label="$tl('表格编码')">
+        <a-form-item :label="t('system.tableConfig.tableCode')">
           <a-input v-model:value="formData.tableCode" disabled />
         </a-form-item>
 
-        <a-form-item :label="$tl('分页大小')">
+        <a-form-item :label="t('system.tableConfig.userColumnSetting.pageSize')">
           <a-input-number
             v-model:value="formData.pageSize"
             :min="1"
@@ -122,17 +122,30 @@
             />
           </template>
 
+          <template v-else-if="column.key === 'fixed'">
+            <a-select
+              v-model:value="record.fixed"
+              allow-clear
+              size="small"
+              :placeholder="t('system.tableConfig.columnSetting.fixedUnset')"
+              style="width: 120px"
+            >
+              <a-select-option value="left">{{ t('system.tableConfig.columnSetting.fixedLeft') }}</a-select-option>
+              <a-select-option value="right">{{ t('system.tableConfig.columnSetting.fixedRight') }}</a-select-option>
+            </a-select>
+          </template>
+
           <template v-else-if="column.key === 'move'">
             <a-space>
               <a-button size="small" :disabled="index === 0" @click="moveColumn(index, -1)">
-                {{ $tl('上移') }}
+                {{ t('common.moveUp') }}
               </a-button>
               <a-button
                 size="small"
                 :disabled="index === formData.columns.length - 1"
                 @click="moveColumn(index, 1)"
               >
-                {{ $tl('下移') }}
+                {{ t('common.moveDown') }}
               </a-button>
             </a-space>
           </template>
@@ -172,9 +185,10 @@ interface EditableColumnItem {
   title: string
   visible: boolean
   order: number
+  fixed?: 'left' | 'right'
 }
 
-const { t } = useI18n({ useScope: 'global' })
+const { t, locale } = useI18n({ useScope: 'global' })
 
 const loading = ref(false)
 const saving = ref(false)
@@ -205,48 +219,51 @@ const formData = reactive({
   columns: [] as EditableColumnItem[],
 })
 
-const columns = computed(() => [
+const columns = computed(() => {
+  // Keep the page table labels reactive when the user switches locale.
+  void locale.value
+  return [
   {
-    title: translateLegacyText('表格编码'),
+    title: t('system.tableConfig.tableCode'),
     dataIndex: 'tableCode',
     key: 'tableCode',
     width: 220,
   },
   {
-    title: translateLegacyText('表格名称'),
+    title: t('system.tableConfig.tableName'),
     dataIndex: 'tableNameI18nJson',
     key: 'tableNameI18nJson',
     width: 220,
     ellipsis: true,
   },
   {
-    title: translateLegacyText('默认分页大小'),
+    title: t('system.tableConfig.defaultPageSize'),
     dataIndex: 'defaultPageSize',
     key: 'defaultPageSize',
     width: 130,
     align: 'center' as const,
   },
   {
-    title: translateLegacyText('用户分页大小'),
+    title: t('system.tableConfig.userColumnSetting.userPageSize'),
     key: 'userPageSize',
     width: 130,
     align: 'center' as const,
   },
   {
-    title: translateLegacyText('配置状态'),
+    title: t('system.tableConfig.userColumnSetting.configStatus'),
     key: 'userConfigured',
     width: 120,
     align: 'center' as const,
   },
   {
-    title: translateLegacyText('配置版本'),
+    title: t('system.tableConfig.userColumnSetting.version'),
     dataIndex: 'userVersion',
     key: 'userVersion',
     width: 100,
     align: 'center' as const,
   },
   {
-    title: translateLegacyText('最后更新时间'),
+    title: t('system.tableConfig.userColumnSetting.updateTime'),
     dataIndex: 'userUpdateTime',
     key: 'userUpdateTime',
     width: 180,
@@ -257,40 +274,21 @@ const columns = computed(() => [
     width: 150,
     fixed: 'right' as const,
   },
-])
+  ]
+})
 
-const columnTableColumns = [
-  {
-    title: translateLegacyText('字段名'),
-    dataIndex: 'field',
-    key: 'field',
-    width: 180,
-  },
-  {
-    title: translateLegacyText('标题'),
-    dataIndex: 'title',
-    key: 'title',
-    width: 220,
-    ellipsis: true,
-  },
-  {
-    title: translateLegacyText('显示'),
-    key: 'visible',
-    width: 90,
-    align: 'center' as const,
-  },
-  {
-    title: translateLegacyText('排序'),
-    key: 'order',
-    width: 120,
-    align: 'center' as const,
-  },
-  {
-    title: translateLegacyText('移动'),
-    key: 'move',
-    width: 180,
-  },
-]
+const columnTableColumns = computed(() => {
+  // Depend on locale so labels update immediately after a language switch.
+  void locale.value
+  return [
+    { title: t('system.tableConfig.field'), dataIndex: 'field', key: 'field', width: 180 },
+    { title: t('system.tableConfig.title'), dataIndex: 'title', key: 'title', width: 220, ellipsis: true },
+    { title: t('system.tableConfig.userColumnSetting.visible'), key: 'visible', width: 90, align: 'center' as const },
+    { title: t('system.tableConfig.userColumnSetting.order'), key: 'order', width: 120, align: 'center' as const },
+    { title: t('system.tableConfig.userColumnSetting.move'), key: 'move', width: 180 },
+    { title: t('system.tableConfig.fixed'), key: 'fixed', width: 150 },
+  ]
+})
 
 const tableScrollX = computed(() => {
   return columns.value.reduce((sum: number, col: any) => {
@@ -331,6 +329,7 @@ function buildEditableColumns(baseColumns: FxTableColumn[], userConfig?: UserCol
       title: column.title,
       visible: userColumn?.visible ?? column.visible ?? true,
       order: userColumn?.order ?? column.order ?? index + 1,
+      fixed: userColumn?.fixed ?? column.fixed,
     }
   })
 
@@ -452,6 +451,7 @@ const handleSubmit = async () => {
     field: item.field,
     visible: item.visible,
     order: item.order,
+    fixed: item.fixed,
   }))
 
   saving.value = true

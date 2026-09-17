@@ -312,12 +312,23 @@
   }
 
   .task-name {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     font-weight: 500;
     color: var(--fx-text-primary, #111827);
     flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .unread-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #fa8c16;
+    flex-shrink: 0;
   }
 
   .task-meta {

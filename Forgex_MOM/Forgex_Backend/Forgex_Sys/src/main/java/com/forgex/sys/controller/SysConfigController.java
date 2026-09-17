@@ -21,6 +21,7 @@ import com.forgex.common.domain.config.CryptoTransportConfig;
 import com.forgex.common.domain.config.EmailConfig;
 import com.forgex.common.domain.config.LoginSecurityConfig;
 import com.forgex.common.domain.config.PasswordPolicyConfig;
+import com.forgex.common.security.password.PasswordPolicyValidator;
 import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.security.perm.RequirePerm;
 import com.forgex.common.web.R;
@@ -259,15 +260,16 @@ public class SysConfigController {
      * @see PasswordPolicyConfig
      * @see CryptoTransportConfig
      */
-    @RequirePerm("sys:config:view")
+    @RequirePerm("sys:security:view")
     @GetMapping("/security")
     public R<SecurityConfig> getSecurityConfig() {
         // 1. 获取默认安全配置
         SecurityConfig defaults = SecurityConfig.defaults();
 
-        // 2. 从 ConfigService 获取各项配置
+        // 2. 从 ConfigService 获取各项配置；口令过期和历史次数缺字段时补齐等保默认值
         CaptchaConfig captcha = configService.getJson(KEY_LOGIN_CAPTCHA, CaptchaConfig.class, defaults.getCaptcha());
-        PasswordPolicyConfig policy = configService.getJson(KEY_SECURITY_PASSWORD_POLICY, PasswordPolicyConfig.class, defaults.getPasswordPolicy());
+        PasswordPolicyConfig policy = PasswordPolicyValidator.normalizeLifecycle(
+                configService.getJson(KEY_SECURITY_PASSWORD_POLICY, PasswordPolicyConfig.class, defaults.getPasswordPolicy()));
         LoginSecurityConfig loginSecurity = configService.getJson(KEY_SECURITY_LOGIN_FAILURE, LoginSecurityConfig.class, defaults.getLoginSecurity());
         CryptoTransportConfig transport = configService.getJson(KEY_SECURITY_CRYPTO_TRANSPORT, CryptoTransportConfig.class, defaults.getCryptoTransport());
 
@@ -276,7 +278,7 @@ public class SysConfigController {
         result.setCaptcha(captcha == null ? CaptchaConfig.defaults() : captcha);
         result.setPasswordPolicy(policy == null ? SecurityConfig.defaults().getPasswordPolicy() : policy);
         result.setLoginSecurity(loginSecurity == null ? SecurityConfig.defaults().getLoginSecurity() : loginSecurity);
-        result.setCryptoTransport(transport == null ? SecurityConfig.defaults().getCryptoTransport() : transport);
+        result.setCryptoTransport(maskTransport(transport == null ? SecurityConfig.defaults().getCryptoTransport() : transport));
 
         // 4. 返回安全配置对象
         return R.ok(result);
@@ -306,17 +308,26 @@ public class SysConfigController {
      *         - message: 提示信息（保存成功）
      * @see SecurityConfig
      */
-    @RequirePerm("sys:config:edit")
+    @RequirePerm("sys:security:edit")
+    @com.forgex.common.audit.OperationLog(module = "sys", menuPath = "/system/config", operationType = com.forgex.common.audit.OperationType.UPDATE, detailTemplateCode = "SECURITY_CONFIG_UPDATE")
     @PutMapping("/security")
     public R<Boolean> setSecurityConfig(@RequestBody SecurityConfig body) {
         // 1. 使用默认值填充空配置
         SecurityConfig config = body == null ? SecurityConfig.defaults() : body;
 
-        // 2. 分别获取各项配置，使用默认值兜底
+        // 2. 分别获取各项配置，使用默认值兜底；保存前规范化过期天数和禁止重复次数
         CaptchaConfig captcha = config.getCaptcha() == null ? CaptchaConfig.defaults() : config.getCaptcha();
-        PasswordPolicyConfig policy = config.getPasswordPolicy() == null ? SecurityConfig.defaults().getPasswordPolicy() : config.getPasswordPolicy();
+        PasswordPolicyConfig policy = PasswordPolicyValidator.normalizeLifecycle(
+                config.getPasswordPolicy() == null ? SecurityConfig.defaults().getPasswordPolicy() : config.getPasswordPolicy());
         LoginSecurityConfig loginSecurity = config.getLoginSecurity() == null ? SecurityConfig.defaults().getLoginSecurity() : config.getLoginSecurity();
         CryptoTransportConfig transport = config.getCryptoTransport() == null ? SecurityConfig.defaults().getCryptoTransport() : config.getCryptoTransport();
+        CryptoTransportConfig existingTransport = configService.getJson(KEY_SECURITY_CRYPTO_TRANSPORT, CryptoTransportConfig.class, SecurityConfig.defaults().getCryptoTransport());
+        boolean privateProvided = org.springframework.util.StringUtils.hasText(transport.getPrivateKey());
+        boolean publicChanged = existingTransport != null && !java.util.Objects.equals(transport.getPublicKey(), existingTransport.getPublicKey());
+        if (publicChanged && !privateProvided) {
+            return R.fail(CommonPrompt.BAD_REQUEST, "privateKey is required when changing publicKey");
+        }
+        if (!org.springframework.util.StringUtils.hasText(transport.getPrivateKey()) && existingTransport != null) transport.setPrivateKey(existingTransport.getPrivateKey());
 
         if (!isPasswordValid(policy.getDefaultPassword(), policy)) {
             return R.fail(CommonPrompt.DEFAULT_PASSWORD_INVALID);
@@ -562,7 +573,13 @@ public class SysConfigController {
 
     private SystemBasicConfig normalizeSystemBasicConfig(SystemBasicConfig source) {
         SystemBasicConfig config = source == null ? SystemBasicConfig.defaults() : source;
+        if (!org.springframework.util.StringUtils.hasText(config.getBrowserTitle())) {
+            config.setBrowserTitle(config.getSystemName());
+        } else {
+            config.setBrowserTitle(config.getBrowserTitle().trim());
+        }
         config.setSystemLogo(normalizeConfigMediaUrl(config.getSystemLogo()));
+        config.setBrowserIcon(normalizeConfigMediaUrl(config.getBrowserIcon()));
         config.setLoginBackgroundImage(normalizeConfigMediaUrl(config.getLoginBackgroundImage()));
         config.setLoginBackgroundVideo(normalizeConfigMediaUrl(config.getLoginBackgroundVideo()));
         return config;
@@ -735,12 +752,20 @@ public class SysConfigController {
         CryptoConfig.KmsConfig kms = configService.getJson(KEY_KMS_MASTER, CryptoConfig.KmsConfig.class, new CryptoConfig.KmsConfig());
         CryptoConfig.FileEncryptConfig fileEnc = configService.getJson(KEY_FILE_ENCRYPT, CryptoConfig.FileEncryptConfig.class, new CryptoConfig.FileEncryptConfig());
         CryptoConfig.FieldEncryptConfig fieldEnc = configService.getJson(KEY_FIELD_ENCRYPT, CryptoConfig.FieldEncryptConfig.class, new CryptoConfig.FieldEncryptConfig());
-        config.setSm4(sm4 != null ? sm4 : new CryptoConfig.Sm4Config());
-        config.setAes(aes != null ? aes : new CryptoConfig.AesConfig());
-        config.setRsa(rsa != null ? rsa : new CryptoConfig.RsaConfig());
-        config.setKms(kms != null ? kms : new CryptoConfig.KmsConfig());
+        config.setSm4(copySm4(sm4));
+        config.setAes(copyAes(aes));
+        config.setRsa(copyRsa(rsa));
+        config.setKms(copyKms(kms));
         config.setFileEncrypt(fileEnc != null ? fileEnc : new CryptoConfig.FileEncryptConfig());
         config.setFieldEncrypt(fieldEnc != null ? fieldEnc : new CryptoConfig.FieldEncryptConfig());
+        config.getSm4().setKeyHexConfigured(org.springframework.util.StringUtils.hasText(config.getSm4().getKeyHex()));
+        config.getSm4().setKeyHex("");
+        config.getAes().setKeyHexConfigured(org.springframework.util.StringUtils.hasText(config.getAes().getKeyHex()));
+        config.getAes().setKeyHex("");
+        config.getRsa().setPrivateKeyConfigured(org.springframework.util.StringUtils.hasText(config.getRsa().getPrivateKey()));
+        config.getRsa().setPrivateKey("");
+        config.getKms().setMasterKeyHexConfigured(org.springframework.util.StringUtils.hasText(config.getKms().getMasterKeyHex()));
+        config.getKms().setMasterKeyHex("");
         return R.ok(config);
     }
 
@@ -757,10 +782,15 @@ public class SysConfigController {
     @RequirePerm("sys:config:edit")
     @PutMapping("/crypto")
     public R<Boolean> setCryptoConfig(@RequestBody CryptoConfig config) {
-        if (config.getSm4() != null) configService.setJson(KEY_CRYPTO_SM4, config.getSm4());
-        if (config.getAes() != null) configService.setJson(KEY_CRYPTO_AES, config.getAes());
-        if (config.getRsa() != null) configService.setJson(KEY_CRYPTO_RSA, config.getRsa());
-        if (config.getKms() != null) configService.setJson(KEY_KMS_MASTER, config.getKms());
+        if (config == null) config = CryptoConfig.defaults();
+        CryptoConfig.Sm4Config sm4 = config.getSm4();
+        CryptoConfig.Sm4Config oldSm4 = configService.getJson(KEY_CRYPTO_SM4, CryptoConfig.Sm4Config.class, new CryptoConfig.Sm4Config());
+        if (sm4 != null) { if (!org.springframework.util.StringUtils.hasText(sm4.getKeyHex())) sm4.setKeyHex(oldSm4.getKeyHex()); configService.setJson(KEY_CRYPTO_SM4, sm4); }
+        CryptoConfig.AesConfig aes = config.getAes();
+        CryptoConfig.AesConfig oldAes = configService.getJson(KEY_CRYPTO_AES, CryptoConfig.AesConfig.class, new CryptoConfig.AesConfig());
+        if (aes != null) { if (!org.springframework.util.StringUtils.hasText(aes.getKeyHex())) aes.setKeyHex(oldAes.getKeyHex()); configService.setJson(KEY_CRYPTO_AES, aes); }
+        if (config.getRsa() != null) { CryptoConfig.RsaConfig old = configService.getJson(KEY_CRYPTO_RSA, CryptoConfig.RsaConfig.class, new CryptoConfig.RsaConfig()); if (!org.springframework.util.StringUtils.hasText(config.getRsa().getPrivateKey())) config.getRsa().setPrivateKey(old.getPrivateKey()); configService.setJson(KEY_CRYPTO_RSA, config.getRsa()); }
+        if (config.getKms() != null) { CryptoConfig.KmsConfig old = configService.getJson(KEY_KMS_MASTER, CryptoConfig.KmsConfig.class, new CryptoConfig.KmsConfig()); if (!org.springframework.util.StringUtils.hasText(config.getKms().getMasterKeyHex())) config.getKms().setMasterKeyHex(old.getMasterKeyHex()); configService.setJson(KEY_KMS_MASTER, config.getKms()); }
         if (config.getFileEncrypt() != null) configService.setJson(KEY_FILE_ENCRYPT, config.getFileEncrypt());
         if (config.getFieldEncrypt() != null) configService.setJson(KEY_FIELD_ENCRYPT, config.getFieldEncrypt());
         return R.ok(CommonPrompt.SAVE_SUCCESS, true);
@@ -845,25 +875,39 @@ public class SysConfigController {
     }
 
     private boolean isPasswordValid(String password, PasswordPolicyConfig policy) {
-        if (password == null || password.isEmpty()) {
-            return false;
-        }
-        int minLength = policy == null || policy.getMinLength() == null ? 0 : policy.getMinLength();
-        if (password.length() < minLength) {
-            return false;
-        }
-        if (policy != null && Boolean.TRUE.equals(policy.getRequireNumbers()) && !password.matches(".*\\d.*")) {
-            return false;
-        }
-        if (policy != null && Boolean.TRUE.equals(policy.getRequireUppercase()) && !password.matches(".*[A-Z].*")) {
-            return false;
-        }
-        if (policy != null && Boolean.TRUE.equals(policy.getRequireLowercase()) && !password.matches(".*[a-z].*")) {
-            return false;
-        }
-        if (policy != null && Boolean.TRUE.equals(policy.getRequireSymbols()) && !password.matches(".*[^A-Za-z0-9].*")) {
-            return false;
-        }
-        return true;
+        return PasswordPolicyValidator.isValid(password, null, policy);
+    }
+
+    private CryptoConfig.Sm4Config copySm4(CryptoConfig.Sm4Config source) {
+        CryptoConfig.Sm4Config c = new CryptoConfig.Sm4Config();
+        if (source != null) c.setKeyHex(source.getKeyHex());
+        c.setKeyHexConfigured(org.springframework.util.StringUtils.hasText(c.getKeyHex()));
+        c.setKeyHex("");
+        return c;
+    }
+    private CryptoConfig.AesConfig copyAes(CryptoConfig.AesConfig source) {
+        CryptoConfig.AesConfig c = new CryptoConfig.AesConfig();
+        if (source != null) c.setKeyHex(source.getKeyHex());
+        c.setKeyHexConfigured(org.springframework.util.StringUtils.hasText(c.getKeyHex()));
+        c.setKeyHex("");
+        return c;
+    }
+    private CryptoConfig.RsaConfig copyRsa(CryptoConfig.RsaConfig source) {
+        CryptoConfig.RsaConfig c = new CryptoConfig.RsaConfig();
+        if (source != null) { c.setPublicKey(source.getPublicKey()); c.setKeySize(source.getKeySize()); c.setPrivateKeyConfigured(org.springframework.util.StringUtils.hasText(source.getPrivateKey())); }
+        c.setPrivateKey("");
+        return c;
+    }
+    private CryptoConfig.KmsConfig copyKms(CryptoConfig.KmsConfig source) {
+        CryptoConfig.KmsConfig c = new CryptoConfig.KmsConfig();
+        if (source != null) { c.setMasterSource(source.getMasterSource()); c.setMasterKeyFile(source.getMasterKeyFile()); c.setRotateRemindDays(source.getRotateRemindDays()); c.setMasterKeyHexConfigured(org.springframework.util.StringUtils.hasText(source.getMasterKeyHex())); }
+        c.setMasterKeyHex("");
+        return c;
+    }
+    private CryptoTransportConfig maskTransport(CryptoTransportConfig source) {
+        CryptoTransportConfig c = new CryptoTransportConfig();
+        if (source != null) { c.setAlgorithm(source.getAlgorithm()); c.setPublicKey(source.getPublicKey()); c.setCipher(source.getCipher()); c.setPrivateKeyConfigured(org.springframework.util.StringUtils.hasText(source.getPrivateKey())); }
+        c.setPrivateKey("");
+        return c;
     }
 }

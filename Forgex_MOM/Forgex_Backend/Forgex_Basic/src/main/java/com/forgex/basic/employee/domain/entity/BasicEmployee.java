@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.forgex.common.base.BaseEntity;
+import com.forgex.common.crypto.FieldEncrypt;
+import com.forgex.common.security.desensitize.Desensitize;
+import com.forgex.common.security.desensitize.DesensitizeType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -31,10 +34,14 @@ public class BasicEmployee extends BaseEntity {
 
     /** 手机号。 */
     @TableField("phone")
+    @FieldEncrypt
+    @Desensitize(DesensitizeType.PHONE)
     private String phone;
 
     /** 邮箱。 */
     @TableField("email")
+    @FieldEncrypt
+    @Desensitize(DesensitizeType.EMAIL)
     private String email;
 
     /** 性别：0 未知，1 男，2 女。 */

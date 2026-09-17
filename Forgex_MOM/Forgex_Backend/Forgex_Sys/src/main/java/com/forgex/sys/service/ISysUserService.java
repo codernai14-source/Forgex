@@ -176,7 +176,7 @@ public interface ISysUserService extends IService<SysUser> {
      * <p>处理流程：</p>
      * <ol>
      *   <li>将 DTO 转换为实体对象</li>
-     *   <li>如果未设置密码，使用默认密码 "123456"</li>
+     *   <li>如果未设置密码，使用密码策略中显式配置的初始密码</li>
      *   <li>使用 BCrypt 算法对密码进行加密</li>
      *   <li>插入用户数据</li>
      *   <li>保存用户扩展档案信息（可选）</li>
@@ -307,7 +307,7 @@ public interface ISysUserService extends IService<SysUser> {
     /**
      * 重置用户密码
      * <p>
-     * 将指定用户的密码重置为默认密码 "123456"。
+     * 将指定用户的密码重置为密码策略中显式配置的初始密码。
      * </p>
      * <p>处理流程：</p>
      * <ol>

@@ -11,7 +11,8 @@ src/views/workflow/
 ├── myTask/              # 我的任务
 │   ├── pending.vue      # 我的待办
 │   ├── processed.vue    # 我已处理
-│   └── initiated.vue    # 我发起的
+│   ├── initiated.vue    # 我发起的
+│   └── myCc.vue         # 抄送给我的
 └── README.md            # 接入指南
 ```
 
@@ -46,9 +47,10 @@ import workflowRoutes from '@/router/workflow'
 | 工作流管理 | /workflow | wf:task | FolderOutlined |
 | ├─ 审批任务配置 | /workflow/taskConfig | wf:taskConfig:view | SettingOutlined |
 | ├─ 发起审批 | /workflow/execution/start | wf:execution:start | PlusOutlined |
-| ├─ 我的待办 | /workflow/my/pending | wf:myTask:pending | BellOutlined |
-| ├─ 我已处理 | /workflow/my/processed | wf:myTask:processed | CheckCircleOutlined |
-| └─ 我发起的 | /workflow/my/initiated | wf:myTask:initiated | SendOutlined |
+| ├─ 我的待办 | /workspace/approval/my/pending | wf:myTask:pending | BellOutlined |
+| ├─ 我已处理 | /workspace/approval/my/processed | wf:myTask:processed | CheckCircleOutlined |
+| ├─ 我发起的 | /workspace/approval/my/initiated | wf:myTask:initiated | SendOutlined |
+| └─ 抄送给我的 | /workspace/approval/my/cc | wf:myTask:cc | MailOutlined |
 
 ## 权限配置
 
@@ -109,7 +111,7 @@ import workflowRoutes from '@/router/workflow'
 - 审批同意
 - 审批驳回
 - 查看详情
-- 审批历史查看（待开发）
+- 处理弹窗与详情抽屉共用 `WorkflowTracePanel`，进行中单据展示当前节点已等待时长
 
 **审批操作**：
 - **同意**：填写审批意见后提交
@@ -119,16 +121,34 @@ import workflowRoutes from '@/router/workflow'
 
 **功能**：
 - 已处理审批列表展示
-- 查看详情
-- 审批历史查看（待开发）
+- 查看详情（轨迹摘要条与待办处理弹窗同一口径）
+- 审批历史查看
 
 ### 5. 我发起的页面 (`/workflow/my/initiated`)
 
 **功能**：
 - 我发起的审批列表展示
-- 查看详情
-- 审批历史查看（待开发）
+- 查看详情（轨迹摘要条与待办处理弹窗同一口径）
+- 审批历史查看
 - 撤销审批（仅支持未审批或审批中的任务）
+
+### 6. 抄送给我的页面 (`/workspace/approval/my/cc`)
+
+**功能**：
+- 动态表 `WfMyCcTaskTable` 按流程聚合抄送记录
+- 展示抄送节点、抄送时间、已读/未读；操作只有详情和轨迹，没有处理按钮
+- 打开详情或轨迹后调用 `mark-read` 刷新未读状态
+- 轨迹节点下展示只读抄送人 tag，等待时长结构不变
+
+### 7. 详情抽屉 / 轨迹展示
+
+公共组件：`myTask/WorkflowTracePanel.vue`，时长口径：`myTask/traceDisplay.mjs`。
+
+- 进行中才显示摘要条：`当前等待：姓名` + `已等待 {duration}`；配置了节点超时才追加剩余或已超时。
+- 轨迹 waiting 末条展示到达时间（`currentWaitStartTime`，当前节点最新明细创建时间），不要用发起时间把前序节点算进去。
+- 打开期间每 60 秒用本地时钟刷新时长，不额外轮询接口。
+- 已结束流程没有激活待办时，不渲染 waiting，也不显示「已等待」。
+- 抄送页、补偿中心详情同样复用该组件。
 
 ## 待开发功能
 

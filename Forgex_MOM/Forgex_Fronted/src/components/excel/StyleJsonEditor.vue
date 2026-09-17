@@ -142,11 +142,11 @@ const parseInitialValue = (): Partial<StyleConfig> => {
     if (props.modelValue) {
       const parsed = JSON.parse(props.modelValue)
       return {
-        backgroundColor: parsed.backgroundColor || '#ffffff',
+        backgroundColor: parsed.fillColor || parsed.backgroundColor || '#ffffff',
         fontSize: parsed.fontSize || 14,
-        wordWrap: parsed.wordWrap ?? false,
+        wordWrap: parsed.wrapText ?? parsed.wordWrap ?? false,
         align: parsed.align || 'left',
-        fontWeight: parsed.fontWeight || 'normal'
+        fontWeight: parsed.bold === true || parsed.fontWeight === 'bold' ? 'bold' : 'normal'
       }
     }
   } catch (error) {
@@ -170,7 +170,13 @@ const initStyleConfig = () => {
  * 生成 JSON 预览
  */
 const jsonPreview = computed(() => {
-  return JSON.stringify(styleConfig.value, null, 2)
+  return JSON.stringify({
+    fillColor: styleConfig.value.backgroundColor,
+    fontSize: styleConfig.value.fontSize,
+    wrapText: styleConfig.value.wordWrap,
+    align: styleConfig.value.align,
+    bold: styleConfig.value.fontWeight === 'bold',
+  }, null, 2)
 })
 
 /**

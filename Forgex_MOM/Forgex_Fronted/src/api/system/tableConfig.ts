@@ -114,6 +114,7 @@ export interface UserColumnItem {
   visible: boolean
   order: number
   width?: number
+  fixed?: 'left' | 'right'
 }
 
 export interface UserColumnConfigParam {

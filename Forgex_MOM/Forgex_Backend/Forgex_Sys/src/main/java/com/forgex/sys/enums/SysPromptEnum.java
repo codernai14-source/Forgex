@@ -263,7 +263,33 @@ public enum SysPromptEnum implements I18nPrompt {
 
     // ========== 消息发送校验（Service 层）==========
     MSG_NO_PERMISSION("MSG_NO_PERMISSION", "无权向该租户发送消息，请联系管理员配置租户消息白名单"),
-    MSG_TEMPLATE_TEST_PARAM_REQUIRED("MSG_TEMPLATE_TEST_PARAM_REQUIRED", "请求参数不能为空");
+    MSG_TEMPLATE_TEST_PARAM_REQUIRED("MSG_TEMPLATE_TEST_PARAM_REQUIRED", "请求参数不能为空"),
+
+    THREE_ROLE_CONFLICT("THREE_ROLE_CONFLICT", "三员角色互斥，同一用户不能兼任系统/安全/审计管理员"),
+    THREE_ROLE_AUDIT_WRITE_DENIED("THREE_ROLE_AUDIT_WRITE_DENIED", "审计管理员不能被授予业务写权限"),
+    THREE_ROLE_SYS_AUDIT_DENIED("THREE_ROLE_SYS_AUDIT_DENIED", "系统管理员不能被授予审计查看权限"),
+    PASSWORD_REUSED("PASSWORD_REUSED", "不能复用最近使用过的密码"),
+    PASSWORD_POLICY_INVALID("PASSWORD_POLICY_INVALID", "密码不符合安全策略"),
+    SECURITY_LEVEL_FORBIDDEN("SECURITY_LEVEL_FORBIDDEN", "仅安全管理员可以调整用户密级"),
+    AUDIT_CHAIN_BROKEN("AUDIT_CHAIN_BROKEN", "审计哈希链校验失败"),
+    AUDIT_CHAIN_OK("AUDIT_CHAIN_OK", "审计哈希链完整"),
+    BACKUP_TRIGGERED("BACKUP_TRIGGERED", "备份任务已触发"),
+
+    // ========== 帮助中心 ==========
+    HELP_RESOURCE_NOT_FOUND("HELP_RESOURCE_NOT_FOUND", "帮助资源不存在"),
+    HELP_TITLE_REQUIRED("HELP_TITLE_REQUIRED", "帮助资源标题不能为空"),
+    HELP_DOC_TYPE_INVALID("HELP_DOC_TYPE_INVALID", "帮助资源类型无效"),
+    HELP_SCOPE_TYPE_INVALID("HELP_SCOPE_TYPE_INVALID", "帮助资源范围无效"),
+    HELP_SOURCE_TYPE_INVALID("HELP_SOURCE_TYPE_INVALID", "帮助资源来源无效"),
+    HELP_MENU_REQUIRED("HELP_MENU_REQUIRED", "菜单范围必须指定菜单和路径"),
+    HELP_GLOBAL_MENU_FORBIDDEN("HELP_GLOBAL_MENU_FORBIDDEN", "全局范围不能绑定菜单"),
+    HELP_FILE_REQUIRED("HELP_FILE_REQUIRED", "文件来源必须上传文件"),
+    HELP_EXTERNAL_URL_REQUIRED("HELP_EXTERNAL_URL_REQUIRED", "外链来源必须填写地址"),
+    HELP_EXTERNAL_URL_INVALID("HELP_EXTERNAL_URL_INVALID", "外链地址仅支持 http 或 https"),
+    HELP_FILE_EXT_INVALID("HELP_FILE_EXT_INVALID", "当前类型不支持该文件格式"),
+    HELP_FILE_SIZE_EXCEEDED("HELP_FILE_SIZE_EXCEEDED", "文件大小超出限制"),
+    HELP_FILE_EMPTY("HELP_FILE_EMPTY", "上传文件不能为空"),
+    HELP_CONTACT_SAVE_SUCCESS("HELP_CONTACT_SAVE_SUCCESS", "联系方式保存成功");
 
     private final String promptCode;
     private final String defaultTemplate;

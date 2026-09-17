@@ -27,6 +27,21 @@ export default {
   addColumn: '列追加',
   columnRequired: '少なくとも 1 つの列設定を追加してください',
   loadDetailFailed: '設定詳細の読み込みに失敗しました',
+  userColumnSetting: {
+    title: 'ユーザー列設定を編集',
+    descriptionTitle: '説明',
+    description: '現在のユーザーの列表示設定を管理します。ページやボタンの表示はロール権限に従います。',
+    configured: '設定済み',
+    notConfigured: '未設定',
+    pageSize: 'ページサイズ',
+    userPageSize: 'ユーザーページサイズ',
+    configStatus: '設定状態',
+    version: '設定バージョン',
+    updateTime: '最終更新日時',
+    visible: '表示',
+    order: '並び順',
+    move: '移動',
+  },
   
   /**
    * 列设置相关
@@ -37,7 +52,10 @@ export default {
     resetSuccess: 'デフォルト設定にリセットしました',
     hint: '表示列をチェックし、ドラッグして順序を調整',
     dragSort: 'ドラッグして並び替え',
-    dragResize: 'ドラッグして列幅を調整'
+    dragResize: 'ドラッグして列幅を調整',
+    fixedUnset: '固定しない',
+    fixedLeft: '左に固定',
+    fixedRight: '右に固定'
   },
   
   form: {

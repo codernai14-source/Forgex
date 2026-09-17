@@ -15,18 +15,20 @@
       :src="resolveMediaUrl(systemConfig.loginBackgroundImage)"
       alt="login-background"
     />
+    <div v-if="normalizedLayout === 'split-hero' && heroSlide" class="hero-media"><video v-if="heroSlide.type === 'video'" autoplay muted loop playsinline :src="resolveMediaUrl(heroSlide.url)" /><img v-else :src="resolveMediaUrl(heroSlide.url)" alt="hero" /></div>
     <div class="mask" :style="{ backgroundColor: systemConfig.loginBackgroundType === 'color' ? systemConfig.loginBackgroundColor : '' }"></div>
     <div class="grid"></div>
-    <div class="content" :class="`layout-${systemConfig.loginLayout || 'center'}`">
+    <div class="content" :class="[`layout-${normalizedLayout}`, { 'background-separated': systemConfig.loginSplitBackgroundMode === 'separated' }]">
+      <div v-if="normalizedLayout === 'split-hero'" class="hero-pane"></div>
       <div class="brand" v-show="!tenantOpen">
         <img v-if="resolveMediaUrl(systemConfig.systemLogo)" :src="resolveMediaUrl(systemConfig.systemLogo)" class="brand-logo" alt="system-logo" />
         <span v-else class="brand-blue">{{ systemConfig.systemName.split('_')[0] }}</span
         ><span v-if="!resolveMediaUrl(systemConfig.systemLogo)" class="brand-red">_{{ systemConfig.systemName.split('_')[1] || 'MOM' }}</span>
         <div class="brand-line"></div>
       </div>
-      <div class="brand-sub" v-show="!tenantOpen">{{ systemConfig.loginPageTitle }}</div>
-      <div class="brand-sub-desc" v-show="!tenantOpen">{{ systemConfig.loginPageSubtitle }}</div>
-      <div class="glass-card" v-show="!tenantOpen">
+      <div class="brand-sub" v-show="!tenantOpen" :style="titleStyle">{{ systemConfig.loginPageTitle }}</div>
+      <div class="brand-sub-desc" v-show="!tenantOpen" :style="subtitleStyle">{{ systemConfig.loginPageSubtitle }}</div>
+      <div class="glass-card" v-show="!tenantOpen" :class="`form-style-${systemConfig.loginFormStyle}`" :style="formCardStyle">
         <form class="cyber-form" @submit.prevent="onPreLogin">
           <div class="field">
             <label class="cyber-label">{{ i18nT('common.login.accountLabel') }}</label>
@@ -233,11 +235,13 @@
         </div>
       </div>
     </a-modal>
+    <MfaVerify :open="mfaOpen" :challenge-id="mfaChallengeId" @close="mfaOpen = false" @success="onChallengeSuccess" />
+    <ForceChangePassword :open="forcePwdOpen" :ticket="forcePwdTicket" @close="forcePwdOpen = false" @success="onChallengeSuccess" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import {
@@ -245,12 +249,15 @@ import {
   chooseTenant,
   getSocialAuthorizeUrl,
   updateTenantPreferences,
-  type TenantOption
+  type TenantOption,
+  type LoginResult
 } from '../../../api/auth/login'
+import MfaVerify from './components/MfaVerify.vue'
+import ForceChangePassword from './components/ForceChangePassword.vue'
 import { captchaImage, captchaSlider, captchaSliderValidate } from '../../../api/auth/captcha'
 import { getRoutes } from '../../../api/system/route'
 import router, { PERSONAL_HOME_PATH, injectDynamicRoutes } from '../../../router'
-import { getLoginCaptcha, getSystemBasicConfig } from '../../../api/system/config'
+import { createDefaultSystemBasicConfig, getLoginCaptcha, getSystemBasicConfig } from '../../../api/system/config'
 import { reloadTenantIgnore } from '../../../api/system/tenant'
 import { listEnabledLanguages, type LanguageType } from '../../../api/system/i18n'
 import { encryptSensitiveText } from '@/utils/crypto'
@@ -260,6 +267,8 @@ import type { SystemBasicConfig } from '../../../api/system/config'
 import { getLocale, setLocale } from '@/locales'
 import { getLanguageDisplayName, LANG_SWITCH_ICON_SRC } from '@/utils/language'
 import { normalizeMediaUrl } from '@/utils/media'
+import { applySiteBranding } from '@/utils/siteBranding'
+import { buildLoginSubtitleCss, buildLoginTitleCss } from '@/utils/loginTitleStyle'
 
 /**
  * 后端返回的滑块验证码数据结构。
@@ -323,6 +332,10 @@ const sliderChallenge = ref<SliderCaptchaChallenge | null>(null)
 const sliderValue = ref(0)
 const sliderTrackStartAt = ref(0)
 const logging = ref(false)
+const mfaOpen = ref(false)
+const mfaChallengeId = ref('')
+const forcePwdOpen = ref(false)
+const forcePwdTicket = ref('')
 const tenantConfirming = ref(false)
 const showSort = ref(false)
 const languages = ref<LanguageType[]>([])
@@ -331,6 +344,8 @@ const selectedLang = ref<string>(getLocale())
 const systemConfig = ref<SystemBasicConfig>({
   systemName: 'FORGEX_MOM',
   systemLogo: '',
+  browserTitle: 'FORGEX_MOM',
+  browserIcon: '',
   systemVersion: '1.0.0',
   copyright: '© 2025 FORGEX_MOM',
   copyrightLink: '#',
@@ -342,6 +357,13 @@ const systemConfig = ref<SystemBasicConfig>({
   loginBackgroundColor: '#0d0221',
   loginStyle: 'cyber',
   loginLayout: 'center',
+  loginSplitBackgroundMode: 'fullscreen',
+  loginTitleStyle: { fontFamily: "'Orbitron', 'Segoe UI', sans-serif", fontSize: 28, colorMode: 'solid', color: '#ffffff', gradientFrom: '#05d9e8', gradientTo: '#ff2a6d', gradientAngle: 90, fontWeight: '600', fontStyle: 'normal', letterSpacing: 0 },
+  loginSubtitleStyle: { fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif', fontSize: 13, color: '#9ca3af', fontWeight: 'normal', fontStyle: 'normal', letterSpacing: 0 },
+  loginPageSubtitleFontSize: 13,
+  loginPageSubtitleColor: '#9ca3af',
+  loginHeroSlides: [],
+  loginHeroIntervalSeconds: 6,
   showOAuthLogin: true,
   showRegisterEntry: true,
   registerUrl: '/register',
@@ -349,7 +371,37 @@ const systemConfig = ref<SystemBasicConfig>({
   secondaryColor: '#ff2a6d'
 })
 
+const normalizedLayout = computed(() => {
+  const raw = String(systemConfig.value.loginLayout || 'center')
+  return raw === 'split' ? 'form-left' : raw === 'compact' ? 'center' : ['center', 'form-left', 'form-right', 'split-hero', 'form-row-left', 'form-row-right'].includes(raw) ? raw : 'center'
+})
+const heroSlide = computed(() => systemConfig.value.loginHeroSlides?.[0])
+const formCardStyle = computed(() => {
+  const s = systemConfig.value.loginFormShadow
+  const color = s?.color || '#1e9bff'
+  const alpha = Math.max(0, Math.min(100, Number(s?.opacity ?? 45))) / 100
+  return { borderRadius: `${systemConfig.value.loginFormRadius || 20}px`, backgroundColor: `rgba(15,23,42,${Math.max(0.2, Math.min(1, Number(systemConfig.value.loginFormOpacity || 72) / 100))})`, boxShadow: s?.enabled === false ? 'none' : `0 0 ${s?.blur || 16}px ${color}${Math.round(alpha * 255).toString(16).padStart(2, '0')}` }
+})
+const titleStyle = computed(() => buildLoginTitleCss(systemConfig.value.loginTitleStyle))
+const subtitleStyle = computed(() => buildLoginSubtitleCss({
+  fontFamily: systemConfig.value.loginSubtitleStyle?.fontFamily,
+  fontSize: systemConfig.value.loginSubtitleStyle?.fontSize || systemConfig.value.loginPageSubtitleFontSize,
+  color: systemConfig.value.loginSubtitleStyle?.color || systemConfig.value.loginPageSubtitleColor,
+  fontWeight: systemConfig.value.loginSubtitleStyle?.fontWeight,
+  fontStyle: systemConfig.value.loginSubtitleStyle?.fontStyle,
+  letterSpacing: systemConfig.value.loginSubtitleStyle?.letterSpacing,
+}))
+
 const showRegisterEntry = computed(() => systemConfig.value.showRegisterEntry !== false)
+
+watch(
+  () => [systemConfig.value.browserTitle, systemConfig.value.browserIcon, systemConfig.value.systemName],
+  () => applySiteBranding({
+    title: systemConfig.value.browserTitle || systemConfig.value.systemName,
+    icon: resolveMediaUrl(systemConfig.value.browserIcon),
+  }),
+  { immediate: true },
+)
 
 const currentLanguageLabel = computed(() => {
   return getLanguageDisplayName(languages.value.find(l => l.langCode === selectedLang.value))
@@ -550,18 +602,67 @@ async function onPreLogin() {
       captcha: captcha.value,
       captchaId: mode.value === 'image' ? captchaId.value : undefined
     })
-    tenants.value = Array.isArray(res?.tenants) ? res.tenants : []
-    interactionCode.value = res?.interactionCode || ''
-    if (tenants.value.length > 0) {
-      tenantOpen.value = true
-    } else {
-      message.error(i18nT('common.login.msg.noTenantBound'))
+    applyLoginResult(res)
+  } catch (e: any) {
+    if (applyChallengePayload(e)) {
+      return
     }
-  } catch (e) {
+    if (e?.message) {
+      message.error(e.message)
+    }
     await refreshLoginCaptchaAfterFailure()
   } finally {
     logging.value = false
   }
+}
+
+/**
+ * 将登录成功结果写入租户选择流程。
+ *
+ * @param res 登录结果
+ */
+function applyLoginResult(res?: LoginResult) {
+  tenants.value = Array.isArray(res?.tenants) ? res.tenants : []
+  interactionCode.value = res?.interactionCode || ''
+  if (tenants.value.length > 0) {
+    tenantOpen.value = true
+  } else if (interactionCode.value) {
+    message.warning(i18nT('common.login.msg.noTenantBound'))
+  } else {
+    message.error(i18nT('common.login.msg.noTenantBound'))
+  }
+}
+
+/**
+ * 识别 MFA / 强制改密挑战。
+ *
+ * @param err 失败响应
+ * @returns 是否已打开挑战弹窗
+ */
+function applyChallengePayload(err: any): boolean {
+  const payload = err?.data || err
+  if (payload?.nextStep === 'MFA' || payload?.challengeId) {
+    mfaChallengeId.value = payload.challengeId || ''
+    mfaOpen.value = true
+    return true
+  }
+  if (payload?.nextStep === 'FORCE_CHANGE_PASSWORD' || payload?.passwordTicket) {
+    forcePwdTicket.value = payload.passwordTicket || ''
+    forcePwdOpen.value = true
+    return true
+  }
+  return false
+}
+
+/**
+ * MFA 或强制改密成功后继续租户选择。
+ *
+ * @param res 登录结果
+ */
+function onChallengeSuccess(res: LoginResult) {
+  mfaOpen.value = false
+  forcePwdOpen.value = false
+  applyLoginResult(res)
 }
 
 async function onOAuth(platform: 'WECHAT' | 'DINGTALK') {
@@ -841,7 +942,18 @@ onMounted(async () => {
   try {
     const config = await getSystemBasicConfig()
     if (config) {
-      systemConfig.value = { ...config }
+      const defaults = createDefaultSystemBasicConfig()
+      systemConfig.value = {
+        ...defaults,
+        ...config,
+        loginTitleStyle: { ...defaults.loginTitleStyle, ...(config.loginTitleStyle || {}) },
+        loginSubtitleStyle: {
+          ...defaults.loginSubtitleStyle,
+          ...(config.loginSubtitleStyle || {}),
+          fontSize: config.loginSubtitleStyle?.fontSize || config.loginPageSubtitleFontSize || defaults.loginPageSubtitleFontSize,
+          color: config.loginSubtitleStyle?.color || config.loginPageSubtitleColor || defaults.loginPageSubtitleColor,
+        },
+      }
     }
   } catch (_) {}
   

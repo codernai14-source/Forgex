@@ -40,6 +40,13 @@ public class Sm4PasswordProvider implements CryptoPasswordProvider {
      * @return 十六进制编码的密钥
      */
     private String ensureKeyHex() {
+        FieldEncryptKeyProvider kmsProvider = FieldEncryptKeyProviders.current();
+        if (kmsProvider != null) {
+            String fromKms = kmsProvider.resolveSm4KeyHex();
+            if (fromKms != null && !fromKms.isEmpty()) {
+                return fromKms;
+            }
+        }
         java.util.Map m = cfg.getJson("security.crypto.sm4", java.util.Map.class, null);
         String keyHex = m == null ? null : (String) m.get("keyHex");
         if (keyHex == null || keyHex.length() == 0) {

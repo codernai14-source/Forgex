@@ -33,9 +33,9 @@
         <bcprov.version>1.82</bcprov.version>
         <lombok.version>1.18.30</lombok.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
-        <hutool.version>5.8.23</hutool.version>
+        <hutool.version>5.8.36</hutool.version>
         <poi.version>5.2.5</poi.version>
-        <commons-compress.version>1.25.0</commons-compress.version>
+        <commons-compress.version>1.26.2</commons-compress.version>
         <aliyun-oss.version>3.17.4</aliyun-oss.version>
         <minio.version>8.5.7</minio.version>
         <aliyun-sms.version>2.0.24</aliyun-sms.version>

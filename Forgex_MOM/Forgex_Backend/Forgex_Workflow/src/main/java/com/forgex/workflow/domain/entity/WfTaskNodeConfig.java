@@ -135,6 +135,15 @@ public class WfTaskNodeConfig {
     private Integer approveType;
 
     /**
+     * 是否启用节点抄送：0=否，1=是。
+     * <p>
+     * 开启后节点进入时额外抄送 {@code wf_task_node_cc} 解析出的用户，不替代审批人。
+     * </p>
+     */
+    @TableField("cc_enabled")
+    private Integer ccEnabled;
+
+    /**
      * 分支条件设置（JSON）
      * <p>
      * 格式：
