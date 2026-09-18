@@ -44,6 +44,8 @@ public final class TenantIgnoreRegistry {
         IGNORE_TABLES.add("sys_tenant_ignore");
         // 租户菜单复制规则配置表，作为管理库全局配置，不参与租户隔离
         IGNORE_TABLES.add("sys_tenant_menu_copy_rule");
+        // Job执行器实例表为公共租户基础设施表，后台注册/心跳线程无租户上下文，跳过租户隔离
+        IGNORE_TABLES.add("sys_job_instance");
         // 国际化消息表，全局共享，不参与租户隔离
         IGNORE_TABLES.add("fx_i18n_message");
         // 表格配置表为全局共享配置，不参与租户隔离
@@ -142,6 +144,8 @@ public final class TenantIgnoreRegistry {
         IGNORE_TABLES.add("sys_config");
         IGNORE_TABLES.add("sys_tenant_ignore");
         IGNORE_TABLES.add("sys_tenant_menu_copy_rule");
+        // Job执行器实例表为公共租户基础设施表，后台注册/心跳线程无租户上下文，跳过租户隔离
+        IGNORE_TABLES.add("sys_job_instance");
         // 国际化消息表，全局共享，不参与租户隔离
         IGNORE_TABLES.add("fx_i18n_message");
         // 表格配置表为全局共享配置，不参与租户隔离

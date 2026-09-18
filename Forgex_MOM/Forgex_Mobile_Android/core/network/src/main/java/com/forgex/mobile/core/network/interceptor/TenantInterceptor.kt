@@ -19,7 +19,7 @@ class TenantInterceptor @Inject constructor(
         }
 
         val withTenantRequest = request.newBuilder()
-            .header("Tenant-Id", tenantId)
+            .header("X-Tenant-Id", tenantId)
             .build()
 
         return chain.proceed(withTenantRequest)

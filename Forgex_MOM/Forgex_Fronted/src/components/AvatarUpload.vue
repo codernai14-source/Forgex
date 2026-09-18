@@ -140,9 +140,9 @@ function handleCrop() {
   uploading.value = true
   cropperRef.value.getCropBlob(async (blob: Blob) => {
     try {
-      // 创建一个新的 File 对象
-      const fileName = currentFile.value?.name || 'avatar.png'
-      const file = new File([blob], fileName, { type: 'image/png' })
+      // 裁剪输出固定为 PNG，文件名扩展名需与实际内容一致，避免 PNG 内容存成 .jpg。
+      const baseName = (currentFile.value?.name || 'avatar').replace(/\.[^.]+$/, '') || 'avatar'
+      const file = new File([blob], `${baseName}.png`, { type: 'image/png' })
       
       loading.value = true
       const url = await uploadFile(file, {

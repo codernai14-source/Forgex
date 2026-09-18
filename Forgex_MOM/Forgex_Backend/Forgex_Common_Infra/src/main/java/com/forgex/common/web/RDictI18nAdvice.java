@@ -186,6 +186,12 @@ public class RDictI18nAdvice implements ResponseBodyAdvice<Object> {
         // 标记为已处理
         visited.put(obj, Boolean.TRUE);
 
+        // Path 实现了 Iterable<Path>，但每次迭代都会生成新的单段 Path 实例，
+        // visited 的实例去重对其无效，会无限递归；File 同理按文件系统对象跳过。
+        if (obj instanceof java.nio.file.Path || obj instanceof java.io.File) {
+            return;
+        }
+
         // 对于IPage分页，处理其records字段
         if (obj instanceof IPage<?> page) {
             translateAny(page.getRecords(), tenantId, visited);

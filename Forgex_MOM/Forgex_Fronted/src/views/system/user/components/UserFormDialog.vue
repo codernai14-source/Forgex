@@ -3,6 +3,7 @@
     v-model:open="visible"
     :title="isEdit ? t('system.user.form.editUser') : t('system.user.form.addUser')"
     :loading="loading"
+    submit-test-id="user-form-submit"
     width="900px"
     @submit="handleSubmit"
     @cancel="handleCancel"
@@ -22,6 +23,7 @@
               <a-form-item :label="t('common.login.accountLabel')" name="account">
                 <a-input
                   v-model:value="formData.account"
+                  data-testid="user-form-account"
                   :placeholder="t('system.user.form.account')"
                   :disabled="isEdit"
                 />
@@ -31,6 +33,7 @@
               <a-form-item :label="t('system.user.username')" name="username">
                 <a-input
                   v-model:value="formData.username"
+                  data-testid="user-form-name"
                   :placeholder="t('system.user.form.username')"
                 />
               </a-form-item>

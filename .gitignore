@@ -68,3 +68,32 @@ hs_err_pid*
 **/.vs/
 *.csproj.user
 /.workbuddy/
+/.mimosa
+**/.mimosa/
+/.uploads
+/.cursor/
+/.cursor/plans/
+/.agents
+/.video_agent
+/LOG_DIR_IS_UNDEFINED
+/org
+/tools/doc-freshness/report.md
+
+# Maven build output for all modules
+**/target/
+
+# Frontend test artifacts
+/Forgex_MOM/Forgex_Fronted/test-results/
+/Forgex_MOM/Forgex_Fronted/playwright-report/
+/Forgex_MOM/Forgex_Fronted/audit-reports/
+
+# Plan/spec working documents (not product docs)
+/docs/superpowers/
+
+# Local runtime files
+**/run.args
+
+
+# Environment-specific nginx TLS template
+/Forgex_Build/shared/nginx/forgex-tls.conf.template
+
