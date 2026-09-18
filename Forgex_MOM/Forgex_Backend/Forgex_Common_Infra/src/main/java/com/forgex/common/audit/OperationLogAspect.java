@@ -13,6 +13,8 @@ import org.aspectj.lang.annotation.Aspect;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -179,6 +181,10 @@ public class OperationLogAspect {
             // ?????R?????data??
             r.setResponseStatus(rr.getCode());
             r.setResponseResult(safeWrite(rr.getData()));
+        } else if (result instanceof ResponseEntity<?> response && response.getBody() instanceof Resource) {
+            // 二进制下载流只能读取一次，审计日志不得提前序列化响应体。
+            r.setResponseStatus(response.getStatusCode().value());
+            r.setResponseResult("[binary response omitted]");
         } else if (result != null) {
             // ??????R????????
             r.setResponseResult(safeWrite(result));

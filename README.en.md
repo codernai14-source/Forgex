@@ -1,5 +1,9 @@
 
 
+<div align="center">
+  <img src="Forgex_Doc/img/forgex-logo-readme.png" alt="Forgex Logo" width="160"/>
+</div>
+
 # Forgex
 
 
@@ -7,15 +11,20 @@
 
 
 > Full-stack enterprise scaffold and business platform foundation for production manufacturing
-> Version: **V0.8.5**
+> Version: **V1.0.0**
+
+<p align="center">
+  <a href="https://gitee.com/coder_nai/forgex/stargazers"><img alt="star" src="https://gitee.com/coder_nai/forgex/badge/star.svg?theme=dark"/></a>
+  <a href="https://gitcode.com/Wu_NaiandN/forgex"><img alt="AtomGitStars" src="https://gitcode.com/Wu_NaiandN/forgex/star/new_badge.svg"/></a>
+</p>
 
 Forgex is an enterprise-grade scaffold for manufacturing digitalization projects such as MES, WMS, QMS, equipment integration, workflow collaboration, reporting, and private deployment. It is not just a generic admin template for login, menus, and CRUD pages. Forgex packages the repetitive production concerns of enterprise systems into a reusable platform foundation: identity, tenants, permissions, dynamic tables, dictionaries, workflow, messaging, reports, import/export, file storage, integration, packaging, deployment, and upgrade support.
 
-> **V0.8.5** builds on the V0.8.0 production baseline with modular Common Maven artifacts, workflow/org/login enhancements, and synced formal docs for secondary development.
+> **V1.0.0** builds on the production baseline with modular Common Maven artifacts, workflow recall/delegate/timeout/CC enhancements, superior-based approval and interaction-code auth; formal docs are synced to V1.0.0 for secondary development.
 
 ## Table of Contents
 
-- [Demo](#demo)
+- [Project Links](#project-links)
 - [What Makes It Different](#what-makes-it-different)
 - [Architecture Overview](#architecture-overview)
 - [Feature Matrix](#feature-matrix)
@@ -32,19 +41,13 @@ Forgex is an enterprise-grade scaffold for manufacturing digitalization projects
 
 ---
 
-## Demo
+## Project Links
 
-- Online demo: [http://175.27.135.204:18080/login](http://175.27.135.204:18080/login)
+Forgex is simultaneously hosted on the following platforms. Stars ⭐ and watches are appreciated:
 
-**Note: The demo environment does not publicly disclose the admin password. Users need to register their own accounts to experience the complete registration flow.**
-
-**How to register:** Copy the invitation code of the role you want to experience, click "Register" on the login page, fill in your information and paste the invitation code. After successful registration, simply log in with your newly created account!
-
-- Normal user invitation code: `D83F9B1E`
-- Department manager invitation code: `C40EDD46`
-- System auditor invitation code: `948F2D80`
-
-
+- **Gitee**: [https://gitee.com/coder_nai/forgex](https://gitee.com/coder_nai/forgex)
+- **AtomGit (hosted in China)**: [https://gitcode.com/Wu_NaiandN/forgex](https://gitcode.com/Wu_NaiandN/forgex)
+- **GitHub**: [https://github.com/codernai14-source/Forgex](https://github.com/codernai14-source/Forgex)
 
 Forgex includes an external-facing user registration capability for enterprise use. Companies can issue invitation codes by role, position, or business scenario, allowing new employees, project members, or trial users to create accounts by themselves. The invitation code completes account creation, role binding, and basic permission activation, so administrators do not need to manually create every user one by one.
 
@@ -147,10 +150,13 @@ graph TB
 
 | Module                | Capabilities                                                                                                     |
 | --------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Auth & Authorization  | Login, registration, logout, captcha, OAuth2, password encryption, permission checks, dynamic routing            |
-| Security & Encryption | SM2/SM4 national crypto, AES-256/RSA, Argon2/Bcrypt, transparent field encryption, file encryption, built-in KMS |
-| Users & Organization  | Users, roles, departments, positions, menus, role-based and user-based authorization                             |
-| Multi-Tenant          | Tenant isolation, context propagation, ignore rules, public config fallback                                      |
+| Auth & Authorization  | Login, registration, logout, captcha, interaction-code auth, OAuth2, MFA, invite-code registration, password encryption, permission checks, dynamic routing |
+| Security & Encryption | SM2/SM4 national crypto, AES-256/RSA, Argon2/Bcrypt, transparent field encryption, file encryption, built-in KMS, MLPS (China CPS) compliance hardening |
+| Users & Organization  | Users, roles, departments, positions, menus, direct supervisors, role-based and user-based authorization     |
+| Multi-Tenant          | Tenant isolation, hierarchical parent/child tenants, supplier tenants, context propagation, ignore rules, public config fallback |
+| Internationalization  | I18n messages & language config, entity multi-language, dictionary i18n, multi-level fallback chains         |
+| Label & Print         | Label type/field/template management, template binding, label printing & preview, print records and reprints |
+| Encoding Rules        | Business code rule config, examples, issuance history for automatic document/master-data coding              |
 | Factory Modeling      | Workshop → Production Line → Work Section → Process (four-level master data), work calendars, shift management   |
 | Material Management   | Finished goods, raw materials, semi-finished products, packaging types, units of measure                         |
 | Supplier & Customer   | Supplier master data and reviews; customer master data and import sync                                           |
@@ -158,11 +164,13 @@ graph TB
 | Dynamic Table         | Table config, column config, query config, per-user column preferences                                           |
 | Import/Export         | Excel import/export, template downloads, dropdown option providers                                               |
 | File Storage          | Local, OSS, MinIO storage strategies; avatar, logo, business file tracking                                       |
-| Workflow              | Process configuration, approval initiation, approve/reject, todo/done queues, business callbacks                 |
-| Reporting             | Report categories, datasources, template management, UReport2/JimuReport integration                             |
-| Integration Hub       | Third-party systems, auth config, API config, parameter mapping, call logs                                       |
-| Messaging             | In-app messages, template messages, SSE push                                                                     |
-| Audit & Logging       | Login logs, operation logs, auto-filled audit fields                                                             |
+| Workflow              | Visual DAG process designer, custom forms, process version publishing, approval initiation, todo/done/CC queues, withdraw & timeout scanning, business callbacks |
+| Reporting             | Report categories, datasources, template management, UReport2/JimuReport integration                          |
+| Integration Hub       | Third-party systems, auth config, API config, parameter mapping, call logs                                    |
+| Messaging             | In-app messages, message templates, system notifications, SSE push, message voice broadcast                   |
+| Audit & Logging       | Login logs, operation logs, auto-filled audit fields                                                          |
+| System Monitoring     | Service monitoring dashboard (CPU/memory/JVM/server info), online user & session management                   |
+| System Operations     | Site branding (name/logo/favicon/copyright), login portal & security policy, mail config, database backup, help center, Android version management |
 | Code Generation       | Online code generator, datasource config, template management                                                    |
 | Scheduled Jobs        | Distributed job scheduling (SnailJob), job management, alerts, retries, execution logs                           |
 
@@ -180,7 +188,10 @@ graph TB
 | Personal Workspace   | Draggable homepage widgets, component sorting, sizing, visibility control, layout sharing                                                          |
 | Label Templates      | Label type/field/template management, label binding, print records                                                                                 |
 | Theme System         | Token-driven light/dark dynamic switching, layout depth layering, brand theme customization                                                        |
-| Auth Entry           | Login, registration, invite-code registration, role-based demo experience                                                                          |
+| Auth Entry           | Login, registration, invite-code registration, tenant selection & identity verification                          |
+| Global Search        | `Ctrl+K` global menu/function quick search with keyboard access                                                   |
+| Multi-Tab Bar        | Route tabs, tab switching/closing, tab state preservation                                                         |
+| Message & Help       | Message/notification bell, unread badges, voice broadcast, help resources & guided tour (`FxGuideTour`)           |
 
 
 ### Mobile (Android)
@@ -379,13 +390,13 @@ Use `Forgex_Build` to create delivery packages:
 
 ```powershell
 cd Forgex_Build
-powershell -ExecutionPolicy Bypass -File build-all.ps1 -Version 0.8.0 -AllowDistFallback
+powershell -ExecutionPolicy Bypass -File build-all.ps1 -Version 1.0.0 -AllowDistFallback
 ```
 
 Main outputs:
 
-- `Forgex_Build/dist/windows/Forgex-Windows-Package-0.8.0.zip`
-- `Forgex_Build/dist/linux/forgex-linux-bundle-0.8.0.tar.gz`
+- `Forgex_Build/dist/windows/Forgex-Windows-Package-1.0.0.zip`
+- `Forgex_Build/dist/linux/forgex-linux-bundle-1.0.0.tar.gz`
 
 ### Windows
 
@@ -394,8 +405,8 @@ The Windows bundle includes web static assets, service JARs, bundled Nginx, Wind
 ### Linux
 
 ```bash
-tar -zxvf forgex-linux-bundle-0.8.0.tar.gz
-cd forgex-linux-bundle-0.8.0
+tar -zxvf forgex-linux-bundle-1.0.0.tar.gz
+cd forgex-linux-bundle-1.0.0
 ./install.sh ACME_PROD yanshi
 ```
 

@@ -24,8 +24,8 @@ import com.forgex.sys.domain.entity.SysKmsKeyLog;
 import com.forgex.sys.mapper.SysKmsKeyLogMapper;
 import com.forgex.sys.mapper.SysKmsKeyMapper;
 import com.forgex.sys.service.KmsService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +39,7 @@ import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Base64;
+import java.util.function.Function;
 
 /**
  * 密钥管理服务实现（KMS）。
@@ -58,7 +59,6 @@ import java.util.Base64;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class KmsServiceImpl implements KmsService {
 
     /** 主密钥 hex 环境变量名 */
@@ -75,9 +75,28 @@ public class KmsServiceImpl implements KmsService {
 
     private final SysKmsKeyMapper kmsKeyMapper;
     private final SysKmsKeyLogMapper kmsKeyLogMapper;
+    private final Function<String, String> environmentReader;
 
     /** 主密钥缓存，首次加载后复用，避免每次加解密重复读取文件 */
     private volatile byte[] cachedMasterKey;
+
+    /**
+     * 创建使用系统环境变量读取主密钥的 KMS 服务。
+     *
+     * @param kmsKeyMapper KMS 密钥数据访问对象
+     * @param kmsKeyLogMapper KMS 操作日志数据访问对象
+     */
+    @Autowired
+    public KmsServiceImpl(SysKmsKeyMapper kmsKeyMapper, SysKmsKeyLogMapper kmsKeyLogMapper) {
+        this(kmsKeyMapper, kmsKeyLogMapper, System::getenv);
+    }
+
+    KmsServiceImpl(SysKmsKeyMapper kmsKeyMapper, SysKmsKeyLogMapper kmsKeyLogMapper,
+                   Function<String, String> environmentReader) {
+        this.kmsKeyMapper = kmsKeyMapper;
+        this.kmsKeyLogMapper = kmsKeyLogMapper;
+        this.environmentReader = environmentReader;
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -319,16 +338,16 @@ public class KmsServiceImpl implements KmsService {
      */
     private String resolveMasterKeyHex() {
         // 优先级 1: 环境变量 FORGEX_KMS_MASTER_KEY_HEX
-        String hex = System.getenv(ENV_MASTER_KEY_HEX);
+        String hex = environmentReader.apply(ENV_MASTER_KEY_HEX);
         if (hex != null && !hex.isEmpty()) {
             return hex.trim();
         }
 
         // 优先级 2: 密钥文件
-        String filePath = System.getenv(ENV_MASTER_KEY_FILE);
+        String filePath = environmentReader.apply(ENV_MASTER_KEY_FILE);
         if (filePath == null || filePath.isEmpty()) {
             // 默认尝试 ${FORGEX_LICENSE_DIR}/kms.key
-            String licenseDir = System.getenv(ENV_LICENSE_DIR);
+            String licenseDir = environmentReader.apply(ENV_LICENSE_DIR);
             if (licenseDir != null && !licenseDir.isEmpty()) {
                 filePath = Paths.get(licenseDir, DEFAULT_KEY_FILE_NAME).toString();
             }
@@ -358,15 +377,15 @@ public class KmsServiceImpl implements KmsService {
      * @return 来源描述
      */
     private String describeKeySource() {
-        String hex = System.getenv(ENV_MASTER_KEY_HEX);
+        String hex = environmentReader.apply(ENV_MASTER_KEY_HEX);
         if (hex != null && !hex.isEmpty()) {
             return "环境变量 " + ENV_MASTER_KEY_HEX;
         }
-        String filePath = System.getenv(ENV_MASTER_KEY_FILE);
+        String filePath = environmentReader.apply(ENV_MASTER_KEY_FILE);
         if (filePath != null && !filePath.isEmpty()) {
             return "文件 " + filePath;
         }
-        String licenseDir = System.getenv(ENV_LICENSE_DIR);
+        String licenseDir = environmentReader.apply(ENV_LICENSE_DIR);
         if (licenseDir != null && !licenseDir.isEmpty()) {
             return "文件 " + Paths.get(licenseDir, DEFAULT_KEY_FILE_NAME);
         }

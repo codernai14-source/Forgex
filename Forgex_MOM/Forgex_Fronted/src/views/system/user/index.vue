@@ -13,7 +13,7 @@
     >
       <template #toolbar>
         <a-space :size="8" wrap>
-          <a-button data-guide-id="sys-user-add" v-permission="'sys:user:add'" type="primary" @click="openAddDialog">
+          <a-button data-guide-id="sys-user-add" data-testid="user-add" v-permission="'sys:user:add'" type="primary" @click="openAddDialog">
             {{ t('system.user.add') }}
           </a-button>
           <a-button data-guide-id="sys-user-sync-third-party" v-permission="'sys:user:syncThirdParty'" @click="handleSyncThirdParty">

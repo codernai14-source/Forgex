@@ -21,7 +21,7 @@
         <a-button @click="handleCancel">
           {{ cancelText || $t('common.cancel') }}
         </a-button>
-        <a-button v-if="!readonly" type="primary" :loading="loading" @click="handleSubmit">
+        <a-button v-if="!readonly" type="primary" :loading="loading" :data-testid="submitTestId" @click="handleSubmit">
           {{ okText || $t('common.confirm') }}
         </a-button>
       </a-space>
@@ -47,7 +47,7 @@
           <a-button @click="handleCancel">
             {{ cancelText || $t('common.cancel') }}
           </a-button>
-          <a-button v-if="!readonly" type="primary" :loading="loading" @click="handleSubmit">
+          <a-button v-if="!readonly" type="primary" :loading="loading" :data-testid="submitTestId" @click="handleSubmit">
             {{ okText || $t('common.confirm') }}
           </a-button>
         </a-space>
@@ -96,6 +96,8 @@ interface Props {
   readonly?: boolean
   /** 确认按钮文案 */
   okText?: string
+  /** 确认按钮的端到端测试标识 */
+  submitTestId?: string
   /** 取消/关闭按钮文案 */
   cancelText?: string
 }
@@ -136,6 +138,7 @@ const props = withDefaults(defineProps<Props>(), {
   footer: true,
   readonly: false,
   okText: '',
+  submitTestId: undefined,
   cancelText: '',
 })
 

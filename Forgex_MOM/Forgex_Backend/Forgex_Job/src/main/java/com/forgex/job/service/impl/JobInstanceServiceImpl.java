@@ -13,6 +13,7 @@ import com.forgex.job.enums.JobConstants;
 import com.forgex.job.mapper.SysJobInstanceMapper;
 import com.forgex.job.service.IJobInstanceService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -29,6 +30,9 @@ import java.time.LocalDateTime;
 @Service
 @DS("job")
 public class JobInstanceServiceImpl extends ServiceImpl<SysJobInstanceMapper, SysJobInstance> implements IJobInstanceService {
+
+    /** Job 服务实例注册使用公共租户。 */
+    private static final long PUBLIC_TENANT_ID = 0L;
 
     private final JobProperties properties;
     private final String serviceName;
@@ -61,36 +65,56 @@ public class JobInstanceServiceImpl extends ServiceImpl<SysJobInstanceMapper, Sy
         return instanceId;
     }
 
+    /**
+     * 注册或刷新当前执行器实例心跳。
+     * <p>
+     * 启动注册（ApplicationReadyEvent）与定时心跳（fixedDelay 首跑）可能并发触发，
+     * 方法级同步保证同一进程内串行执行，避免"双方都查无记录后各自插入"撞唯一键
+     * {@code uk_sys_job_instance(tenant_id, instance_id, deleted)}。
+     */
     @Override
-    public void registerOrHeartbeat() {
+    public synchronized void registerOrHeartbeat() {
         String current = currentInstanceId();
-        SysJobInstance entity = getOne(new LambdaQueryWrapper<SysJobInstance>()
-            .eq(SysJobInstance::getInstanceId, current), false);
+        SysJobInstance entity = findByInstanceId(current);
         LocalDateTime now = LocalDateTime.now();
+        // 分支一：无记录时首次注册
         if (entity == null) {
-            entity = new SysJobInstance();
-            entity.setInstanceId(current);
-            entity.setServiceName(serviceName);
-            entity.setIp(resolveIp());
-            entity.setPort(port);
-            entity.setPid(resolvePid());
-            entity.setStatus(JobConstants.INSTANCE_ONLINE);
-            entity.setRunningCount(0);
-            entity.setStartTime(now);
+            SysJobInstance fresh = new SysJobInstance();
+            // 实例注册由后台调度线程执行，没有请求租户上下文，显式归入公共租户。
+            fresh.setTenantId(PUBLIC_TENANT_ID);
+            fresh.setInstanceId(current);
+            fresh.setServiceName(serviceName);
+            fresh.setIp(resolveIp());
+            fresh.setPort(port);
+            fresh.setPid(resolvePid());
+            fresh.setStatus(JobConstants.INSTANCE_ONLINE);
+            fresh.setRunningCount(0);
+            fresh.setStartTime(now);
+            fresh.setLastHeartbeatTime(now);
+            try {
+                save(fresh);
+                return;
+            } catch (DuplicateKeyException ex) {
+                // 兜底：注册与心跳极端并发或库中残留同实例记录时唯一键冲突，转为更新已有行
+                entity = findByInstanceId(current);
+                if (entity == null) {
+                    throw ex;
+                }
+            }
         }
+        // 分支二：已有记录时刷新心跳与状态
         entity.setLastHeartbeatTime(now);
         if (entity.getMaintenance() == null || entity.getMaintenance() == 0) {
             entity.setStatus(JobConstants.INSTANCE_ONLINE);
         } else {
             entity.setStatus(JobConstants.INSTANCE_MAINTENANCE);
         }
-        saveOrUpdate(entity);
+        updateById(entity);
     }
 
     @Override
     public void changeMaintenance(JobInstanceMaintainParam param) {
-        SysJobInstance entity = param.getId() != null ? getById(param.getId())
-            : getOne(new LambdaQueryWrapper<SysJobInstance>().eq(SysJobInstance::getInstanceId, param.getInstanceId()), false);
+        SysJobInstance entity = param.getId() != null ? getById(param.getId()) : findByInstanceId(param.getInstanceId());
         if (entity == null) {
             return;
         }
@@ -119,14 +143,18 @@ public class JobInstanceServiceImpl extends ServiceImpl<SysJobInstanceMapper, Sy
     }
 
     private void changeRunning(int delta) {
-        SysJobInstance entity = getOne(new LambdaQueryWrapper<SysJobInstance>()
-            .eq(SysJobInstance::getInstanceId, currentInstanceId()), false);
+        SysJobInstance entity = findByInstanceId(currentInstanceId());
         if (entity == null) {
             return;
         }
         int count = entity.getRunningCount() == null ? 0 : entity.getRunningCount();
         entity.setRunningCount(Math.max(0, count + delta));
         updateById(entity);
+    }
+
+    private SysJobInstance findByInstanceId(String instanceId) {
+        return getOne(new LambdaQueryWrapper<SysJobInstance>()
+            .eq(SysJobInstance::getInstanceId, instanceId), false);
     }
 
     private String resolveIp() {

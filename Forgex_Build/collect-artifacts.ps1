@@ -152,7 +152,7 @@ $controlCenterPublishDir = Join-Path $PSScriptRoot "tools\\control-center\\publi
 $nginxTemplatePath = Join-Path $sharedRoot "nginx\\forgex.conf.template"
 $docNacosConfigRoot = Join-Path $repoRoot "Forgex_Doc\\部署\\nacos配置"
 $docDatabaseInitRoot = Join-Path $repoRoot "Forgex_Doc\\部署\\数据库初始化脚本"
-$docDatabaseUpgradeRoot = Join-Path $repoRoot "doc\\sql\\upgrade"
+$docDatabaseUpgradeRoot = Join-Path $repoRoot "Forgex_Doc\\数据库\\脚本与修复"
 $windowsNginxRuntimeRoot = Join-Path $sharedRoot "nginx\\windows"
 $resolvedWindowsJreHome = Resolve-WindowsJreHome -ConfiguredHome $WindowsJreHome
 

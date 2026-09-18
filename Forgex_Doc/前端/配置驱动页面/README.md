@@ -1,13 +1,13 @@
-﻿# 前端 / 配置驱动页面
+# 前端 / 配置驱动页面
 
-> 版本：`V0.8.5`
+> 版本：`V1.0.0`
 
 ## 文档入口
 
 | 功能 | 实现逻辑 | 使用方式 | 兼容入口 |
 |---|---|---|---|
-| FxDynamicTable 与列设置 | [实现逻辑](./FxDynamicTable实现逻辑.md) | [使用方式](./FxDynamicTable使用方式.md) | [专题索引](./FxDynamicTable与列设置.md) |
-| 公共表格体系 | [规范文档](../../开发规范/规范文档/公共表格组件使用说明与实现逻辑.md) | [FxDynamicTable 使用方式](./FxDynamicTable使用方式.md) | - |
+| FxDynamicTable | [实现逻辑](./FxDynamicTable实现逻辑.md) | [使用方式](./FxDynamicTable使用方式.md) | - |
+| FxDynamicTable | [FxDynamicTable 实现逻辑](./FxDynamicTable实现逻辑.md) | [FxDynamicTable 使用方式](./FxDynamicTable使用方式.md) | - |
 
 ## 适用场景
 
