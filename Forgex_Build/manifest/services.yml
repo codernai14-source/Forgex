@@ -52,7 +52,7 @@ services:
   - serviceId: report
     modulePath: Forgex_MOM/Forgex_Backend/Forgex_Report
     artifactName: forgex-report.jar
-    defaultPort: 8084
+    defaultPort: 9006
     winswServiceName: forgex-report-{INSTANCE_CODE}
     composeServiceName: forgex-report
     requiresLicenseCheck: false

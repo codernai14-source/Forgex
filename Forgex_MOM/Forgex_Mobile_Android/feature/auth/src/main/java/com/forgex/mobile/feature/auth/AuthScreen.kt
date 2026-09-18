@@ -73,6 +73,7 @@ import com.forgex.mobile.core.component.scanner.FxScanActionBar
 import com.forgex.mobile.core.component.scanner.FxScanInputBox
 import com.forgex.mobile.core.device.FxScannerManager
 import com.forgex.mobile.core.ui.R
+import com.forgex.mobile.core.ui.i18n.LocalI18nBundle
 import com.forgex.mobile.core.ui.i18n.i18nString
 import com.forgex.mobile.core.ui.i18n.resolveAppText
 import com.forgex.mobile.feature.auth.data.CaptchaMode
@@ -97,6 +98,7 @@ fun AuthScreen(
     val uiState by viewModel.uiState.collectAsState()
     val imageLoader = rememberGifImageLoader()
     val context = LocalContext.current
+    val i18nBundle = LocalI18nBundle.current
     val scannerManager = remember(scanBridgeViewModel) { scanBridgeViewModel.scannerManager }
 
     LaunchedEffect(viewModel) {
@@ -104,7 +106,15 @@ fun AuthScreen(
             when (event) {
                 is AuthEvent.LoginCompleted -> onLoginSuccess()
                 is AuthEvent.ShowMessage -> {
-                    val message = resolveEventMessage(context, event)
+                    val message = AuthEventMessageResolver.resolve(
+                        appText = event.appText,
+                        bundle = i18nBundle,
+                        resourceResolver = { resId, args ->
+                            runCatching {
+                                context.getString(resId, *args.toTypedArray())
+                            }.getOrNull()
+                        }
+                    )
                         ?: event.fallbackMessage
                     if (!message.isNullOrBlank()) {
                         onShowMessage(message)
@@ -1108,22 +1118,6 @@ private fun resolveRegisterUrl(raw: String, serverOrigin: String): String {
 private fun isLikelyBase64(raw: String): Boolean {
     if (raw.length < 40) return false
     return raw.matches(Regex("^[A-Za-z0-9+/=,:;._-]+$"))
-}
-
-private fun resolveEventMessage(
-    context: android.content.Context,
-    event: AuthEvent.ShowMessage
-): String? {
-    return when (val appText = event.appText) {
-        null -> null
-        is com.forgex.mobile.core.common.i18n.AppText.Raw -> appText.value
-        is com.forgex.mobile.core.common.i18n.AppText.Resource -> {
-            runCatching {
-                context.getString(appText.resId, *appText.args.toTypedArray())
-            }.getOrNull()
-        }
-        is com.forgex.mobile.core.common.i18n.AppText.Dynamic -> appText.fallbackRaw
-    }
 }
 
 /**

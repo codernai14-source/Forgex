@@ -1,5 +1,9 @@
 
 
+<div align="center">
+  <img src="Forgex_Doc/img/forgex-logo-readme.png" alt="Forgex Logo" width="160"/>
+</div>
+
 # Forgex
 
 
@@ -9,11 +13,17 @@
 > 🚀 立足生产制造、已在实际生产中验证的中大型前后端企业级脚手架底座
 > 当前版本：**V0.8.5**
 
+<p align="center">
+  <a href="https://gitee.com/coder_nai/forgex/stargazers"><img alt="star" src="https://gitee.com/coder_nai/forgex/badge/star.svg?theme=dark"/></a>
+  <a href="https://gitcode.com/Wu_NaiandN/forgex"><img alt="AtomGitStars" src="https://gitcode.com/Wu_NaiandN/forgex/star/new_badge.svg"/></a>
+</p>
+
 **💖 如果你觉得该项目有潜力或者对你有所启发，请点一个 Star ⭐，这是对我们开源作者最大的肯定与支持！**
 
 ## 📑 目录
 
-- [在线演示与注册](#-在线演示与注册)
+- [项目地址](#-项目地址)
+- [系统预览](#-系统预览)
 - [项目简介](#-项目简介)
 - [核心优势 (Why Forgex?)](#-核心优势-why-forgex)
 - [架构总览](#-架构总览)
@@ -31,21 +41,31 @@
 
 ---
 
-## 🚀 在线演示与注册
+## 📦 项目地址
 
-👉 **演练环境入口：** [http://175.27.135.204:18080/login](http://175.27.135.204:18080/login)
+Forgex 在以下平台同步托管，欢迎 Star ⭐ 与 Watch 关注版本发布：
 
-**说明：本演示环境不对外公开 admin 密码，需要用户自行体验真实的注册全流程。**
+- **Gitee**：[https://gitee.com/coder_nai/forgex](https://gitee.com/coder_nai/forgex)
+- **AtomGit（国内托管）**：[https://gitcode.com/Wu_NaiandN/forgex](https://gitcode.com/Wu_NaiandN/forgex)
+- **GitHub**：[https://github.com/codernai14-source/Forgex](https://github.com/codernai14-source/Forgex)
 
-**注册方法：** 复制您想体验的角色的邀请码，在登录页点击"注册"，填写信息并输入该邀请码进行注册。注册成功后，直接登录您刚刚创建的账号即可！
+## 🖼️ 系统预览
 
-- 🧑‍💻 **普通用户邀请码**：`D83F9B1E`
-- 👔 **部门经理邀请码**：`C40EDD46`
-- 🛡️ **系统审计员邀请码**：`948F2D80`
+| **🔐 登录认证门户** | **🎛️ 拖拽式个人工作台** |
+| :---: | :---: |
+| ![登录认证门户](Forgex_Doc/img/readme-login.png) | ![拖拽式个人工作台](Forgex_Doc/img/readme-workspace-home.png) |
+| **📊 系统管理监控大盘** | **🔀 审批流程可视化设计器** |
+| ![系统管理监控大盘](Forgex_Doc/img/readme-system-dashboard.png) | ![审批流程可视化设计器](Forgex_Doc/img/readme-workflow-designer.png) |
+| **📋 审批工作台** | **⚙️ 系统配置中心** |
+| ![审批工作台](Forgex_Doc/img/readme-workflow-dashboard.png) | ![系统配置中心](Forgex_Doc/img/readme-system-config.png) |
+| **🗄️ 文件存储策略配置** | **📚 字典管理 · FxDynamicTable 动态表格** |
+| ![文件存储策略配置](Forgex_Doc/img/readme-system-config-storage.png) | ![字典管理](Forgex_Doc/img/readme-system-dict.png) |
+| **🏭 基础信息主页与工厂工作日历** | **📦 物料管理** |
+| ![基础信息主页与工厂工作日历](Forgex_Doc/img/readme-basic-dashboard.png) | ![物料管理](Forgex_Doc/img/readme-basic-material.png) |
+| **🧭 菜单管理 · 模块化菜单配置** | **🔌 第三方接口配置总线** |
+| ![菜单管理](Forgex_Doc/img/readme-system-menu.png) | ![第三方接口配置总线](Forgex_Doc/img/readme-integration-api.png) |
 
-
-
-内置对外自助注册链路，极简放号系统，告别低效手工拉人，极其适合企业内部培训、发码内测与业务试点。
+> 🌓 以上截图均采用 Token 驱动的深色主题渲染，平台同时支持浅色主题一键切换。
 
 ## 📖 项目简介
 
@@ -155,10 +175,13 @@ graph TB
 
 | 模块    | 能力                                                                    |
 | ----- | --------------------------------------------------------------------- |
-| 认证与授权 | 登录、注册、登出、验证码、OAuth2、密码加密、权限校验、动态路由、第三方登录预留                            |
-| 安全与加密 | 国密 (SM2/SM4)、AES-256 / RSA、Argon2/Bcrypt、字段透明加解密、文件加密、自带 KMS (密钥管理中心) |
-| 用户与组织 | 用户、角色、部门、岗位、菜单、角色授权、人员授权                                              |
-| 多租户   | 租户隔离、租户上下文传递、租户忽略配置、公共配置回退                                            |
+| 认证与授权 | 登录、注册、登出、验证码、交互码认证、OAuth2、MFA 多因素认证、邀请码注册、密码加密、权限校验、动态路由、第三方登录预留       |
+| 安全与加密 | 国密 (SM2/SM4)、AES-256 / RSA、Argon2/Bcrypt、字段透明加解密、文件加密、自带 KMS (密钥管理中心)、等保合规加固 |
+| 用户与组织 | 用户、角色、部门、岗位、菜单、直属上级、角色授权、人员授权                                          |
+| 多租户   | 租户隔离、层级父子租户、供应商租户、租户上下文传递、租户忽略配置、公共配置回退                                |
+| 国际化   | 多语言消息与语言配置、实体多语展现、字典多语言、多级 Fallback 回退链                                |
+| 标签与打印 | 标签类型/字段/模板管理、模板绑定、标签打印与预览、打印记录与补打                                       |
+| 编码规则  | 业务编码规则配置、示例管理、取号历史，支撑单据与主数据自动编码                                         |
 | 工厂建模  | 车间 → 产线 → 工段 → 工序四级主数据，工作历与班次管理                                       |
 | 物料管理  | 成品/原材料/半成品管理，包装方式，计量单位                                                |
 | 供应商管理 | 供应商主数据、供应商评审                                                          |
@@ -167,11 +190,13 @@ graph TB
 | 动态表格  | 表格配置、列配置、查询配置、用户个性化列配置                                                |
 | 导入导出  | Excel 导入、Excel 导出、模板下载、下拉选项 Provider                                  |
 | 文件存储  | 本地、OSS、MinIO 存储策略，头像、Logo、业务文件归属记录                                    |
-| 工作流   | 流程配置、发起审批、审批处理、待办/已办、业务回调                                             |
+| 工作流   | 可视化 DAG 流程设计、自定义表单、流程版本发布、发起审批、待办/已办/抄送、撤回与超时扫描、业务回调                   |
 | 报表中心  | 报表分类、数据源、模板管理、UReport2/JimuReport 集成                                  |
 | 集成平台  | 第三方系统、授权配置、API 配置、参数映射、调用日志                                           |
-| 消息通知  | 站内消息、模板消息、SSE 推送                                                      |
+| 消息通知  | 站内消息、消息模板、系统通知、SSE 实时推送、消息语音播报                                        |
 | 审计与日志 | 登录日志、操作日志、审计字段自动填充                                                    |
+| 系统监控  | 服务监控大盘 (CPU/内存/JVM/服务器信息)、在线用户与会话管理                                    |
+| 系统运维  | 站点品牌配置 (名称/Logo/图标/版权)、登录门户与安全验证策略、邮件配置、数据库备份、帮助资源中心、安卓版本管理            |
 | 代码生成  | 在线代码生成器、数据源配置、模板管理                                                    |
 | 定时任务  | 分布式任务调度（SnailJob）、任务管理、告警、重试、执行日志                                     |
 
@@ -189,7 +214,10 @@ graph TB
 | 个性化布局  | 个人首页拖拽布局、组件排序、尺寸调整、显隐控制、布局分享                          |
 | 标签模板   | 标签类型/字段/模板管理、标签绑定、打印记录                                |
 | 首页组件中心 | 可拖拽工作台、组件显隐/排序/尺寸、布局分享与仪表盘增强                          |
-| 认证入口   | 登录、注册、邀请码注册、不同角色体验入口                                  |
+| 认证入口   | 登录、注册、邀请码注册、租户选择与身份校验                                  |
+| 全局搜索   | `Ctrl+K` 全局菜单与功能快捷搜索，键盘直达                              |
+| 多标签页签  | 路由页签、页签切换与关闭、页签状态保持                                    |
+| 消息与帮助  | 消息/通知铃铛、未读提醒、消息语音播报、帮助资源与新手引导 (`FxGuideTour`)          |
 | 主题系统   | Token 驱动浅色/深色动态切换，布局深色分层，品牌主题可定制                      |
 
 
@@ -344,7 +372,7 @@ npm run dev
 默认本地地址：
 
 - 前端：`http://localhost:5173`
-- 网关：`http://localhost:8000`
+- 网关：`http://localhost:9000`
 
 ### 📱 拥抱 Android
 

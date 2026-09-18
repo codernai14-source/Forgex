@@ -1,12 +1,12 @@
 package com.forgex.mobile.feature.auth.data
 
-import android.util.Base64
 import java.nio.charset.StandardCharsets
 import java.security.SecureRandom
 import org.bouncycastle.crypto.engines.SM2Engine
 import org.bouncycastle.crypto.params.ECPublicKeyParameters
 import org.bouncycastle.crypto.params.ParametersWithRandom
 import org.bouncycastle.crypto.util.PublicKeyFactory
+import org.bouncycastle.util.encoders.Base64
 import org.bouncycastle.util.encoders.Hex
 
 object Sm2Encryptor {
@@ -37,6 +37,6 @@ object Sm2Encryptor {
             .replace("-----BEGIN PUBLIC KEY-----", "")
             .replace("-----END PUBLIC KEY-----", "")
             .replace("\\s".toRegex(), "")
-        return Base64.decode(normalized, Base64.DEFAULT)
+        return Base64.decode(normalized)
     }
 }

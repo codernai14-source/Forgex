@@ -60,7 +60,11 @@ class SysUserImportProxyHandlerTest {
     @Test
     void handleShouldCreateImportedUserInRegisteredHandler() {
         when(configService.getJson(eq("security.password.policy"), eq(PasswordPolicyConfig.class), any(PasswordPolicyConfig.class)))
-            .thenAnswer(invocation -> invocation.getArgument(2));
+            .thenAnswer(invocation -> {
+                PasswordPolicyConfig policy = invocation.getArgument(2);
+                policy.setDefaultPassword("Import@2026");
+                return policy;
+            });
         doAnswer(invocation -> {
             SysUser user = invocation.getArgument(0);
             user.setId(1L);

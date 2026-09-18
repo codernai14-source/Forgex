@@ -46,7 +46,7 @@ public class BaseEntity {
     private Long id;
 
     /** 租户ID */
-    @TableField(value = "tenant_id")
+    @TableField(value = "tenant_id", fill = FieldFill.INSERT)
     private Long tenantId;
 
     /** 创建时间 */
@@ -69,6 +69,6 @@ public class BaseEntity {
 
     /** 逻辑删除：false=未删除 true=已删除 */
     @TableLogic
-    @TableField(value = "deleted")
+    @TableField(value = "deleted", fill = FieldFill.INSERT)
     private Boolean deleted;
 }

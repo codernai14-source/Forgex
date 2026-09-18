@@ -1,0 +1,56 @@
+name: repository-verification
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test backend
+        run: mvn -q test -f Forgex_MOM/Forgex_Backend/pom.xml
+      - name: Verify common module boundaries
+        shell: pwsh
+        run: ./Forgex_MOM/Forgex_Backend/scripts/verify-common-module-boundaries.ps1
+
+  frontend-and-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: Forgex_MOM/Forgex_Fronted/package-lock.json
+      - name: Install frontend dependencies
+        run: npm ci --legacy-peer-deps
+        working-directory: Forgex_MOM/Forgex_Fronted
+      - name: Build frontend
+        run: npm run build
+        working-directory: Forgex_MOM/Forgex_Fronted
+      - name: Audit frontend i18n
+        run: npm run i18n:audit
+        working-directory: Forgex_MOM/Forgex_Fronted
+      - name: Run frontend tests
+        run: npm test
+        working-directory: Forgex_MOM/Forgex_Fronted
+      - name: Test document freshness checks
+        run: node --test tools/doc-freshness/tests/doc-freshness.test.mjs
+      - name: Check document freshness
+        run: node tools/doc-freshness/doc-freshness.mjs
+
+  android-network:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Test and compile Android network module
+        run: ./gradlew :core:network:testDebugUnitTest :core:network:compileDebugKotlin :feature:auth:testDebugUnitTest
+        working-directory: Forgex_MOM/Forgex_Mobile_Android

@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "test": "node --test \"tests/**/*.test.mjs\" && vitest run tests/components/common tests/utils/i18n",
+    "test:e2e": "playwright test",
     "i18n:audit": "node scripts/i18n-audit.mjs",
     "preview": "vite preview"
   },
@@ -43,6 +45,7 @@
     "three": "^0.182.0",
     "vue": "^3.5.26",
     "vue-cropper": "^1.1.4",
+    "vue-demi": "^0.14.6",
     "vue-draggable-next": "^2.3.0",
     "vue-echarts": "^8.0.1",
     "vue-grid-layout-v3": "^3.1.2",
@@ -53,12 +56,16 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "@types/dompurify": "^3.0.5",
     "@types/node": "^25.6.0",
     "@types/sm-crypto": "^0.3.4",
     "@vitejs/plugin-vue": "^5.0.4",
+    "@vue/test-utils": "^2.5.1",
+    "happy-dom": "^15.11.7",
     "less": "^4.2.0",
     "typescript": "^5.6.3",
-    "vite": "^5.4.3"
+    "vite": "^5.4.3",
+    "vitest": "^2.1.9"
   }
 }

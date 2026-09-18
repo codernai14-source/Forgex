@@ -8,6 +8,11 @@ import axios, { type AxiosRequestConfig, type AxiosInstance } from 'axios'
 import { message, Modal } from 'ant-design-vue'
 import i18n, { getLocale } from '../locales'
 import { translateLegacyContent, translateLegacyText } from '@/utils/legacyI18n'
+import {
+  createActionDeduper,
+  resolveTableSortHeaders,
+  unwrapBusinessResponse,
+} from './httpPolicy'
 
 type FxLoadingMode = 'global' | 'local' | 'silent'
 type FxDedupeMode = 'drop' | 'none'
@@ -60,12 +65,7 @@ const recentBackendToast = {
   timestamp: 0,
 }
 let backendToastDepth = 0
-const pendingActions = new Map<string, Promise<any>>()
-const tableSortHeaders = {
-  tableCode: 'X-Fx-Table-Code',
-  sortField: 'X-Fx-Sort-Field',
-  sortOrder: 'X-Fx-Sort-Order',
-}
+const actionDeduper = createActionDeduper()
 
 function shouldSuppressFrontendMessage(type: 'success' | 'error'): boolean {
   return backendToastDepth === 0
@@ -116,8 +116,6 @@ if (!(message as any).__fxBackendToastPatched) {
  * 需要重新登录的错误码列表
  * 当后端返回这些错误码时，前端需要重新登录
  */
-const reloadCodes = [602] // 602: 未登录或登录过期
-const passwordExpiredCode = 606
 
 function isFallbackPage() {
   return typeof window !== 'undefined'
@@ -187,16 +185,6 @@ function redirectToLogin() {
   }
 
   window.location.replace(new URL('/login', window.location.origin).toString())
-}
-
-/**
- * 检查错误码是否需要重新登录
- * 
- * @param code 后端返回的错误码
- * @returns boolean 是否需要重新登录
- */
-function needReload(code: number): boolean {
-  return reloadCodes.includes(code)
 }
 
 /**
@@ -482,18 +470,10 @@ function injectTableSortHeaders(cfg: any) {
   const source = method === 'get' ? cfg.params : cfg.data
   if (!source || typeof source !== 'object') return cfg
 
-  const tableCode = source.__fxTableCode
-  const sortField = source.sortField || source.orderBy
-  const sortOrder = source.sortOrder || source.orderDirection
-  if (Object.prototype.hasOwnProperty.call(source, '__fxTableCode')) {
-    delete source.__fxTableCode
-  }
-
-  if (!tableCode || !sortField || !sortOrder) return cfg
   const headersAny: any = cfg.headers || {}
-  setHeader(headersAny, tableSortHeaders.tableCode, tableCode)
-  setHeader(headersAny, tableSortHeaders.sortField, sortField)
-  setHeader(headersAny, tableSortHeaders.sortOrder, sortOrder)
+  for (const [key, value] of Object.entries(resolveTableSortHeaders(source))) {
+    setHeader(headersAny, key, value)
+  }
   cfg.headers = headersAny
   return cfg
 }
@@ -537,15 +517,15 @@ async function handleResponse(resp: any, httpInstance: any) {
   
   // 处理JSON响应
   const data = resp.data || {}
-  const code = data.code
+  const decision = unwrapBusinessResponse(data)
 
-  if (code === passwordExpiredCode) {
+  if (decision.kind === 'password-expired') {
     window.location.replace(new URL('/workspace/profile?tab=security', window.location.origin).toString())
     return Promise.reject(data)
   }
   
   // 检查是否需要重新登录
-  if (needReload(code)) {
+  if (decision.kind === 'login') {
     if (isFallbackPage()) {
       return Promise.reject(data)
     }
@@ -570,7 +550,7 @@ async function handleResponse(resp: any, httpInstance: any) {
   }
   
   // 处理其他业务错误
-  if (code !== 200) {
+  if (decision.kind === 'error') {
     const cfgAny = resp.config as any
     const customErrorMessage = cfgAny.customErrorMessage
     const silentError = cfgAny.silentError === true
@@ -587,7 +567,7 @@ async function handleResponse(resp: any, httpInstance: any) {
   }
 
   // 响应成功，返回业务数据
-  return data.data
+  return decision.data
 }
 
 /**
@@ -610,22 +590,7 @@ function mergeRequestConfig(defaults?: FxRequestConfig, config?: FxRequestConfig
 }
 
 function requestWithDedupe<T>(key: string | undefined, mode: FxDedupeMode | undefined, request: () => Promise<T>) {
-  if (!key || mode === 'none') {
-    return request()
-  }
-
-  const running = pendingActions.get(key)
-  if (running) {
-    return running as Promise<T>
-  }
-
-  const promise = request().finally(() => {
-    if (pendingActions.get(key) === promise) {
-      pendingActions.delete(key)
-    }
-  })
-  pendingActions.set(key, promise)
-  return promise
+  return actionDeduper.run(key, mode, request)
 }
 
 function createHttpClient(instance: AxiosInstance, defaults?: FxRequestConfig): FxHttpClient {

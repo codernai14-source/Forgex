@@ -1,7 +1,7 @@
-﻿# Git 提交与开发规范
+# Git 提交与开发规范
 
 > 分类：开发规范 / 规范文档
-> 版本：**V0.8.5**
+> 版本：**V1.0.0**
 
 本规范约束 Forgex 团队的 Git 提交格式、分支模型、合并流程与 Code Review 要求，确保版本历史可追溯、协作高效、质量可控。
 
@@ -95,8 +95,8 @@ Closes #8
 ```
 feature/128-sms-login
 fix/kms-master-key            # 简短修复可省略 issue-id
-release/v0.8.0
-hotfix/v0.8.1-auth-redirect
+release/V1.0.0
+hotfix/V1.0.0-auth-redirect
 ```
 
 ### 2.3 分支规则
@@ -156,16 +156,16 @@ PR/MR 标题使用 Conventional Commits 格式，描述需包含：
 
 ```
 1. develop 达到发布标准，创建 release 分支
-   git checkout -b release/v0.8.0 develop
+   git checkout -b release/V1.0.0 develop
 
 2. 在 release 分支仅修 bug、版本号、文档，不加新功能
 
 3. 验证通过后合并到 main 并打 tag
-   git checkout main && git merge release/v0.8.0
-   git tag v0.8.0
+   git checkout main && git merge release/V1.0.0
+   git tag V1.0.0
 
 4. 同步回 develop
-   git checkout develop && git merge release/v0.8.0
+   git checkout develop && git merge release/V1.0.0
 
 5. 删除 release 分支
 ```

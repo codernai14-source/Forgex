@@ -34,6 +34,7 @@
             <label class="cyber-label">{{ i18nT('common.login.accountLabel') }}</label>
             <input
               class="cyber-input"
+              data-testid="login-account"
               type="text"
               v-model="account"
               autocomplete="username"
@@ -44,6 +45,7 @@
             <label class="cyber-label">{{ i18nT('common.login.passwordLabel') }}</label>
             <input
               class="cyber-input"
+              data-testid="login-password"
               type="password"
               v-model="password"
               autocomplete="current-password"
@@ -55,6 +57,7 @@
             <div class="captcha-row">
               <input
                 class="cyber-input captcha-input"
+                data-testid="login-captcha"
                 type="text"
                 v-model="captcha"
                 autocomplete="off"
@@ -96,6 +99,7 @@
           <button
             type="submit"
             class="btn-gradient block-btn"
+            data-testid="login-submit"
             :disabled="logging"
             :class="{ 'btn-disabled': logging }"
             :style="{ '--primary-color': systemConfig.primaryColor, '--secondary-color': systemConfig.secondaryColor }"
@@ -176,6 +180,7 @@
           <a-button
             type="primary"
             @click="confirmTenant"
+            data-testid="tenant-confirm"
             :loading="tenantConfirming"
             :disabled="tenantConfirming"
             class="action-btn primary"

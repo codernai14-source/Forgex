@@ -28,4 +28,6 @@ dependencies {
     implementation(libs.coil.gif)
     implementation(libs.bouncycastle.bcprov)
     implementation(libs.kotlinx.coroutines.android)
+
+    testImplementation(libs.junit)
 }

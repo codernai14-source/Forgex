@@ -13,10 +13,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -55,27 +55,22 @@ class KmsServiceImplTest {
 
     private SysKmsKeyMapper kmsKeyMapper;
     private SysKmsKeyLogMapper kmsKeyLogMapper;
+    private Map<String, String> environment;
     private KmsServiceImpl service;
 
     @BeforeEach
-    void setUp() throws Exception {
+    void setUp() {
         kmsKeyMapper = mock(SysKmsKeyMapper.class);
         kmsKeyLogMapper = mock(SysKmsKeyLogMapper.class);
-        service = new KmsServiceImpl(kmsKeyMapper, kmsKeyLogMapper);
+        environment = new HashMap<>();
+        service = new KmsServiceImpl(kmsKeyMapper, kmsKeyLogMapper, environment::get);
         // 每次测试前重置缓存
         resetCachedMasterKey();
-        // 清理相关环境变量
-        clearEnv("FORGEX_KMS_MASTER_KEY_HEX");
-        clearEnv("FORGEX_KMS_MASTER_KEY_FILE");
-        clearEnv("FORGEX_LICENSE_DIR");
     }
 
     @AfterEach
-    void tearDown() throws Exception {
+    void tearDown() {
         resetCachedMasterKey();
-        clearEnv("FORGEX_KMS_MASTER_KEY_HEX");
-        clearEnv("FORGEX_KMS_MASTER_KEY_FILE");
-        clearEnv("FORGEX_LICENSE_DIR");
     }
 
     // ======================== 辅助方法 ========================
@@ -84,63 +79,12 @@ class KmsServiceImplTest {
         ReflectionTestUtils.setField(service, "cachedMasterKey", null);
     }
 
-    /**
-     * 通过反射设置环境变量（绕过 System.getenv() 的不可变性）。
-     * 需要 JVM 参数 --add-opens java.base/java.lang=ALL-UNNAMED
-     * 和 --add-opens java.base/java.util=ALL-UNNAMED（见 pom.xml surefire 配置）。
-     */
-    @SuppressWarnings("unchecked")
-    private static void setEnv(String key, String value) throws Exception {
-        // 方案一：通过 ProcessEnvironment.theEnvironment 直接操作
-        try {
-            Class<?> peClass = Class.forName("java.lang.ProcessEnvironment");
-            java.lang.reflect.Field theEnvField = peClass.getDeclaredField("theEnvironment");
-            theEnvField.setAccessible(true);
-            Map<Object, Object> theEnv = (Map<Object, Object>) theEnvField.get(null);
-
-            Class<?> varClass = Class.forName("java.lang.ProcessEnvironment$Variable");
-            Class<?> valClass = Class.forName("java.lang.ProcessEnvironment$Value");
-            java.lang.reflect.Method varValueOf = varClass.getDeclaredMethod("valueOf", String.class);
-            varValueOf.setAccessible(true);
-            java.lang.reflect.Method valValueOf = valClass.getDeclaredMethod("valueOf", String.class);
-            valValueOf.setAccessible(true);
-            theEnv.put(varValueOf.invoke(null, key), valValueOf.invoke(null, value));
-            return;
-        } catch (Exception peEx) {
-            // 回退方案：通过 Collections$UnmodifiableMap.m
-        }
-        // 方案二：通过 UnmodifiableMap 的 backing map
-        Map<String, String> env = System.getenv();
-        java.lang.reflect.Field field = Collections.unmodifiableMap(new HashMap<>()).getClass()
-                .getDeclaredField("m");
-        field.setAccessible(true);
-        Map<String, String> writableEnv = (Map<String, String>) field.get(env);
-        writableEnv.put(key, value);
+    private void setEnv(String key, String value) {
+        environment.put(key, value);
     }
 
-    /**
-     * 通过反射清除环境变量。
-     */
-    @SuppressWarnings("unchecked")
-    private static void clearEnv(String key) throws Exception {
-        // 方案一：通过 ProcessEnvironment.theEnvironment 直接操作
-        try {
-            Class<?> peClass = Class.forName("java.lang.ProcessEnvironment");
-            java.lang.reflect.Field theEnvField = peClass.getDeclaredField("theEnvironment");
-            theEnvField.setAccessible(true);
-            Map<Object, Object> theEnv = (Map<Object, Object>) theEnvField.get(null);
-            theEnv.keySet().removeIf(k -> k.toString().contains(key));
-            return;
-        } catch (Exception peEx) {
-            // 回退方案：通过 Collections$UnmodifiableMap.m
-        }
-        // 方案二：通过 UnmodifiableMap 的 backing map
-        Map<String, String> env = System.getenv();
-        java.lang.reflect.Field field = Collections.unmodifiableMap(new HashMap<>()).getClass()
-                .getDeclaredField("m");
-        field.setAccessible(true);
-        Map<String, String> writableEnv = (Map<String, String>) field.get(env);
-        writableEnv.remove(key);
+    private void clearEnv(String key) {
+        environment.remove(key);
     }
 
     /** 通过反射调用 private getMasterKey() */
@@ -294,6 +238,11 @@ class KmsServiceImplTest {
                 invokeGetMasterKey();
             } catch (IllegalStateException e) {
                 throw e;
+            } catch (InvocationTargetException e) {
+                if (e.getCause() instanceof IllegalStateException illegalStateException) {
+                    throw illegalStateException;
+                }
+                throw new RuntimeException(e.getCause());
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
