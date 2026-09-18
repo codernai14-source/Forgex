@@ -93,3 +93,7 @@ hs_err_pid*
 # Local runtime files
 **/run.args
 
+
+# Environment-specific nginx TLS template
+/Forgex_Build/shared/nginx/forgex-tls.conf.template
+
