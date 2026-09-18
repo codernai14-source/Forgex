@@ -11,7 +11,7 @@
 
 
 > Full-stack enterprise scaffold and business platform foundation for production manufacturing
-> Version: **V0.8.5**
+> Version: **V1.0.0**
 
 <p align="center">
   <a href="https://gitee.com/coder_nai/forgex/stargazers"><img alt="star" src="https://gitee.com/coder_nai/forgex/badge/star.svg?theme=dark"/></a>
@@ -20,7 +20,7 @@
 
 Forgex is an enterprise-grade scaffold for manufacturing digitalization projects such as MES, WMS, QMS, equipment integration, workflow collaboration, reporting, and private deployment. It is not just a generic admin template for login, menus, and CRUD pages. Forgex packages the repetitive production concerns of enterprise systems into a reusable platform foundation: identity, tenants, permissions, dynamic tables, dictionaries, workflow, messaging, reports, import/export, file storage, integration, packaging, deployment, and upgrade support.
 
-> **V0.8.5** builds on the V0.8.0 production baseline with modular Common Maven artifacts, workflow/org/login enhancements, and synced formal docs for secondary development.
+> **V1.0.0** builds on the production baseline with modular Common Maven artifacts, workflow recall/delegate/timeout/CC enhancements, superior-based approval and interaction-code auth; formal docs are synced to V1.0.0 for secondary development.
 
 ## Table of Contents
 
@@ -390,13 +390,13 @@ Use `Forgex_Build` to create delivery packages:
 
 ```powershell
 cd Forgex_Build
-powershell -ExecutionPolicy Bypass -File build-all.ps1 -Version 0.8.0 -AllowDistFallback
+powershell -ExecutionPolicy Bypass -File build-all.ps1 -Version 1.0.0 -AllowDistFallback
 ```
 
 Main outputs:
 
-- `Forgex_Build/dist/windows/Forgex-Windows-Package-0.8.0.zip`
-- `Forgex_Build/dist/linux/forgex-linux-bundle-0.8.0.tar.gz`
+- `Forgex_Build/dist/windows/Forgex-Windows-Package-1.0.0.zip`
+- `Forgex_Build/dist/linux/forgex-linux-bundle-1.0.0.tar.gz`
 
 ### Windows
 
@@ -405,8 +405,8 @@ The Windows bundle includes web static assets, service JARs, bundled Nginx, Wind
 ### Linux
 
 ```bash
-tar -zxvf forgex-linux-bundle-0.8.0.tar.gz
-cd forgex-linux-bundle-0.8.0
+tar -zxvf forgex-linux-bundle-1.0.0.tar.gz
+cd forgex-linux-bundle-1.0.0
 ./install.sh ACME_PROD yanshi
 ```
 

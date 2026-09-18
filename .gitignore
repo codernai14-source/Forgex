@@ -71,7 +71,7 @@ hs_err_pid*
 /.mimosa
 **/.mimosa/
 /.uploads
-/.cursor
+/.cursor/
 /.cursor/plans/
 /.agents
 /.video_agent

@@ -11,7 +11,7 @@
 
 
 > 🚀 立足生产制造、已在实际生产中验证的中大型前后端企业级脚手架底座
-> 当前版本：**V0.8.5**
+> 当前版本：**V1.0.0**
 
 <p align="center">
   <a href="https://gitee.com/coder_nai/forgex/stargazers"><img alt="star" src="https://gitee.com/coder_nai/forgex/badge/star.svg?theme=dark"/></a>
@@ -74,7 +74,7 @@ Forgex 是一款**主打制造业数字化，同时向全行业通用后台**的
 
 🛡️ **百搭且强悍：** 无论你是需要一套支撑 MES、WMS 这类车间级 MOM (制造运营管理) 系统的重工业引擎，还是仅仅想为教育、政务或常规 SaaS 业务寻找一套极具扩展性且坚如磐石的通用后台基架，Forgex 都能为你提供极其强悍的生产力护航！
 
-> **V0.8.5 定位**：在 V0.8.0 正式生产版基础上，完成后端公共模块 Maven 拆分与工作流/组织/登录链路增强，并同步正式文档，便于二开与普通模型按需接入。
+> **V1.0.0 定位**：在正式生产版基础上，完成 Forgex_Common 模块化拆分、工作流撤回/委托/超时扫描/抄送增强、直属上级审批与交互码认证，文档版本同步升至 V1.0.0，便于二开与普通模型按需接入。
 
 ## 💡 核心优势 (Why Forgex?)
 
@@ -421,13 +421,13 @@ Forgex 使用 Nacos 作为配置中心，各服务 `application.yml` 配置数�
 
 ```powershell
 cd Forgex_Build
-powershell -ExecutionPolicy Bypass -File build-all.ps1 -Version 0.8.0 -AllowDistFallback
+powershell -ExecutionPolicy Bypass -File build-all.ps1 -Version 1.0.0 -AllowDistFallback
 ```
 
 构建后主要产物：
 
-- `Forgex_Build/dist/windows/Forgex-Windows-Package-0.8.0.zip`
-- `Forgex_Build/dist/linux/forgex-linux-bundle-0.8.0.tar.gz`
+- `Forgex_Build/dist/windows/Forgex-Windows-Package-1.0.0.zip`
+- `Forgex_Build/dist/linux/forgex-linux-bundle-1.0.0.tar.gz`
 
 Windows 首次部署时，解压交付包后按安装器或 `scripts` 目录中的脚本完成安装、数据库导入、Nacos 配置导入和服务启动。已有环境升级时，使用新包中的 `scripts/upgrade.bat` 或 `scripts/upgrade.ps1` 替换应用文件，并在数据库备份后按需执行 `database-upgrade` 里的 SQL。
 
@@ -436,8 +436,8 @@ Windows 首次部署时，解压交付包后按安装器或 `scripts` 目录中�
 Linux 交付包包含前端、后端服务、Nginx 配置模板、Nacos 配置、授权客户端和部署脚本。解压后通过 `install.sh` 初始化目录和环境变量，再结合 Docker Compose 或现场服务管理方式启动后端服务。
 
 ```bash
-tar -zxvf forgex-linux-bundle-0.8.0.tar.gz
-cd forgex-linux-bundle-0.8.0
+tar -zxvf forgex-linux-bundle-1.0.0.tar.gz
+cd forgex-linux-bundle-1.0.0
 ./install.sh ACME_PROD yanshi
 ```
 
