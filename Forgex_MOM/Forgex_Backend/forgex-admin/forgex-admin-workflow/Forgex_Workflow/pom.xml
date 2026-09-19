@@ -17,6 +17,8 @@
     <description>锻冶项目工作流模块 - 自研审批工作流引擎</description>
 
     <dependencies>
+        <dependency><groupId>com.forgex</groupId><artifactId>forgex-admin-client</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>com.forgex</groupId><artifactId>forgex-admin-runtime</artifactId><version>${project.version}</version></dependency>
         <!-- 按职责依赖公共能力，避免引入完整 Common 聚合模块 -->
         <dependency>
             <groupId>com.forgex</groupId>

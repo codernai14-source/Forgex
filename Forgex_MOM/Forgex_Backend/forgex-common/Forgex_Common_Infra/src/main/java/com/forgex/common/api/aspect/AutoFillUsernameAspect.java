@@ -15,7 +15,8 @@ package com.forgex.common.api.aspect;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.forgex.common.api.annotation.AutoFillUsername;
-import com.forgex.common.api.feign.SysUserFeignClient;
+import com.forgex.common.spi.UserDirectory;
+import org.springframework.beans.factory.ObjectProvider;
 import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.web.R;
@@ -55,7 +56,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AutoFillUsernameAspect {
 
-    private final SysUserFeignClient sysUserFeignClient;
+    private final ObjectProvider<UserDirectory> userDirectoryProvider;
 
     /**
      * 拦截 Controller 响应并自动填充用户名。
@@ -220,7 +221,7 @@ public class AutoFillUsernameAspect {
                 .distinct()
                 .collect(Collectors.toList());
 
-        R<Map<Long, String>> response = sysUserFeignClient.getUsernameMap(userIds);
+        R<Map<Long, String>> response = userDirectoryProvider.getObject().getUsernameMap(userIds);
         if (response == null || response.getCode() != 200 || response.getData() == null) {
             log.error("批量查询用户名失败: {}", response);
             return;

@@ -1,0 +1,9 @@
+spring:
+  cloud:
+    openfeign:
+      client:
+        config:
+          sysUserFeignClient:
+            url: ${FORGEX_SYS_URL:http://127.0.0.1:9002}
+            connectTimeout: 3000
+            readTimeout: 5000

@@ -3,8 +3,6 @@ package com.forgex.common.audit;
 import com.forgex.common.audit.OperationLogFeignClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.stereotype.Component;
 
 /**
  * 跨服务操作日志兜底写入器。
@@ -16,8 +14,6 @@ import org.springframework.stereotype.Component;
  * @version 1.0.0
  */
 @Slf4j
-@Component
-@ConditionalOnMissingBean(SysLocalOperationLogRecorderMarker.class)
 @RequiredArgsConstructor
 public class RemoteOperationLogRecorder implements OperationLogRecorder {
 

@@ -21,6 +21,9 @@
     </properties>
 
     <dependencies>
+        <dependency><groupId>com.forgex</groupId><artifactId>Forgex_Sys_Api</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>com.forgex</groupId><artifactId>forgex-admin-client</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>com.forgex</groupId><artifactId>forgex-admin-runtime</artifactId><version>${project.version}</version></dependency>
         <!-- 按职责依赖公共能力，避免引入完整 Common 聚合模块 -->
         <dependency>
             <groupId>com.forgex</groupId>
@@ -30,6 +33,11 @@
         <dependency>
             <groupId>com.forgex</groupId>
             <artifactId>Forgex_Common_Core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.forgex</groupId>
+            <artifactId>Forgex_Domain_Contract</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

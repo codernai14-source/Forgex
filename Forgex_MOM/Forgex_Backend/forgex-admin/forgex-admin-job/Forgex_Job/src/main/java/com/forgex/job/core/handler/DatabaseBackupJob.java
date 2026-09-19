@@ -3,8 +3,9 @@ package com.forgex.job.core.handler;
 import com.forgex.job.annotation.FxJobHandler;
 import com.forgex.job.core.executor.JobExecutionContext;
 import com.forgex.job.core.executor.JobResult;
-import com.forgex.sys.domain.entity.SysDataBackupRecord;
-import com.forgex.sys.service.IDataBackupService;
+import com.forgex.common.web.R;
+import com.forgex.common.web.StatusCode;
+import com.forgex.job.service.PlatformBackupClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class DatabaseBackupJob {
 
-    private final IDataBackupService dataBackupService;
+    private final PlatformBackupClient backupClient;
 
     /**
      * 触发一次全量备份记录。
@@ -28,7 +29,11 @@ public class DatabaseBackupJob {
      * @return 执行结果
      */
     public JobResult execute(JobExecutionContext context) {
-        SysDataBackupRecord record = dataBackupService.triggerFullBackup("job");
-        return JobResult.success("backupId=" + record.getId());
+        R<Long> response = backupClient.triggerFullBackup(context.getTenantId());
+        if (response == null || !Integer.valueOf(StatusCode.SUCCESS).equals(response.getCode())
+                || response.getData() == null) {
+            return JobResult.failure("backup failed, code=" + (response == null ? "no response" : response.getCode()));
+        }
+        return JobResult.success("backupId=" + response.getData());
     }
 }

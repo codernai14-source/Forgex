@@ -42,7 +42,7 @@ import org.springframework.stereotype.Component;
  * @version 1.0
  * @since 2026-04-10
  * @see EncodeRuleService 编码生成服务
- * @see com.forgex.common.feign.client.EncodeRuleFeignClient Feign Client
+ * @see com.forgex.common.spi.EncodeRuleProvider 编码提供者
  */
 @Component
 public class EncodeUtils {

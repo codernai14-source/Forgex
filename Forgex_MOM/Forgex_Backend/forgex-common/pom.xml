@@ -6,9 +6,9 @@
 
     <parent>
         <groupId>com.forgex</groupId>
-        <artifactId>Forgex_Backend</artifactId>
+        <artifactId>forgex-common-parent</artifactId>
         <version>1.0.0</version>
-        <relativePath>../pom.xml</relativePath>
+        <relativePath>forgex-common-parent/pom.xml</relativePath>
     </parent>
 
     <artifactId>forgex-common</artifactId>
@@ -17,6 +17,8 @@
     <description>Forgex publishable common foundation and compatibility aggregates</description>
 
     <modules>
+        <module>forgex-common-parent</module>
+        <module>forgex-common-starter</module>
         <module>forgex-common-bom</module>
         <module>Forgex_Common_Contract</module>
         <module>Forgex_Common_Core</module>

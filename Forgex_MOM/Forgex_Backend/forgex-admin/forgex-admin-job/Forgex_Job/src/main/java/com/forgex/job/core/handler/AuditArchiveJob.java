@@ -3,7 +3,9 @@ package com.forgex.job.core.handler;
 import com.forgex.job.annotation.FxJobHandler;
 import com.forgex.job.core.executor.JobExecutionContext;
 import com.forgex.job.core.executor.JobResult;
-import com.forgex.sys.service.IDataBackupService;
+import com.forgex.common.web.R;
+import com.forgex.common.web.StatusCode;
+import com.forgex.job.service.PlatformBackupClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -18,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class AuditArchiveJob {
 
-    private final IDataBackupService dataBackupService;
+    private final PlatformBackupClient backupClient;
 
     /**
      * 归档超过 180 天的操作日志。
@@ -27,7 +29,11 @@ public class AuditArchiveJob {
      * @return 执行结果
      */
     public JobResult execute(JobExecutionContext context) {
-        int archived = dataBackupService.archiveAuditLogs(180);
-        return JobResult.success("archived=" + archived);
+        R<Integer> response = backupClient.archiveAuditLogs(context.getTenantId());
+        if (response == null || !Integer.valueOf(StatusCode.SUCCESS).equals(response.getCode())
+                || response.getData() == null) {
+            return JobResult.failure("archive failed, code=" + (response == null ? "no response" : response.getCode()));
+        }
+        return JobResult.success("archived=" + response.getData());
     }
 }

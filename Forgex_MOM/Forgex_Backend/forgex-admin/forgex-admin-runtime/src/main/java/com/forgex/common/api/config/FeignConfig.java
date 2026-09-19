@@ -13,18 +13,16 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.common.api.config;
 
-import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Configuration;
 
 /**
  * Feign 配置类
- * <p>启用 Feign 客户端扫描</p>
+ * <p>平台客户端由 admin-client 精确注册，此类保留原配置类兼容入口。</p>
  * 
  * @author coder_nai@163.com
  * @date 2026-01-27
  */
 @Configuration
-@EnableFeignClients(basePackages = {"com.forgex.common.api.feign", "com.forgex.common.audit"})
 public class FeignConfig {
     // Feign 配置可以在这里添加
 }

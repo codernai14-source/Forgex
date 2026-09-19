@@ -14,7 +14,8 @@ limitations under the License.*/
 package com.forgex.common.api.service;
 
 import com.forgex.common.api.dto.UserInfoDTO;
-import com.forgex.common.api.feign.SysUserFeignClient;
+import com.forgex.common.spi.UserDirectory;
+import org.springframework.beans.factory.ObjectProvider;
 import com.forgex.common.web.R;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +37,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class UserInfoService {
     
-    private final SysUserFeignClient sysUserFeignClient;
+    private final ObjectProvider<UserDirectory> userDirectoryProvider;
     
     /**
      * 根据用户ID获取用户信息
@@ -50,7 +51,7 @@ public class UserInfoService {
         }
         
         try {
-            R<UserInfoDTO> response = sysUserFeignClient.getUserById(userId);
+            R<UserInfoDTO> response = userDirectoryProvider.getObject().getUserById(userId);
             if (response != null && response.getCode() == 200) {
                 return response.getData();
             }
@@ -73,7 +74,7 @@ public class UserInfoService {
         }
         
         try {
-            R<UserInfoDTO> response = sysUserFeignClient.getUserByAccount(account);
+            R<UserInfoDTO> response = userDirectoryProvider.getObject().getUserByAccount(account);
             if (response != null && response.getCode() == 200) {
                 return response.getData();
             }
@@ -107,7 +108,7 @@ public class UserInfoService {
         }
         
         try {
-            R<List<UserInfoDTO>> response = sysUserFeignClient.getUsersByIds(userIds);
+            R<List<UserInfoDTO>> response = userDirectoryProvider.getObject().getUsersByIds(userIds);
             if (response != null && response.getCode() == 200 && response.getData() != null) {
                 return response.getData();
             }
@@ -130,7 +131,7 @@ public class UserInfoService {
         }
         
         try {
-            R<Map<Long, String>> response = sysUserFeignClient.getUsernameMap(userIds);
+            R<Map<Long, String>> response = userDirectoryProvider.getObject().getUsernameMap(userIds);
             if (response != null && response.getCode() == 200 && response.getData() != null) {
                 return response.getData();
             }

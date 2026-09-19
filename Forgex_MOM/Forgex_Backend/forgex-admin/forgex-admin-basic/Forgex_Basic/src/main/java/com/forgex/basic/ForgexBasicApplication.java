@@ -23,7 +23,7 @@ import com.forgex.common.api.feign.SysTenantFeignClient;
 import com.forgex.common.api.feign.WorkflowExecutionFeignClient;
 import com.forgex.common.audit.OperationLogFeignClient;
 import com.forgex.common.feign.client.EncodeRuleFeignClient;
-import com.forgex.sys.service.impl.SysModuleServiceImpl;
+import com.forgex.common.api.feign.SysBasicSupportFeignClient;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -45,6 +45,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableDiscoveryClient
 @EnableFeignClients(clients = {
         EncodeRuleFeignClient.class,
+        SysBasicSupportFeignClient.class,
         AuthPermClient.class,
         CalendarReminderFeignClient.class,
         SysTenantFeignClient.class,
@@ -61,8 +62,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
  * @version 1.0.0
  */
 @EnableAsync
-@Import({DynamicDataSourceAutoConfiguration.class, SysModuleServiceImpl.class})
-@MapperScan({"com.forgex.basic.**.mapper", "com.forgex.common.mapper", "com.forgex.sys.mapper"})
+@Import(DynamicDataSourceAutoConfiguration.class)
+@MapperScan({"com.forgex.basic.**.mapper", "com.forgex.common.mapper"})
 public class ForgexBasicApplication {
 
     /**

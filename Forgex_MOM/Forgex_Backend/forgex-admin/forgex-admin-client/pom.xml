@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <parent><groupId>com.forgex</groupId><artifactId>Forgex_Backend</artifactId><version>1.0.0</version><relativePath>../../pom.xml</relativePath></parent>
+    <artifactId>forgex-admin-client</artifactId>
+    <name>forgex-admin-client</name>
+    <description>显式接入平台用户、编码和审计接口的客户端适配器</description>
+    <dependencies>
+        <dependency><groupId>com.forgex</groupId><artifactId>Forgex_Domain_Contract</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>com.forgex</groupId><artifactId>Forgex_Common_Web</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>com.forgex</groupId><artifactId>Forgex_Sys_Api</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>org.springframework.cloud</groupId><artifactId>spring-cloud-starter-openfeign</artifactId></dependency>
+        <dependency><groupId>org.springframework.cloud</groupId><artifactId>spring-cloud-starter-loadbalancer</artifactId></dependency>
+        <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><scope>provided</scope></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>
+    </dependencies>
+</project>

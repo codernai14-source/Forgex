@@ -5,39 +5,14 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.forgex</groupId>
-        <artifactId>Forgex_Backend</artifactId>
+        <artifactId>forgex-common-parent</artifactId>
         <version>1.0.0</version>
-        <relativePath>../../pom.xml</relativePath>
+        <relativePath>../forgex-common-parent/pom.xml</relativePath>
     </parent>
     <artifactId>Forgex_Common</artifactId>
     <name>Forgex_Common</name>
     <description>Compatibility aggregate for modular Forgex common capabilities</description>
     <dependencies>
-        <dependency>
-            <groupId>com.forgex</groupId>
-            <artifactId>Forgex_Auth_Api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.forgex</groupId>
-            <artifactId>Forgex_Basic_Api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.forgex</groupId>
-            <artifactId>Forgex_Job_Api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.forgex</groupId>
-            <artifactId>Forgex_Workflow_Api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.forgex</groupId>
-            <artifactId>Forgex_Integration_Api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
         <dependency>
             <groupId>com.forgex</groupId>
             <artifactId>Forgex_Common_Infra</artifactId>

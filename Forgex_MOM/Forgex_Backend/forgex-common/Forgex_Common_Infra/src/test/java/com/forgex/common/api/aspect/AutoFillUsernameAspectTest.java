@@ -2,7 +2,7 @@ package com.forgex.common.api.aspect;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.forgex.common.api.annotation.AutoFillUsername;
-import com.forgex.common.api.feign.SysUserFeignClient;
+import com.forgex.common.spi.UserDirectory;
 import com.forgex.common.web.R;
 import lombok.Data;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -32,9 +32,9 @@ class AutoFillUsernameAspectTest {
 
     @Test
     void shouldFillSingleObjectUsername() throws Throwable {
-        SysUserFeignClient userFeignClient = mock(SysUserFeignClient.class);
+        UserDirectory userFeignClient = mock(UserDirectory.class);
         when(userFeignClient.getUsernameMap(anyList())).thenReturn(R.ok(Map.of(1L, "admin")));
-        AutoFillUsernameAspect aspect = new AutoFillUsernameAspect(userFeignClient);
+        AutoFillUsernameAspect aspect = new AutoFillUsernameAspect(new org.springframework.beans.factory.support.StaticListableBeanFactory(Map.of("directory", userFeignClient)).getBeanProvider(UserDirectory.class));
         AuditDTO dto = new AuditDTO("1");
 
         Object result = aspect.around(joinPointReturning(R.ok(dto)));
@@ -46,9 +46,9 @@ class AutoFillUsernameAspectTest {
 
     @Test
     void shouldBatchFillCollectionUsernames() throws Throwable {
-        SysUserFeignClient userFeignClient = mock(SysUserFeignClient.class);
+        UserDirectory userFeignClient = mock(UserDirectory.class);
         when(userFeignClient.getUsernameMap(anyList())).thenReturn(R.ok(Map.of(1L, "admin", 2L, "operator")));
-        AutoFillUsernameAspect aspect = new AutoFillUsernameAspect(userFeignClient);
+        AutoFillUsernameAspect aspect = new AutoFillUsernameAspect(new org.springframework.beans.factory.support.StaticListableBeanFactory(Map.of("directory", userFeignClient)).getBeanProvider(UserDirectory.class));
         AuditDTO first = new AuditDTO("1");
         AuditDTO second = new AuditDTO("2");
 
@@ -61,9 +61,9 @@ class AutoFillUsernameAspectTest {
 
     @Test
     void shouldBatchFillPageRecordUsernames() throws Throwable {
-        SysUserFeignClient userFeignClient = mock(SysUserFeignClient.class);
+        UserDirectory userFeignClient = mock(UserDirectory.class);
         when(userFeignClient.getUsernameMap(anyList())).thenReturn(R.ok(Map.of(1L, "admin", 2L, "operator")));
-        AutoFillUsernameAspect aspect = new AutoFillUsernameAspect(userFeignClient);
+        AutoFillUsernameAspect aspect = new AutoFillUsernameAspect(new org.springframework.beans.factory.support.StaticListableBeanFactory(Map.of("directory", userFeignClient)).getBeanProvider(UserDirectory.class));
         AuditDTO first = new AuditDTO("1");
         AuditDTO second = new AuditDTO("2");
         Page<AuditDTO> page = new Page<>(1, 10);
@@ -78,9 +78,9 @@ class AutoFillUsernameAspectTest {
 
     @Test
     void shouldResolveUsernameMapWithStringKeys() throws Throwable {
-        SysUserFeignClient userFeignClient = mock(SysUserFeignClient.class);
+        UserDirectory userFeignClient = mock(UserDirectory.class);
         when(userFeignClient.getUsernameMap(anyList())).thenReturn(R.ok(Map.of(1L, "admin")));
-        AutoFillUsernameAspect aspect = new AutoFillUsernameAspect(userFeignClient);
+        AutoFillUsernameAspect aspect = new AutoFillUsernameAspect(new org.springframework.beans.factory.support.StaticListableBeanFactory(Map.of("directory", userFeignClient)).getBeanProvider(UserDirectory.class));
         StringKeyAuditDTO dto = new StringKeyAuditDTO("1");
 
         aspect.around(joinPointReturning(R.ok(dto)));
@@ -90,9 +90,9 @@ class AutoFillUsernameAspectTest {
 
     @Test
     void shouldFillInheritedUserIdField() throws Throwable {
-        SysUserFeignClient userFeignClient = mock(SysUserFeignClient.class);
+        UserDirectory userFeignClient = mock(UserDirectory.class);
         when(userFeignClient.getUsernameMap(anyList())).thenReturn(R.ok(Map.of(1L, "admin")));
-        AutoFillUsernameAspect aspect = new AutoFillUsernameAspect(userFeignClient);
+        AutoFillUsernameAspect aspect = new AutoFillUsernameAspect(new org.springframework.beans.factory.support.StaticListableBeanFactory(Map.of("directory", userFeignClient)).getBeanProvider(UserDirectory.class));
         InheritedAuditDTO dto = new InheritedAuditDTO("1");
 
         aspect.around(joinPointReturning(R.ok(dto)));
@@ -102,9 +102,9 @@ class AutoFillUsernameAspectTest {
 
     @Test
     void shouldSkipJdkValueFieldsWhenFillingNestedBusinessObject() throws Throwable {
-        SysUserFeignClient userFeignClient = mock(SysUserFeignClient.class);
+        UserDirectory userFeignClient = mock(UserDirectory.class);
         when(userFeignClient.getUsernameMap(anyList())).thenReturn(R.ok(Map.of(1L, "admin")));
-        AutoFillUsernameAspect aspect = new AutoFillUsernameAspect(userFeignClient);
+        AutoFillUsernameAspect aspect = new AutoFillUsernameAspect(new org.springframework.beans.factory.support.StaticListableBeanFactory(Map.of("directory", userFeignClient)).getBeanProvider(UserDirectory.class));
         WrapperDTO wrapper = new WrapperDTO(new AuditDTO("1"), Charset.defaultCharset());
 
         aspect.around(joinPointReturning(R.ok(wrapper)));
@@ -115,8 +115,8 @@ class AutoFillUsernameAspectTest {
 
     @Test
     void shouldSkipNonNumericOptionalUserIdWithoutQuerying() throws Throwable {
-        SysUserFeignClient userFeignClient = mock(SysUserFeignClient.class);
-        AutoFillUsernameAspect aspect = new AutoFillUsernameAspect(userFeignClient);
+        UserDirectory userFeignClient = mock(UserDirectory.class);
+        AutoFillUsernameAspect aspect = new AutoFillUsernameAspect(new org.springframework.beans.factory.support.StaticListableBeanFactory(Map.of("directory", userFeignClient)).getBeanProvider(UserDirectory.class));
         AuditDTO dto = new AuditDTO("admin");
 
         aspect.around(joinPointReturning(R.ok(dto)));
@@ -127,8 +127,8 @@ class AutoFillUsernameAspectTest {
 
     @Test
     void shouldSkipFrameworkReturnObject() throws Throwable {
-        SysUserFeignClient userFeignClient = mock(SysUserFeignClient.class);
-        AutoFillUsernameAspect aspect = new AutoFillUsernameAspect(userFeignClient);
+        UserDirectory userFeignClient = mock(UserDirectory.class);
+        AutoFillUsernameAspect aspect = new AutoFillUsernameAspect(new org.springframework.beans.factory.support.StaticListableBeanFactory(Map.of("directory", userFeignClient)).getBeanProvider(UserDirectory.class));
 
         Object result = aspect.around(joinPointReturning(new SseEmitter(0L)));
 

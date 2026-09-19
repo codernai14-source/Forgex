@@ -14,6 +14,8 @@
     <name>forgex-admin</name>
     <description>Forgex platform governance services</description>
     <modules>
+        <module>forgex-admin-client</module>
+        <module>forgex-admin-runtime</module>
         <module>forgex-admin-auth</module>
         <module>forgex-admin-sys</module>
         <module>forgex-admin-basic</module>

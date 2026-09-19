@@ -20,8 +20,8 @@ import com.forgex.common.i18n.CommonPrompt;
 import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.StatusCode;
-import com.forgex.sys.domain.dto.SysModuleDTO;
-import com.forgex.sys.service.ISysModuleService;
+import com.forgex.common.api.dto.SysModuleSummaryDTO;
+import com.forgex.basic.platform.SysPlatformSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -44,7 +44,7 @@ public class LabelFieldServiceImpl extends ServiceImpl<LabelFieldMapper, LabelFi
     private static final Set<String> FIELD_TYPES = Set.of("STRING", "NUMBER", "DATE", "DATETIME", "BOOLEAN");
 
     private final LabelFieldMapper labelFieldMapper;
-    private final ISysModuleService moduleService;
+    private final SysPlatformSupport moduleService;
 
     @Override
     public IPage<LabelFieldVO> pageFields(LabelFieldQueryParam param, Long tenantId) {
@@ -241,9 +241,9 @@ public class LabelFieldServiceImpl extends ServiceImpl<LabelFieldMapper, LabelFi
     private LabelFieldVO toVO(LabelField entity) {
         LabelFieldVO vo = new LabelFieldVO();
         BeanUtils.copyProperties(entity, vo);
-        SysModuleDTO module = entity.getModuleId() == null ? null : moduleService.getModuleById(entity.getModuleId());
+        SysModuleSummaryDTO module = entity.getModuleId() == null ? null : moduleService.getModuleById(entity.getModuleId());
         if (module != null) {
-            vo.setModuleName(module.getName());
+            vo.setModuleName(module.name());
         }
         return vo;
     }

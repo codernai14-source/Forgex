@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.common.feign;
 
+import com.forgex.common.i18n.LangContext;
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
 import org.springframework.util.StringUtils;
@@ -64,6 +65,15 @@ public class FeignTokenInterceptor implements RequestInterceptor {
         }
         if (StringUtils.hasText(tenantId)) {
             template.header(HEADER_TENANT_ID, tenantId);
+        }
+
+        // 语言与 MVC 上下文采用同一解析规则，向下游统一传递 X-Lang。
+        String lang = readHeader(attributes, LangContext.HEADER_LANG);
+        if (!StringUtils.hasText(lang)) {
+            lang = readHeader(attributes, "Accept-Language");
+        }
+        if (StringUtils.hasText(lang)) {
+            template.header(LangContext.HEADER_LANG, lang);
         }
     }
 

@@ -18,6 +18,8 @@
     <description>Forgex 基础信息模块</description>
 
     <dependencies>
+        <dependency><groupId>com.forgex</groupId><artifactId>forgex-admin-client</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>com.forgex</groupId><artifactId>forgex-admin-runtime</artifactId><version>${project.version}</version></dependency>
         <!-- 按职责依赖公共能力，避免引入完整 Common 聚合模块 -->
         <dependency>
             <groupId>com.forgex</groupId>
@@ -83,12 +85,6 @@
             <groupId>com.forgex</groupId>
             <artifactId>Forgex_Common_Infra</artifactId>
             <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.forgex</groupId>
-            <artifactId>Forgex_Sys</artifactId>
-            <version>1.0.0</version>
         </dependency>
 
         <dependency>

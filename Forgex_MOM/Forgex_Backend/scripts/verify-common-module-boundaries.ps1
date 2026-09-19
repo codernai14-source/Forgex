@@ -1,199 +1,76 @@
-$ErrorActionPreference = 'Stop'
-
+﻿$ErrorActionPreference = 'Stop'
 $backendRoot = Split-Path -Parent $PSScriptRoot
-$requiredModules = @(
-    'Forgex_Common_Contract',
-    'Forgex_Common_Core',
-    'Forgex_Domain_Contract',
-    'Forgex_Auth_Api',
-    'Forgex_Sys_Api',
-    'Forgex_Basic_Api',
-    'Forgex_Job_Api',
-    'Forgex_Workflow_Api',
-    'Forgex_Integration_Api',
-    'Forgex_Common_Web',
-    'Forgex_Common_Data',
-    'Forgex_Common_Crypto',
-    'Forgex_Common_Excel',
-    'Forgex_Common_Infra'
-)
-
 $errors = [System.Collections.Generic.List[string]]::new()
+$modules = @{}
+$owners = @{}
 
-foreach ($module in $requiredModules) {
-    $pomPath = Join-Path $backendRoot "$module/pom.xml"
-    if (-not (Test-Path -LiteralPath $pomPath)) {
-        $errors.Add("Missing module POM: $module/pom.xml")
-    }
-}
-
-$forbiddenDependencies = @(
-    'spring-boot-starter-web',
-    'spring-cloud-starter-openfeign',
-    'mybatis-plus',
-    'spring-boot-starter-data-redis',
-    'rocketmq',
-    'poi-ooxml',
-    'fastexcel',
-    'bcprov'
-)
-
-foreach ($module in @('Forgex_Common_Contract', 'Forgex_Common_Core')) {
-    $pomPath = Join-Path $backendRoot "$module/pom.xml"
-    if (-not (Test-Path -LiteralPath $pomPath)) {
-        continue
-    }
-
-    $pomContent = Get-Content -Raw -LiteralPath $pomPath
-    foreach ($dependency in $forbiddenDependencies) {
-        if ($pomContent -match [regex]::Escape($dependency)) {
-            $errors.Add("$module contains forbidden heavy dependency: $dependency")
-        }
-    }
-}
-
-$apiModules = @(
-    'Forgex_Domain_Contract',
-    'Forgex_Auth_Api',
-    'Forgex_Sys_Api',
-    'Forgex_Basic_Api',
-    'Forgex_Job_Api',
-    'Forgex_Workflow_Api',
-    'Forgex_Integration_Api'
-)
-$apiForbiddenDependencies = @(
-    'spring-boot-starter',
-    'mybatis-plus-spring-boot',
-    'dynamic-datasource',
-    'spring-boot-starter-data-redis',
-    'rocketmq',
-    'poi-ooxml',
-    'fastexcel',
-    'bcprov'
-)
-
-foreach ($module in $apiModules) {
-    $pomPath = Join-Path $backendRoot "$module/pom.xml"
-    if (-not (Test-Path -LiteralPath $pomPath)) {
-        continue
-    }
-
-    $pomContent = Get-Content -Raw -LiteralPath $pomPath
-    foreach ($dependency in $apiForbiddenDependencies) {
-        if ($pomContent -match [regex]::Escape($dependency)) {
-            $errors.Add("$module contains forbidden runtime dependency: $dependency")
-        }
-    }
-}
-
-$webPomPath = Join-Path $backendRoot 'Forgex_Common_Web/pom.xml'
-if (Test-Path -LiteralPath $webPomPath) {
-    $webPomContent = Get-Content -Raw -LiteralPath $webPomPath
-    foreach ($module in @('Forgex_Common_Infra', 'Forgex_Common_Data', 'Forgex_Common_Crypto', 'Forgex_Common_Excel')) {
-        if ($webPomContent -match [regex]::Escape("<artifactId>$module</artifactId>")) {
-            $errors.Add("Forgex_Common_Web must not depend on heavy capability module: $module")
-        }
-    }
-}
-
-$sourceOwners = @{}
-foreach ($module in $requiredModules) {
-    $sourceRoot = Join-Path $backendRoot "$module/src/main/java"
-    if (-not (Test-Path -LiteralPath $sourceRoot)) {
-        continue
-    }
-
-    foreach ($sourceFile in Get-ChildItem -LiteralPath $sourceRoot -Recurse -Filter '*.java') {
-        $relativePath = $sourceFile.FullName.Substring($sourceRoot.Length + 1)
-        if ($sourceOwners.ContainsKey($relativePath)) {
-            $errors.Add("Duplicate Java source $relativePath in $($sourceOwners[$relativePath]) and $module")
-        } else {
-            $sourceOwners[$relativePath] = $module
-        }
-    }
-}
-
-$aggregateSource = Join-Path $backendRoot 'Forgex_Common/src/main/java'
-if (Test-Path -LiteralPath $aggregateSource) {
-    $remainingSources = @(Get-ChildItem -LiteralPath $aggregateSource -Recurse -Filter '*.java')
-    if ($remainingSources.Count -gt 0) {
-        $errors.Add("Forgex_Common aggregate still contains $($remainingSources.Count) Java source files")
-    }
-}
-
-$businessModules = @(
-    'Forgex_Auth',
-    'Forgex_Sys',
-    'Forgex_Basic',
-    'Forgex_Gateway',
-    'Forgex_Job',
-    'Forgex_Workflow',
-    'Forgex_Report',
-    'Forgex_Integration'
-)
-
-$classOwners = @{}
-foreach ($module in $requiredModules) {
-    $sourceRoot = Join-Path $backendRoot "$module/src/main/java"
-    if (-not (Test-Path -LiteralPath $sourceRoot)) {
-        continue
-    }
-
-    foreach ($sourceFile in Get-ChildItem -LiteralPath $sourceRoot -Recurse -Filter '*.java') {
-        $content = Get-Content -Raw -LiteralPath $sourceFile.FullName
-        $packageMatch = [regex]::Match($content, '(?m)^package\s+([\w.]+);')
-        if ($packageMatch.Success) {
-            $classOwners["$($packageMatch.Groups[1].Value).$($sourceFile.BaseName)"] = $module
-        }
-    }
-}
-
-foreach ($module in $businessModules) {
-    $pomPath = Join-Path $backendRoot "$module/pom.xml"
-    if (-not (Test-Path -LiteralPath $pomPath)) {
-        $errors.Add("Missing business module POM: $module/pom.xml")
-        continue
-    }
-
-    [xml]$pom = Get-Content -Raw -Encoding UTF8 -LiteralPath $pomPath
-    $namespace = [System.Xml.XmlNamespaceManager]::new($pom.NameTable)
-    $namespace.AddNamespace('m', 'http://maven.apache.org/POM/4.0.0')
-    $declaredDependencies = @(
-        $pom.SelectNodes('/m:project/m:dependencies/m:dependency/m:artifactId', $namespace) |
-            ForEach-Object { $_.InnerText }
-    )
-
-    if ('Forgex_Common' -in $declaredDependencies) {
-        $errors.Add("$module must use precise common dependencies instead of Forgex_Common")
-    }
-
-    $usedModules = [System.Collections.Generic.HashSet[string]]::new()
-    $sourceRoot = Join-Path $backendRoot "$module/src"
-    if (Test-Path -LiteralPath $sourceRoot) {
-        foreach ($sourceFile in Get-ChildItem -LiteralPath $sourceRoot -Recurse -Filter '*.java') {
-            $content = Get-Content -Raw -LiteralPath $sourceFile.FullName
-            foreach ($importMatch in [regex]::Matches(
-                $content,
-                '(?m)^import\s+(?:static\s+)?(com\.forgex\.common\.[\w.]+)(?:\.\*)?;'
-            )) {
-                $className = $importMatch.Groups[1].Value
-                if ($classOwners.ContainsKey($className)) {
-                    [void]$usedModules.Add($classOwners[$className])
-                }
+# 按实际 POM 坐标索引模块，目录分组不参与模块身份判断。
+foreach ($file in Get-ChildItem -LiteralPath $backendRoot -Recurse -Filter pom.xml) {
+    if ($file.FullName -match '[\\/]target[\\/]') { continue }
+    [xml]$pom = Get-Content -Raw -Encoding UTF8 -LiteralPath $file.FullName
+    $id = [string]$pom.project.artifactId
+    if ($modules.ContainsKey($id)) { $errors.Add("Duplicate artifact: $id"); continue }
+    $deps = @($pom.project.dependencies.dependency | Where-Object { $_.scope -ne 'test' })
+    $modules[$id] = @{ Root = $file.DirectoryName; Pom = $pom; Dependencies = $deps }
+    $source = Join-Path $file.DirectoryName 'src/main/java'
+    if (Test-Path -LiteralPath $source) {
+        foreach ($java in Get-ChildItem -LiteralPath $source -Recurse -Filter '*.java') {
+            $text = Get-Content -Raw -Encoding UTF8 -LiteralPath $java.FullName
+            $package = [regex]::Match($text, '(?m)^package\s+([\w.]+);')
+            if ($package.Success) {
+                $class = "$($package.Groups[1].Value).$($java.BaseName)"
+                if ($owners.ContainsKey($class)) { $errors.Add("Duplicate source: $class") }
+                $owners[$class] = $id
             }
         }
     }
+}
 
-    foreach ($usedModule in $usedModules) {
-        if ($usedModule -notin $declaredDependencies) {
-            $errors.Add("$module uses $usedModule classes without a direct Maven dependency")
+$commonIds = @($modules.Keys | Where-Object { $modules[$_].Root.StartsWith((Join-Path $backendRoot 'forgex-common'), [StringComparison]::OrdinalIgnoreCase) })
+$serviceIds = @('Forgex_Auth','Forgex_Sys','Forgex_Basic','Forgex_Job','Forgex_Workflow','Forgex_Integration','Forgex_Report','Forgex_Gateway')
+foreach ($required in @('forgex-common','forgex-common-parent','forgex-common-bom','forgex-common-starter','forgex-admin','forgex-admin-client','forgex-admin-runtime') + $serviceIds) {
+    if (-not $modules.ContainsKey($required)) { $errors.Add("Missing module: $required") }
+}
+
+foreach ($id in $modules.Keys) {
+    $module = $modules[$id]
+    $direct = @($module.Dependencies | ForEach-Object { [string]$_.artifactId })
+    foreach ($dep in $module.Dependencies) {
+        $artifact = [string]$dep.artifactId
+        if ($id -in $commonIds -and $dep.groupId -eq 'com.forgex' -and $artifact -notin $commonIds) {
+            $errors.Add("$id depends on non-common artifact: $artifact")
+        }
+        if ($artifact -in $serviceIds) { $errors.Add("$id depends on runnable service implementation: $artifact") }
+        if (($id -like '*_Api' -or $id -in @('Forgex_Common_Core','Forgex_Common_Contract','Forgex_Domain_Contract')) -and
+            $artifact -match 'spring-boot-starter|spring-cloud-starter|mybatis-plus-spring|dynamic-datasource|rocketmq|poi-ooxml|fastexcel|bcprov') {
+            $errors.Add("$id has heavy contract dependency: $artifact")
+        }
+    }
+    if ($id -in $serviceIds -and 'Forgex_Common' -in $direct) { $errors.Add("$id uses compatibility aggregate") }
+    $source = Join-Path $module.Root 'src/main/java'
+    if (-not (Test-Path -LiteralPath $source)) { continue }
+    foreach ($java in Get-ChildItem -LiteralPath $source -Recurse -Filter '*.java') {
+        $text = Get-Content -Raw -Encoding UTF8 -LiteralPath $java.FullName
+        if ($id -in $commonIds -and $text -match '@(?:EnableFeignClients|FeignClient|TableName)\b|@DS\("(?:admin|common)"\)') {
+            # 通用基础实体不映射任何平台表；平台 Feign 和持久化仅存在于 Admin。
+            $errors.Add("Common source contains platform binding: $($java.FullName)")
+        }
+        foreach ($match in [regex]::Matches($text, '(?m)^import\s+(?:static\s+)?(com\.forgex\.[\w.]+)(?:\.\*)?;')) {
+            $class = $match.Groups[1].Value
+            if (-not $owners.ContainsKey($class)) { continue }
+            $owner = $owners[$class]
+            if ($owner -eq $id) { continue }
+            if ($id -in $commonIds -and $owner -notin $commonIds) { $errors.Add("$id imports platform source: $class") }
+            if ($id -in $serviceIds -and $owner -notin $direct) { $errors.Add("$id uses $owner without direct dependency ($class)") }
         }
     }
 }
-
+$starterDeps = @($modules['forgex-common-starter'].Dependencies | ForEach-Object { [string]$_.artifactId })
+foreach ($forbidden in @('forgex-admin-runtime','forgex-admin-client','Forgex_Common_Infra','Forgex_Common_Data','Forgex_Common_Excel')) {
+    if ($forbidden -in $starterDeps) { $errors.Add("Starter requires optional runtime: $forbidden") }
+}
 if ($errors.Count -gt 0) {
-    $errors | ForEach-Object { Write-Error $_ -ErrorAction Continue }
+    $errors | Select-Object -Unique | ForEach-Object { Write-Error $_ -ErrorAction Continue }
     exit 1
 }
-
-Write-Host "Common module boundary verification passed ($($requiredModules.Count) modules)."
+Write-Host "Common/Admin boundary verification passed ($($modules.Count) modules)."

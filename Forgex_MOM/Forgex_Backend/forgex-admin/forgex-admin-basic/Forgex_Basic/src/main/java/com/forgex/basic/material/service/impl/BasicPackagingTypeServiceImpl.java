@@ -14,8 +14,8 @@ import com.forgex.basic.material.service.IBasicPackagingTypeService;
 import com.forgex.basic.material.service.IMaterialPackagingRelationService;
 import com.forgex.common.exception.I18nBusinessException;
 import com.forgex.common.web.StatusCode;
-import com.forgex.sys.domain.entity.SysDict;
-import com.forgex.sys.mapper.SysDictMapper;
+import com.forgex.common.api.dto.SysDictValueRequest;
+import com.forgex.basic.platform.SysPlatformSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -51,7 +51,7 @@ public class BasicPackagingTypeServiceImpl extends ServiceImpl<BasicPackagingTyp
 
     private final BasicPackagingTypeMapper packagingTypeMapper;
     private final BasicUnitMapper unitMapper;
-    private final SysDictMapper dictMapper;
+    private final SysPlatformSupport platformSupport;
     private final IMaterialPackagingRelationService relationService;
 
     /**
@@ -255,22 +255,7 @@ public class BasicPackagingTypeServiceImpl extends ServiceImpl<BasicPackagingTyp
     }
 
     private void validateDictValue(Long tenantId, String dictValue) {
-        SysDict root = dictMapper.selectOne(new LambdaQueryWrapper<SysDict>()
-                .eq(SysDict::getDictCode, PACKAGING_SPEC_TYPE_DICT)
-                .eq(SysDict::getDeleted, false)
-                .last("LIMIT 1"));
-        if (root == null) {
-            return;
-        }
-        Long currentTenant = tenantId == null ? 0L : tenantId;
-        Long rootTenant = root.getTenantId() == null ? 0L : root.getTenantId();
-        Long count = dictMapper.selectCount(new LambdaQueryWrapper<SysDict>()
-                .eq(SysDict::getParentId, root.getId())
-                .eq(SysDict::getDictValue, dictValue)
-                .eq(SysDict::getStatus, 1)
-                .eq(SysDict::getDeleted, false)
-                .in(SysDict::getTenantId, rootTenant, currentTenant));
-        if (count == null || count == 0) {
+        if (!platformSupport.dictValueValid(new SysDictValueRequest(tenantId, PACKAGING_SPEC_TYPE_DICT, dictValue))) {
             throw packagingException(BasicPromptEnum.PACKAGING_SPEC_TYPE_INVALID);
         }
     }
