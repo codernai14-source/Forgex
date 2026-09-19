@@ -5,9 +5,9 @@
 
 ## 源码位置
 
-- 连接入口：`Forgex_MOM/Forgex_Backend/Forgex_Sys/src/main/java/com/forgex/sys/controller/SysMessageSseController.java`
-- 按租户和用户管理连接：`Forgex_MOM/Forgex_Backend/Forgex_Sys/src/main/java/com/forgex/sys/service/SseEmitterService.java`
-- 旧的任务进度推送服务：`Forgex_MOM/Forgex_Backend/Forgex_Sys/src/main/java/com/forgex/sys/service/SsePushService.java`
+- 连接入口：`Forgex_MOM/Forgex_Backend/forgex-admin/forgex-admin-sys/Forgex_Sys/src/main/java/com/forgex/sys/controller/SysMessageSseController.java`
+- 按租户和用户管理连接：`Forgex_MOM/Forgex_Backend/forgex-admin/forgex-admin-sys/Forgex_Sys/src/main/java/com/forgex/sys/service/SseEmitterService.java`
+- 旧的任务进度推送服务：`Forgex_MOM/Forgex_Backend/forgex-admin/forgex-admin-sys/Forgex_Sys/src/main/java/com/forgex/sys/service/SsePushService.java`
 - 前端封装：`Forgex_MOM/Forgex_Fronted/src/hooks/useSse.ts`、`src/stores/sse.ts`
 
 ## 当前实现的两条链路

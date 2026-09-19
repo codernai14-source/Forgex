@@ -1,56 +1,56 @@
 version: 1
 services:
   - serviceId: gateway
-    modulePath: Forgex_MOM/Forgex_Backend/Forgex_Gateway
+    modulePath: Forgex_MOM/Forgex_Backend/forgex-admin/forgex-admin-gateway/Forgex_Gateway
     artifactName: forgex-gateway.jar
     defaultPort: 9000
     winswServiceName: forgex-gateway-{INSTANCE_CODE}
     composeServiceName: forgex-gateway
     requiresLicenseCheck: true
   - serviceId: auth
-    modulePath: Forgex_MOM/Forgex_Backend/Forgex_Auth
+    modulePath: Forgex_MOM/Forgex_Backend/forgex-admin/forgex-admin-auth/Forgex_Auth
     artifactName: forgex-auth.jar
     defaultPort: 9001
     winswServiceName: forgex-auth-{INSTANCE_CODE}
     composeServiceName: forgex-auth
     requiresLicenseCheck: false
   - serviceId: sys
-    modulePath: Forgex_MOM/Forgex_Backend/Forgex_Sys
+    modulePath: Forgex_MOM/Forgex_Backend/forgex-admin/forgex-admin-sys/Forgex_Sys
     artifactName: forgex-sys.jar
     defaultPort: 9002
     winswServiceName: forgex-sys-{INSTANCE_CODE}
     composeServiceName: forgex-sys
     requiresLicenseCheck: true
   - serviceId: basic
-    modulePath: Forgex_MOM/Forgex_Backend/Forgex_Basic
+    modulePath: Forgex_MOM/Forgex_Backend/forgex-admin/forgex-admin-basic/Forgex_Basic
     artifactName: forgex-basic.jar
     defaultPort: 9003
     winswServiceName: forgex-basic-{INSTANCE_CODE}
     composeServiceName: forgex-basic
     requiresLicenseCheck: false
   - serviceId: job
-    modulePath: Forgex_MOM/Forgex_Backend/Forgex_Job
+    modulePath: Forgex_MOM/Forgex_Backend/forgex-admin/forgex-admin-job/Forgex_Job
     artifactName: forgex-job.jar
     defaultPort: 9004
     winswServiceName: forgex-job-{INSTANCE_CODE}
     composeServiceName: forgex-job
     requiresLicenseCheck: true
   - serviceId: integration
-    modulePath: Forgex_MOM/Forgex_Backend/Forgex_Integration
+    modulePath: Forgex_MOM/Forgex_Backend/forgex-admin/forgex-admin-integration/Forgex_Integration
     artifactName: forgex-integration.jar
     defaultPort: 9007
     winswServiceName: forgex-integration-{INSTANCE_CODE}
     composeServiceName: forgex-integration
     requiresLicenseCheck: false
   - serviceId: workflow
-    modulePath: Forgex_MOM/Forgex_Backend/Forgex_Workflow
+    modulePath: Forgex_MOM/Forgex_Backend/forgex-admin/forgex-admin-workflow/Forgex_Workflow
     artifactName: forgex-workflow.jar
     defaultPort: 9005
     winswServiceName: forgex-workflow-{INSTANCE_CODE}
     composeServiceName: forgex-workflow
     requiresLicenseCheck: false
   - serviceId: report
-    modulePath: Forgex_MOM/Forgex_Backend/Forgex_Report
+    modulePath: Forgex_MOM/Forgex_Backend/forgex-admin/forgex-admin-report/Forgex_Report
     artifactName: forgex-report.jar
     defaultPort: 9006
     winswServiceName: forgex-report-{INSTANCE_CODE}

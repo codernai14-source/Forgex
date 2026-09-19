@@ -198,9 +198,9 @@ $candidateDirs = @(
     (Join-Path (Get-Location).Path "forgex\license"),
     "D:\forgex\forgex\license",
     "D:\mine_product\forgex\forgex\license",
-    "D:\mine_product\forgex\Forgex_MOM\Forgex_Backend\Forgex_Gateway\forgex\license",
-    "D:\mine_product\forgex\Forgex_MOM\Forgex_Backend\Forgex_Sys\forgex\license",
-    "D:\mine_product\forgex\Forgex_MOM\Forgex_Backend\Forgex_Job\forgex\license"
+    "D:\mine_product\forgex\Forgex_MOM\Forgex_Backend\forgex-admin\forgex-admin-gateway\Forgex_Gateway\forgex\license",
+    "D:\mine_product\forgex\Forgex_MOM\Forgex_Backend\forgex-admin\forgex-admin-sys\Forgex_Sys\forgex\license",
+    "D:\mine_product\forgex\Forgex_MOM\Forgex_Backend\forgex-admin\forgex-admin-job\Forgex_Job\forgex\license"
 ) | Select-Object -Unique
 
 foreach ($dir in $candidateDirs) {

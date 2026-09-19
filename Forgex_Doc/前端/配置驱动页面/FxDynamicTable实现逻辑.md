@@ -45,8 +45,8 @@ Forgex_MOM/Forgex_Fronted/src/views/system/menu/index.vue
 ### 后端配置服务
 
 ```text
-Forgex_MOM/Forgex_Backend/Forgex_Common_Infra/src/main/java/com/forgex/common/service/table/impl/FxTableConfigServiceImpl.java
-Forgex_MOM/Forgex_Backend/Forgex_Common_Infra/src/main/java/com/forgex/common/service/table/impl/FxUserTableConfigServiceImpl.java
+Forgex_MOM/Forgex_Backend/forgex-admin/forgex-admin-runtime/src/main/java/com/forgex/common/service/table/impl/FxTableConfigServiceImpl.java
+Forgex_MOM/Forgex_Backend/forgex-admin/forgex-admin-runtime/src/main/java/com/forgex/common/service/table/impl/FxUserTableConfigServiceImpl.java
 ```
 
 ## 核心对象与字段

@@ -201,14 +201,14 @@ Copy-DirectoryContents -Source $frontendDist -Destination (Join-Path $windowsSta
 Copy-DirectoryContents -Source $frontendDist -Destination (Join-Path $linuxStaging "frontend")
 
 $moduleDirs = @(
-    "Forgex_Gateway",
-    "Forgex_Auth",
-    "Forgex_Sys",
-    "Forgex_Basic",
-    "Forgex_Job",
-    "Forgex_Integration",
-    "Forgex_Workflow",
-    "Forgex_Report"
+    "forgex-admin\forgex-admin-gateway\Forgex_Gateway",
+    "forgex-admin\forgex-admin-auth\Forgex_Auth",
+    "forgex-admin\forgex-admin-sys\Forgex_Sys",
+    "forgex-admin\forgex-admin-basic\Forgex_Basic",
+    "forgex-admin\forgex-admin-job\Forgex_Job",
+    "forgex-admin\forgex-admin-integration\Forgex_Integration",
+    "forgex-admin\forgex-admin-workflow\Forgex_Workflow",
+    "forgex-admin\forgex-admin-report\Forgex_Report"
 )
 
 foreach ($module in $moduleDirs) {

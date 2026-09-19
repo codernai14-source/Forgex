@@ -30,6 +30,19 @@ function readUtf8(path) {
   return readFileSync(path, 'utf8').replace(/^\uFEFF/, '')
 }
 
+function firstExistingPath(paths) {
+  return paths.find(path => existsSync(path)) ?? paths[0]
+}
+
+function findMavenModuleName(sourcePath) {
+  let directory = dirname(sourcePath)
+  while (directory && directory !== dirname(directory)) {
+    if (existsSync(join(directory, 'pom.xml'))) return basename(directory)
+    directory = dirname(directory)
+  }
+  return basename(dirname(dirname(dirname(dirname(sourcePath)))))
+}
+
 function toRepoPath(root, path) {
   return relative(root, path).split(sep).join('/')
 }
@@ -43,7 +56,7 @@ function discoverPorts(root, findings) {
   for (const path of walk(join(root, 'Forgex_MOM', 'Forgex_Backend'), file => basename(file) === 'application.yml')) {
     const source = readUtf8(path)
     const port = source.match(/^\s*port:\s*\$\{[^:}]+:(\d+)\}/m)?.[1]
-    if (port) services[basename(dirname(dirname(dirname(dirname(path)))))] = port
+    if (port) services[findMavenModuleName(path)] = port
   }
 
   const manifest = readUtf8(join(root, 'Forgex_Build', 'manifest', 'services.yml'))
@@ -73,9 +86,14 @@ function discoverModules(root, findings) {
     add(findings, 'MODULES:android:core', 'error', `Android core 模块文档为 ${documentedCount ?? '未标注'}，源码为 ${coreCount}`)
   }
 
-  const pom = readUtf8(join(root, 'Forgex_MOM', 'Forgex_Backend', 'pom.xml'))
-  const serviceModules = [...pom.matchAll(/<module>(Forgex_(?:Gateway|Auth|Sys|Basic|Job|Workflow|Report|Integration))<\/module>/g)]
-    .map(match => match[1])
+  const manifest = readUtf8(join(root, 'Forgex_Build', 'manifest', 'services.yml'))
+  let serviceModules = [...manifest.matchAll(/serviceId:\s*\w+[\s\S]*?modulePath:\s*([^\r\n]+)/g)]
+    .map(match => match[1].trim().split('/').at(-1))
+  if (serviceModules.length === 0) {
+    const pom = readUtf8(join(root, 'Forgex_MOM', 'Forgex_Backend', 'pom.xml'))
+    serviceModules = [...pom.matchAll(/<module>(Forgex_(?:Gateway|Auth|Sys|Basic|Job|Workflow|Report|Integration))<\/module>/g)]
+      .map(match => match[1])
+  }
   const backendReadme = readUtf8(join(root, 'Forgex_Doc', '后端', 'README.md'))
   for (const moduleName of serviceModules) {
     if (!backendReadme.includes(`| ${moduleName} |`)) {
@@ -113,12 +131,18 @@ function discoverDocumentPaths(root, findings) {
 
 function discoverContractDrift(root, findings) {
   const androidContract = readUtf8(join(root, 'Forgex_Doc', '安卓端', '网络层与统一结果.md'))
-  const gatewaySource = readUtf8(join(root, 'Forgex_MOM', 'Forgex_Backend', 'Forgex_Gateway', 'src', 'main', 'java', 'com', 'forgex', 'gateway', 'filter', 'TenantPropagationGlobalFilter.java'))
+  const gatewaySource = readUtf8(firstExistingPath([
+    join(root, 'Forgex_MOM', 'Forgex_Backend', 'forgex-admin', 'forgex-admin-gateway', 'Forgex_Gateway', 'src', 'main', 'java', 'com', 'forgex', 'gateway', 'filter', 'TenantPropagationGlobalFilter.java'),
+    join(root, 'Forgex_MOM', 'Forgex_Backend', 'Forgex_Gateway', 'src', 'main', 'java', 'com', 'forgex', 'gateway', 'filter', 'TenantPropagationGlobalFilter.java'),
+  ]))
   const tenantHeader = gatewaySource.match(/HEADER_TENANT_ID\s*=\s*"([^"]+)"/)?.[1]
   if (!tenantHeader || /(?<!X-)Tenant-Id/.test(androidContract) || !androidContract.includes(tenantHeader)) {
     add(findings, 'CONTRACT:android:tenant-header', 'error', 'Android 网络文档未声明 X-Tenant-Id 作为租户头')
   }
-  const statusCodeSource = readUtf8(join(root, 'Forgex_MOM', 'Forgex_Backend', 'Forgex_Common_Contract', 'src', 'main', 'java', 'com', 'forgex', 'common', 'web', 'StatusCode.java'))
+  const statusCodeSource = readUtf8(firstExistingPath([
+    join(root, 'Forgex_MOM', 'Forgex_Backend', 'forgex-common', 'Forgex_Common_Contract', 'src', 'main', 'java', 'com', 'forgex', 'common', 'web', 'StatusCode.java'),
+    join(root, 'Forgex_MOM', 'Forgex_Backend', 'Forgex_Common_Contract', 'src', 'main', 'java', 'com', 'forgex', 'common', 'web', 'StatusCode.java'),
+  ]))
   const statusCodes = [...statusCodeSource.matchAll(/public static final int \w+\s*=\s*(\d+);/g)]
     .map(match => Number(match[1]))
     .filter(code => code >= 600 && code < 700)

@@ -7,7 +7,7 @@
 
 Forgex_MOM/Forgex_Backend 中没有 MySQL TDE 开关、密钥管理器或 TDE 迁移脚本；数据库目录 Forgex_Doc/数据库 也没有可执行 TDE 初始化 SQL。因此 TDE 不是当前产品代码已实现的功能，本页只记录部署评估边界。
 
-应用层加密的实现位于 Forgex_MOM/Forgex_Backend/Forgex_Common_Crypto 及各业务加密服务，和数据库磁盘加密是两条独立链路。
+应用层加密的实现位于 Forgex_MOM/Forgex_Backend/forgex-common/Forgex_Common_Crypto 及各业务加密服务，和数据库磁盘加密是两条独立链路。
 
 ## 评估流程
 

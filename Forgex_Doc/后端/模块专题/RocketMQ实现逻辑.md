@@ -10,13 +10,13 @@
 
 | 能力 | 代码位置 | 说明 |
 |---|---|---|
-| MQ 消息体 | `Forgex_MOM/Forgex_Backend/Forgex_Common_Infra/src/main/java/com/forgex/common/mq/message/TemplateMessageRequest.java` | 模板消息异步载体 |
-| MQ 发送接口 | `Forgex_MOM/Forgex_Backend/Forgex_Common_Infra/src/main/java/com/forgex/common/mq/message/TemplateMessageSender.java` | 发送能力抽象 |
-| RocketMQ 发送实现 | `Forgex_MOM/Forgex_Backend/Forgex_Common_Infra/src/main/java/com/forgex/common/mq/message/impl/TemplateMessageSenderImpl.java` | 基于 `RocketMQTemplate` 发送 |
-| MQ 基础发送抽象 | `Forgex_MOM/Forgex_Backend/Forgex_Common_Infra/src/main/java/com/forgex/common/util/mq/MqSender.java` | 更通用的 MQ 抽象 |
-| MQ 空实现 | `Forgex_MOM/Forgex_Backend/Forgex_Common_Infra/src/main/java/com/forgex/common/util/mq/NoopMqSender.java` | 未接入真实 MQ 时兜底 |
-| RocketMQ 消费者 | `Forgex_MOM/Forgex_Backend/Forgex_Sys/src/main/java/com/forgex/sys/mq/TemplateMessageRocketMqConsumer.java` | 消费模板消息 |
-| 模板消息消费处理 | `Forgex_MOM/Forgex_Backend/Forgex_Sys/src/main/java/com/forgex/sys/service/impl/TemplateMessageServiceImpl.java` | MQ 消费后继续走模板消息流程 |
+| MQ 消息体 | `Forgex_MOM/Forgex_Backend/forgex-common/Forgex_Common_Infra/src/main/java/com/forgex/common/mq/message/TemplateMessageRequest.java` | 模板消息异步载体 |
+| MQ 发送接口 | `Forgex_MOM/Forgex_Backend/forgex-common/Forgex_Common_Infra/src/main/java/com/forgex/common/mq/message/TemplateMessageSender.java` | 发送能力抽象 |
+| RocketMQ 发送实现 | `Forgex_MOM/Forgex_Backend/forgex-common/Forgex_Common_Infra/src/main/java/com/forgex/common/mq/message/impl/TemplateMessageSenderImpl.java` | 基于 `RocketMQTemplate` 发送 |
+| MQ 基础发送抽象 | `Forgex_MOM/Forgex_Backend/forgex-common/Forgex_Common_Infra/src/main/java/com/forgex/common/util/mq/MqSender.java` | 更通用的 MQ 抽象 |
+| MQ 空实现 | `Forgex_MOM/Forgex_Backend/forgex-common/Forgex_Common_Infra/src/main/java/com/forgex/common/util/mq/NoopMqSender.java` | 未接入真实 MQ 时兜底 |
+| RocketMQ 消费者 | `Forgex_MOM/Forgex_Backend/forgex-admin/forgex-admin-sys/Forgex_Sys/src/main/java/com/forgex/sys/mq/TemplateMessageRocketMqConsumer.java` | 消费模板消息 |
+| 模板消息消费处理 | `Forgex_MOM/Forgex_Backend/forgex-admin/forgex-admin-sys/Forgex_Sys/src/main/java/com/forgex/sys/service/impl/TemplateMessageServiceImpl.java` | MQ 消费后继续走模板消息流程 |
 | Nacos 示例配置 | `Forgex_Doc/部署/nacos配置/DEFAULT_GROUP/rocketmq.yml` | NameServer、生产者、消费者基础配置 |
 
 ## 当前 RocketMQ 的业务定位

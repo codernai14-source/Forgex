@@ -35,11 +35,11 @@ test('reports a missing frontend src shorthand path from documentation', t => {
   write('Forgex_MOM/Forgex_Mobile_Android/settings.gradle.kts')
   write('Forgex_MOM/Forgex_Backend/pom.xml')
   write(
-    'Forgex_MOM/Forgex_Backend/Forgex_Gateway/src/main/java/com/forgex/gateway/filter/TenantPropagationGlobalFilter.java',
+    'Forgex_MOM/Forgex_Backend/forgex-admin/forgex-admin-gateway/Forgex_Gateway/src/main/java/com/forgex/gateway/filter/TenantPropagationGlobalFilter.java',
     'HEADER_TENANT_ID = "X-Tenant-Id";'
   )
   write(
-    'Forgex_MOM/Forgex_Backend/Forgex_Common_Contract/src/main/java/com/forgex/common/web/StatusCode.java',
+    'Forgex_MOM/Forgex_Backend/forgex-common/Forgex_Common_Contract/src/main/java/com/forgex/common/web/StatusCode.java',
     ''
   )
   write('Forgex_Build/manifest/services.yml')

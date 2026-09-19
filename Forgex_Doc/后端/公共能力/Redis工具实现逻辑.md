@@ -10,11 +10,11 @@
 
 | 能力 | 代码位置 | 说明 |
 |---|---|---|
-| Redis 工具类 | `Forgex_MOM/Forgex_Backend/Forgex_Common_Infra/src/main/java/com/forgex/common/util/RedisHelper.java` | 基础字符串/JSON 操作封装 |
-| Redisson 客户端 | `Forgex_MOM/Forgex_Backend/Forgex_Auth/src/main/java/com/forgex/auth/service/impl/AuthServiceImpl.java` | 分布式锁、原子计数器 |
-| 字典缓存配置 | `Forgex_MOM/Forgex_Backend/Forgex_Common_Infra/src/main/java/com/forgex/common/config/DictCacheConfig.java` | Caffeine + Redis 二级缓存 |
-| 缓存失效监听 | `Forgex_MOM/Forgex_Backend/Forgex_Common_Infra/src/main/java/com/forgex/common/dict/DictCacheInvalidationListener.java` | Redis Pub/Sub 消息监听 |
-| 字典国际化解析 | `Forgex_MOM/Forgex_Backend/Forgex_Common_Infra/src/main/java/com/forgex/common/dict/DictI18nResolver.java` | 三级缓存查询链路 |
+| Redis 工具类 | `Forgex_MOM/Forgex_Backend/forgex-common/Forgex_Common_Infra/src/main/java/com/forgex/common/util/RedisHelper.java` | 基础字符串/JSON 操作封装 |
+| Redisson 客户端 | `Forgex_MOM/Forgex_Backend/forgex-admin/forgex-admin-auth/Forgex_Auth/src/main/java/com/forgex/auth/service/impl/AuthServiceImpl.java` | 分布式锁、原子计数器 |
+| 字典缓存配置 | `Forgex_MOM/Forgex_Backend/forgex-admin/forgex-admin-runtime/src/main/java/com/forgex/common/config/DictCacheConfig.java` | Caffeine + Redis 二级缓存 |
+| 缓存失效监听 | `Forgex_MOM/Forgex_Backend/forgex-admin/forgex-admin-runtime/src/main/java/com/forgex/common/dict/DictCacheInvalidationListener.java` | Redis Pub/Sub 消息监听 |
+| 字典国际化解析 | `Forgex_MOM/Forgex_Backend/forgex-admin/forgex-admin-runtime/src/main/java/com/forgex/common/dict/DictI18nResolver.java` | 三级缓存查询链路 |
 
 ## 一、RedisHelper 工具类实现
 

@@ -107,9 +107,9 @@ $canonicalLicenseDir = Join-Path $canonicalHome 'license'
 $candidateDirs = @(
     $canonicalLicenseDir,
     (Join-Path $repoRoot 'forgex\license'),
-    (Join-Path $repoRoot 'Forgex_MOM\Forgex_Backend\Forgex_Gateway\forgex\license'),
-    (Join-Path $repoRoot 'Forgex_MOM\Forgex_Backend\Forgex_Sys\forgex\license'),
-    (Join-Path $repoRoot 'Forgex_MOM\Forgex_Backend\Forgex_Job\forgex\license'),
+    (Join-Path $repoRoot 'Forgex_MOM\Forgex_Backend\forgex-admin\forgex-admin-gateway\Forgex_Gateway\forgex\license'),
+    (Join-Path $repoRoot 'Forgex_MOM\Forgex_Backend\forgex-admin\forgex-admin-sys\Forgex_Sys\forgex\license'),
+    (Join-Path $repoRoot 'Forgex_MOM\Forgex_Backend\forgex-admin\forgex-admin-job\Forgex_Job\forgex\license'),
     'D:\forgex\forgex\license'
 ) | Select-Object -Unique
 
