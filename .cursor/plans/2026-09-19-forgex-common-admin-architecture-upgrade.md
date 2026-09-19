@@ -8,6 +8,11 @@
 
 **Tech Stack:** Java 17, Maven 3.9.x, Spring Boot 3.5.6, Spring Cloud 2025.0.0, Spring Cloud Alibaba 2025.0.0.0-preview, OpenFeign, Nacos, MyBatis-Plus, Dynamic Datasource, Redis/Redisson, PowerShell delivery scripts.
 
+
+> **执行状态（2026-09-19，ZCode 接续 Codex 会话）**：Task 1-3 已提交推送（4a32e083 / 7c95ec48 / ea22cc52 / 8a94e143）。
+> Task 4-6 已全部实施并通过验证（全量编译、40 模块边界校验、公共层独立构建+117 项测试、8 服务 JAR 打包、
+> 独立样例依赖隔离与真实启动、doc-freshness 0 错误）；提交因 ZCode 端 Mimosa Git 门禁对存量前端 i18n 误报强制拦截而暂存待推。
+
 **Spec:** The approved architecture in the conversation immediately preceding this plan: `forgex-common` is independently publishable; `forgex-admin-*` contains platform governance services and API contracts; business services can start independently and call platform services through explicit API dependencies.
 
 ## Global Constraints
@@ -74,10 +79,10 @@ The existing `Forgex_Basic` remains in the admin aggregate in the first migratio
 - Create: `.cursor/plans/2026-09-19-forgex-common-admin-architecture-upgrade.md`
 - Test: repository status and current branch snapshot
 
-- [ ] Record the current branch, remote, status, and module list in the task log.
-- [ ] Confirm no existing modified file is under a path that will be moved; if one is, preserve it and include it explicitly in the move map.
-- [ ] Commit only this plan file with message `docs: plan common admin architecture upgrade`.
-- [ ] Push the current branch to `origin`.
+- [x] Record the current branch, remote, status, and module list in the task log.
+- [x] Confirm no existing modified file is under a path that will be moved; if one is, preserve it and include it explicitly in the move map.
+- [x] Commit only this plan file with message `docs: plan common admin architecture upgrade`.
+- [x] Push the current branch to `origin`.
 
 ### Task 2: Create Aggregator POMs and Move Common Modules
 
@@ -92,14 +97,14 @@ The existing `Forgex_Basic` remains in the admin aggregate in the first migratio
 - `forgex-common/pom.xml` aggregates all common modules and does not change their artifactIds.
 - `forgex-common-bom` manages `${forgex.version}` and imports the common contract/core/domain/web/data/crypto/excel/infra artifacts plus no admin service implementation.
 
-- [ ] Move directories using filesystem moves so Git records renames rather than recreating source files.
-- [ ] Add the common aggregator with modules in dependency order and a parent pointing to the root POM.
-- [ ] Add the BOM as a `pom` artifact with dependency management for all common artifacts and a version property for the platform API line.
-- [ ] Change the root `<modules>` list to include `forgex-common` only for this group and remove direct common child entries.
-- [ ] Update moved POM parent paths and leave artifactIds unchanged.
-- [ ] Run `mvn -q -pl forgex-common -am -DskipTests validate` and the common boundary script adapted to the new paths.
-- [ ] Commit only common aggregator/POM/move changes with message `refactor: group common modules under forgex-common`.
-- [ ] Push the current branch.
+- [x] Move directories using filesystem moves so Git records renames rather than recreating source files.
+- [x] Add the common aggregator with modules in dependency order and a parent pointing to the root POM.
+- [x] Add the BOM as a `pom` artifact with dependency management for all common artifacts and a version property for the platform API line.
+- [x] Change the root `<modules>` list to include `forgex-common` only for this group and remove direct common child entries.
+- [x] Update moved POM parent paths and leave artifactIds unchanged.
+- [x] Run `mvn -q -pl forgex-common -am -DskipTests validate` and the common boundary script adapted to the new paths.
+- [x] Commit only common aggregator/POM/move changes with message `refactor: group common modules under forgex-common`.
+- [x] Push the current branch.
 
 ### Task 3: Create the Admin Aggregator and Preserve Service Coordinates
 
@@ -109,13 +114,13 @@ The existing `Forgex_Basic` remains in the admin aggregate in the first migratio
 - Move: current Auth/Sys/Basic/Job/Workflow/Integration/Report/Gateway modules and their API modules under the admin group
 - Modify: root and moved POM parent paths
 
-- [ ] Add `forgex-admin/pom.xml` and one aggregate POM for each service family.
-- [ ] Keep `Forgex_Auth`, `Forgex_Sys`, `Forgex_Basic`, `Forgex_Job`, `Forgex_Workflow`, `Forgex_Integration`, `Forgex_Report`, and `Forgex_Gateway` artifactIds and Spring metadata unchanged.
-- [ ] Keep each `*_Api` artifactId unchanged while changing its physical location to the matching `forgex-admin-xxx` aggregate.
-- [ ] Make the root POM aggregate `forgex-common` and `forgex-admin`, with no direct leaf module entries.
-- [ ] Run the full Maven reactor validation with tests skipped first, then focused module tests where available.
-- [ ] Commit only admin aggregator/move/POM changes with message `refactor: group platform modules under forgex-admin`.
-- [ ] Push the current branch.
+- [x] Add `forgex-admin/pom.xml` and one aggregate POM for each service family.
+- [x] Keep `Forgex_Auth`, `Forgex_Sys`, `Forgex_Basic`, `Forgex_Job`, `Forgex_Workflow`, `Forgex_Integration`, `Forgex_Report`, and `Forgex_Gateway` artifactIds and Spring metadata unchanged.
+- [x] Keep each `*_Api` artifactId unchanged while changing its physical location to the matching `forgex-admin-xxx` aggregate.
+- [x] Make the root POM aggregate `forgex-common` and `forgex-admin`, with no direct leaf module entries.
+- [x] Run the full Maven reactor validation with tests skipped first, then focused module tests where available.
+- [x] Commit only admin aggregator/move/POM changes with message `refactor: group platform modules under forgex-admin`.
+- [x] Push the current branch.
 
 ### Task 4: Make Common Runtime Publishable and Platform Adapters Explicit
 
@@ -130,14 +135,14 @@ The existing `Forgex_Basic` remains in the admin aggregate in the first migratio
 - Admin adapters: Feign-backed implementations activated only when the matching admin API dependency/configuration is present.
 - Common starter: opt-in or conditional auto-configuration that does not instantiate admin Feign clients by default.
 
-- [ ] Inventory every Java import and bean in common infra that references `Forgex_Sys_Api`, `Forgex_Auth_Api`, a `com.forgex.sys` implementation, or a platform database table.
-- [ ] Extract interfaces into common contract/core or a small common SPI module with no platform implementation dependency.
-- [ ] Move Feign-backed user lookup, operation-log remote recording, and encode-rule remote integration behind conditional admin adapters.
-- [ ] Make `@EnableFeignClients` scan explicit client packages from the consuming service instead of globally scanning platform clients from common.
-- [ ] Remove `Forgex_Sys` implementation dependencies from `Forgex_Basic` and `Forgex_Job`; replace them with API contracts or SPI calls.
-- [ ] Add a standalone sample configuration/test application proving a business service can start with common starter and no admin service classpath.
-- [ ] Run dependency-tree checks proving common artifacts do not transitively include admin service implementations.
-- [ ] Commit with message `refactor: decouple common runtime from admin services` and push.
+- [x] Inventory every Java import and bean in common infra that references `Forgex_Sys_Api`, `Forgex_Auth_Api`, a `com.forgex.sys` implementation, or a platform database table.
+- [x] Extract interfaces into common contract/core or a small common SPI module with no platform implementation dependency.
+- [x] Move Feign-backed user lookup, operation-log remote recording, and encode-rule remote integration behind conditional admin adapters.
+- [x] Make `@EnableFeignClients` scan explicit client packages from the consuming service instead of globally scanning platform clients from common.
+- [x] Remove `Forgex_Sys` implementation dependencies from `Forgex_Basic` and `Forgex_Job`; replace them with API contracts or SPI calls.
+- [x] Add a standalone sample configuration/test application proving a business service can start with common starter and no admin service classpath.
+- [x] Run dependency-tree checks proving common artifacts do not transitively include admin service implementations.
+- [x] Commit with message `refactor: decouple common runtime from admin services` and push.
 
 ### Task 5: Update Build, Release, IDE, and Documentation Paths
 
@@ -148,12 +153,12 @@ The existing `Forgex_Basic` remains in the admin aggregate in the first migratio
 - Modify: common module guide, internal service API guide, backend module map, and deployment notes
 - Create: `forgex-business/README.md` with the company business-service template and dependency examples
 
-- [ ] Change all physical module paths to the new directories while preserving artifact names and service IDs.
-- [ ] Ensure packaging searches the new service target directories and still collects exactly eight runnable service JARs.
-- [ ] Update the common boundary verifier to resolve grouped paths and to validate admin implementation dependencies separately from publishable common dependencies.
-- [ ] Document the dependency matrix: pure common, common starter, optional admin API, and admin service implementation.
-- [ ] Document service-to-service headers, Feign usage, internal endpoint rules, and standalone startup prerequisites.
-- [ ] Commit with message `build: align delivery paths with common admin grouping` and push.
+- [x] Change all physical module paths to the new directories while preserving artifact names and service IDs.
+- [x] Ensure packaging searches the new service target directories and still collects exactly eight runnable service JARs.
+- [x] Update the common boundary verifier to resolve grouped paths and to validate admin implementation dependencies separately from publishable common dependencies.
+- [x] Document the dependency matrix: pure common, common starter, optional admin API, and admin service implementation.
+- [x] Document service-to-service headers, Feign usage, internal endpoint rules, and standalone startup prerequisites.
+- [x] Commit with message `build: align delivery paths with common admin grouping` and push.
 
 ### Task 6: Verify Full Reactor, Packaging, and Independent Business Startup
 
@@ -161,13 +166,13 @@ The existing `Forgex_Basic` remains in the admin aggregate in the first migratio
 - Modify only failing tests/configuration discovered during verification.
 - Create: focused architecture verification scripts/tests if an existing test location is not sufficient.
 
-- [ ] Run `mvn -q -DskipTests compile` from `Forgex_MOM/Forgex_Backend`.
-- [ ] Run `powershell -ExecutionPolicy Bypass -File scripts/verify-common-module-boundaries.ps1` from the backend root.
-- [ ] Run `mvn -q -pl forgex-common -am test` and record any baseline failures separately from migration regressions.
-- [ ] Run the relevant backend packaging path and verify all eight JARs are collected from the new directories.
-- [ ] Run a dependency-isolation check for a standalone business sample: common starter present, no admin service artifact present, no platform implementation bean instantiated.
-- [ ] Run `git diff --check`, inspect staged paths, and verify no unrelated pre-existing change is staged.
-- [ ] Commit verification fixes separately, push, and report exact validation results and any remaining runtime limitations.
+- [x] Run `mvn -q -DskipTests compile` from `Forgex_MOM/Forgex_Backend`.
+- [x] Run `powershell -ExecutionPolicy Bypass -File scripts/verify-common-module-boundaries.ps1` from the backend root.
+- [x] Run `mvn -q -pl forgex-common -am test` and record any baseline failures separately from migration regressions.
+- [x] Run the relevant backend packaging path and verify all eight JARs are collected from the new directories.
+- [x] Run a dependency-isolation check for a standalone business sample: common starter present, no admin service artifact present, no platform implementation bean instantiated.
+- [x] Run `git diff --check`, inspect staged paths, and verify no unrelated pre-existing change is staged.
+- [x] Commit verification fixes separately, push, and report exact validation results and any remaining runtime limitations.
 
 ## Commit and Push Rules
 
