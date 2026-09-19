@@ -269,29 +269,8 @@
     </dependencyManagement>
 
     <modules>
-        <module>Forgex_Common_Contract</module>
-        <module>Forgex_Common_Core</module>
-        <module>Forgex_Domain_Contract</module>
-        <module>Forgex_Auth_Api</module>
-        <module>Forgex_Sys_Api</module>
-        <module>Forgex_Basic_Api</module>
-        <module>Forgex_Job_Api</module>
-        <module>Forgex_Workflow_Api</module>
-        <module>Forgex_Integration_Api</module>
-        <module>Forgex_Common_Web</module>
-        <module>Forgex_Common_Data</module>
-        <module>Forgex_Common_Crypto</module>
-        <module>Forgex_Common_Excel</module>
-        <module>Forgex_Common_Infra</module>
-        <module>Forgex_Common</module>
-        <module>Forgex_Auth</module>
-        <module>Forgex_Sys</module>
-        <module>Forgex_Basic</module>
-        <module>Forgex_Gateway</module>
-        <module>Forgex_Job</module>
-        <module>Forgex_Workflow</module>
-        <module>Forgex_Report</module>
-        <module>Forgex_Integration</module>
+        <module>forgex-common</module>
+        <module>forgex-admin</module>
     </modules>
 
     <build>

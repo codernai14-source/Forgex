@@ -1,0 +1,78 @@
+spring:
+  application:
+    name: forgex-sys
+  config:
+    import:
+      - nacos:common.yml
+      - nacos:${FORGEX_DATASOURCE_CONFIG:datasource-forgex-dev.yml}
+      - nacos:redis.yml
+      - nacos:rocketmq.yml
+      - optional:nacos:sa-token.yml
+  datasource:
+    type: com.baomidou.dynamic.datasource.DynamicRoutingDataSource
+  output:
+    ansi:
+      enabled: always
+  main:
+    allow-bean-definition-overriding: true
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 200MB
+  cloud:
+    nacos:
+      discovery:
+        username: ${FORGEX_NACOS_USERNAME:nacos}
+        password: ${FORGEX_NACOS_PASSWORD:123456}
+        server-addr: ${FORGEX_NACOS_ADDR:127.0.0.1:8848}
+        namespace: ${FORGEX_NACOS_NAMESPACE:dev}
+        group: ${FORGEX_NACOS_GROUP:DEFAULT_GROUP}
+        ip: ${FORGEX_NACOS_DISCOVERY_IP:127.0.0.1}
+      config:
+        username: ${FORGEX_NACOS_USERNAME:nacos}
+        password: ${FORGEX_NACOS_PASSWORD:123456}
+        server-addr: ${FORGEX_NACOS_ADDR:127.0.0.1:8848}
+        namespace: ${FORGEX_NACOS_NAMESPACE:dev}
+        group: ${FORGEX_NACOS_GROUP:DEFAULT_GROUP}
+        file-extension: yml
+        import-check:
+          enabled: false
+
+file:
+  upload:
+    path: ${FORGEX_UPLOAD_DIR:${FORGEX_HOME:./forgex}/data/uploads}
+  access:
+    prefix: /sys/files
+
+android-version:
+  upload:
+    temp-dir: ${FORGEX_ANDROID_VERSION_UPLOAD_TEMP_DIR:${FORGEX_HOME:./forgex}/data/tmp/android-version}
+    expire-hours: ${FORGEX_ANDROID_VERSION_UPLOAD_EXPIRE_HOURS:24}
+    cleanup-cron: ${FORGEX_ANDROID_VERSION_UPLOAD_CLEANUP_CRON:0 0 * * * ?}
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %clr(%-5level) %clr([%thread]){magenta} %clr(%logger{36}){cyan} - %msg%n"
+  charset:
+    console: UTF-8
+  level:
+    root: INFO
+
+server:
+  port: ${FORGEX_SYS_PORT:9002}
+  servlet:
+    context-path: /sys
+
+forgex:
+  siem:
+    host: ${FORGEX_SIEM_HOST:}
+    port: ${FORGEX_SIEM_PORT:514}
+  license:
+    scheduler-enabled: ${FORGEX_LICENSE_SCHEDULER_ENABLED:true}
+    refresh-interval-ms: ${FORGEX_LICENSE_REFRESH_INTERVAL_MS:900000}
+  application:
+    version: 1.0.0
+  dashboard:
+    map-longitude: 116.407526
+    map-latitude: 39.90403
+    map-location-name: Beijing

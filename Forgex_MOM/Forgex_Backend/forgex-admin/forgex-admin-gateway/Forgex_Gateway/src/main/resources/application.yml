@@ -1,0 +1,195 @@
+spring:
+  application:
+    name: forgex-gateway
+  config:
+    import:
+      - nacos:common.yml
+      - nacos:redis.yml
+      - optional:nacos:sa-token.yml
+  output:
+    ansi:
+      enabled: always
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - com.baomidou.mybatisplus.autoconfigure.MybatisPlusAutoConfiguration
+      - org.mybatis.spring.boot.autoconfigure.MybatisAutoConfiguration
+      - com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceAutoConfiguration
+      - org.springframework.boot.actuate.autoconfigure.jdbc.DataSourceHealthContributorAutoConfiguration
+  codec:
+    multipart:
+      max-in-memory-size: 209715200
+      max-parts: 10
+  cloud:
+    nacos:
+      discovery:
+        username: ${FORGEX_NACOS_USERNAME:nacos}
+        password: ${FORGEX_NACOS_PASSWORD:123456}
+        server-addr: ${FORGEX_NACOS_ADDR:127.0.0.1:8848}
+        namespace: ${FORGEX_NACOS_NAMESPACE:dev}
+        group: ${FORGEX_NACOS_GROUP:DEFAULT_GROUP}
+        ip: ${FORGEX_NACOS_DISCOVERY_IP:127.0.0.1}
+      config:
+        username: ${FORGEX_NACOS_USERNAME:nacos}
+        password: ${FORGEX_NACOS_PASSWORD:123456}
+        server-addr: ${FORGEX_NACOS_ADDR:127.0.0.1:8848}
+        namespace: ${FORGEX_NACOS_NAMESPACE:dev}
+        group: ${FORGEX_NACOS_GROUP:DEFAULT_GROUP}
+        file-extension: yml
+        import-check:
+          enabled: false
+    gateway:
+      server:
+        webflux:
+          filter:
+            json-to-grpc:
+              enabled: false
+          discovery:
+            locator:
+              enabled: false
+              lower-case-service-id: true
+              predicates:
+                - name: Path
+                  args:
+                    pattern: "'/api/' + serviceId.replace('forgex-', '') + '/**'"
+              filters:
+                - name: RewritePath
+                  args:
+                    regexp: "'/api/' + serviceId.replace('forgex-', '') + '/?(?<remaining>.*)'"
+                    replacement: "'/' + serviceId.replace('forgex-', '') + '/$\\{remaining}'"
+          globalcors:
+            add-to-simple-url-handler-mapping: true
+            cors-configurations:
+              '[/**]':
+                allowed-origin-patterns: "${FORGEX_CORS_ORIGINS:http://localhost:3000,http://localhost:5173}"
+                allowed-methods:
+                  - GET
+                  - POST
+                  - PUT
+                  - DELETE
+                  - OPTIONS
+                allowed-headers: "*"
+                exposed-headers:
+                  - Content-Disposition
+                allow-credentials: true
+                max-age: 3600
+          routes:
+            - id: api-auth
+              uri: lb://forgex-auth
+              predicates:
+                - Path=/api/auth/**
+              filters:
+                - StripPrefix=1
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@ipKeyResolver}"
+                    redis-rate-limiter.replenishRate: ${FORGEX_GATEWAY_AUTH_RATE:300}
+                    redis-rate-limiter.burstCapacity: ${FORGEX_GATEWAY_AUTH_BURST:600}
+                - name: CircuitBreaker
+                  args:
+                    name: api-auth
+                    fallbackUri: forward:/fallback/auth
+            - id: api-job
+              uri: lb://forgex-job
+              predicates:
+                - Path=/api/job/**
+              filters:
+                - StripPrefix=1
+                - name: CircuitBreaker
+                  args:
+                    name: api-job
+                    fallbackUri: forward:/fallback/job
+            - id: api-sys
+              uri: lb://forgex-sys
+              predicates:
+                - Path=/api/sys/**
+              filters:
+                - StripPrefix=1
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@ipKeyResolver}"
+                    redis-rate-limiter.replenishRate: ${FORGEX_GATEWAY_SYS_RATE:1000}
+                    redis-rate-limiter.burstCapacity: ${FORGEX_GATEWAY_SYS_BURST:3000}
+                - name: CircuitBreaker
+                  args:
+                    name: api-sys
+                    fallbackUri: forward:/fallback/sys
+            - id: api-basic
+              uri: lb://forgex-basic
+              predicates:
+                - Path=/api/basic/**
+              filters:
+                - StripPrefix=1
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@ipKeyResolver}"
+                    redis-rate-limiter.replenishRate: ${FORGEX_GATEWAY_BASIC_RATE:1000}
+                    redis-rate-limiter.burstCapacity: ${FORGEX_GATEWAY_BASIC_BURST:3000}
+                - name: CircuitBreaker
+                  args:
+                    name: api-basic
+                    fallbackUri: forward:/fallback/basic
+            - id: api-wf
+              uri: lb://forgex-workflow
+              predicates:
+                - Path=/api/wf/**
+              filters:
+                - StripPrefix=1
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@ipKeyResolver}"
+                    redis-rate-limiter.replenishRate: ${FORGEX_GATEWAY_WF_RATE:1000}
+                    redis-rate-limiter.burstCapacity: ${FORGEX_GATEWAY_WF_BURST:3000}
+                - name: CircuitBreaker
+                  args:
+                    name: api-wf
+                    fallbackUri: forward:/fallback/workflow
+            - id: api-integration
+              uri: lb://forgex-integration
+              predicates:
+                - Path=/api/integration/**
+              filters:
+                - StripPrefix=1
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@ipKeyResolver}"
+                    redis-rate-limiter.replenishRate: ${FORGEX_GATEWAY_INTEGRATION_RATE:1000}
+                    redis-rate-limiter.burstCapacity: ${FORGEX_GATEWAY_INTEGRATION_BURST:3000}
+                - name: CircuitBreaker
+                  args:
+                    name: api-integration
+                    fallbackUri: forward:/fallback/integration
+            - id: api-report
+              uri: lb://forgex-report
+              predicates:
+                - Path=/api/report/**
+              filters:
+                - StripPrefix=1
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@ipKeyResolver}"
+                    redis-rate-limiter.replenishRate: ${FORGEX_GATEWAY_REPORT_RATE:1000}
+                    redis-rate-limiter.burstCapacity: ${FORGEX_GATEWAY_REPORT_BURST:3000}
+                - name: CircuitBreaker
+                  args:
+                    name: api-report
+                    fallbackUri: forward:/fallback/report
+          default-filters:
+            - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST
+  main:
+    web-application-type: reactive
+
+resilience4j:
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 10s
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %clr(%-5level) %clr([%thread]){magenta} %clr(%logger{36}){cyan} - %msg%n"
+  charset:
+    console: UTF-8
+
+server:
+  port: ${FORGEX_GATEWAY_PORT:9000}
