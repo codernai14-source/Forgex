@@ -14,7 +14,7 @@
 3. **`Forgex_Common` 仅作迁移期兼容聚合**：自身不再放实现源码，**新代码禁止新增对它的依赖**。
 4. **内部 Feign 归属提供方 `*_Api`**，共享 DTO 归属 `Forgex_Domain_Contract`。
 5. HTTP 路径、统一返回 `R<T>`、请求头（租户/用户/语言）、服务端口语义保持不变。
-6. **物理目录已分组**（2026-09 架构升级）：`forgex-common/`（可独立发布的公共基础）、`forgex-admin/`（平台治理服务及其 API）、`forgex-business/`(企业业务服务扩展区)。Maven `artifactId`、Java 包名、服务名、JAR 名均保持不变。
+6. **物理目录已分组**（2026-09 架构升级）：`forgex-common/`（可独立发布的公共基础）、`forgex-admin/`（平台治理服务及其 API）、`forgex-business/`（业务服务分组：平台内置基础数据 `Forgex_Basic` 与企业二开扩展区）。Maven `artifactId`、Java 包名、服务名、JAR 名均保持不变。
 7. **公共层不再隐式绑定平台**：用户/编码规则/审计通过 SPI（`UserDirectory`、`EncodeRuleProvider`、`OperationLogRecorder`）接入，平台 Feign 实现在 `forgex-admin-client`，按需引入。
 
 ## 2. 模块地图
@@ -31,11 +31,15 @@ forgex-common/                  # 可独立构建、可发布到公司私服的�
 └── Forgex_Common               # 迁移期兼容聚合（无源码）
 forgex-admin/                   # 平台治理层
 ├── forgex-admin-client         # 平台 Feign 适配（UserDirectory、远程审计）按需引入
-├── forgex-admin-runtime        # 平台库表/字典缓存/动态表格等治理运行时（仅平台服务依赖）
-├── forgex-admin-{auth,sys,basic,job,workflow,integration,report,gateway}/...
+├── forgex-admin-runtime        # 平台库表/字典缓存/动态表格等治理运行时（仅随平台交付的服务依赖）
+├── forgex-admin-{auth,sys,job,workflow,integration,report,gateway}/...
 │   └── Forgex_{Xxx}[_Api]
 └── ...
-forgex-business/                # 企业业务服务扩展区（样例 company-order-service）
+forgex-business/                # 业务服务分组（在平台 Reactor 内）
+├── forgex-business-basic/      # 平台内置基础数据服务（业务域参考实现）
+│   ├── Forgex_Basic_Api
+│   └── Forgex_Basic
+└── company-order-service/      # 企业独立服务示例（不在 Reactor，独立构建部署）
 ```
 
 ### 2.1 公共能力模块
@@ -107,7 +111,7 @@ Common_* 能力模块 -> Common_Contract / Common_Core
 
 ### 3.3 业务服务怎么选依赖
 
-**平台内置服务**（Auth/Sys/Basic/Job/Workflow/Integration/Report）按能力精确选：
+**平台内置服务**（admin 分组的 Auth/Sys/Job/Workflow/Integration/Report/Gateway，业务分组的 Basic）按能力精确选：
 
 | 你需要的能力 | 依赖 |
 |---|---|
@@ -118,8 +122,8 @@ Common_* 能力模块 -> Common_Contract / Common_Core
 | 密码/字段/传输加密 | `Forgex_Common_Crypto` |
 | Excel 导入导出公共能力 | `Forgex_Common_Excel` |
 | 审计切面、许可证、MQ、全局异常 Advice 等 | `Forgex_Common_Infra` |
-| 平台库表（配置/字典缓存/动态表格/i18n 落库） | `forgex-admin-runtime`（仅平台服务） |
-| 用户名补全 / 远程审计的 Feign 实现 | `forgex-admin-client`（仅平台服务或显式接入平台的企业服务） |
+| 平台库表（配置/字典缓存/动态表格/i18n 落库） | `forgex-admin-runtime`（仅随平台交付的服务） |
+| 用户名补全 / 远程审计的 Feign 实现 | `forgex-admin-client`（仅随平台交付的服务或显式接入平台的企业服务） |
 | 调 Sys 用户/编码规则/字典校验 | `Forgex_Sys_Api`（+ 需要的 Domain DTO） |
 | 调工作流内部发起/超时扫描 | `Forgex_Workflow_Api` |
 | 调 Auth 权限内部接口 | `Forgex_Auth_Api` |

@@ -22,7 +22,7 @@ services:
     composeServiceName: forgex-sys
     requiresLicenseCheck: true
   - serviceId: basic
-    modulePath: Forgex_MOM/Forgex_Backend/forgex-admin/forgex-admin-basic/Forgex_Basic
+    modulePath: Forgex_MOM/Forgex_Backend/forgex-business/forgex-business-basic/Forgex_Basic
     artifactName: forgex-basic.jar
     defaultPort: 9003
     winswServiceName: forgex-basic-{INSTANCE_CODE}

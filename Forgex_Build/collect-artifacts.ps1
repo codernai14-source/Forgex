@@ -1,4 +1,4 @@
-﻿param(
+param(
     [string]$Version = "1.0.0",
     [string]$WindowsJreHome = "",
     [switch]$AllowDistFallback
@@ -204,7 +204,7 @@ $moduleDirs = @(
     "forgex-admin\forgex-admin-gateway\Forgex_Gateway",
     "forgex-admin\forgex-admin-auth\Forgex_Auth",
     "forgex-admin\forgex-admin-sys\Forgex_Sys",
-    "forgex-admin\forgex-admin-basic\Forgex_Basic",
+    "forgex-business\forgex-business-basic\Forgex_Basic",
     "forgex-admin\forgex-admin-job\Forgex_Job",
     "forgex-admin\forgex-admin-integration\Forgex_Integration",
     "forgex-admin\forgex-admin-workflow\Forgex_Workflow",

@@ -5,9 +5,10 @@
     <artifactId>Forgex_Backend</artifactId>
     <packaging>pom</packaging>
     <name>Forgex_Backend</name>
-    <description>Forgex 平台治理与公共能力聚合工程</description>
+    <description>Forgex 公共能力、平台治理与业务服务聚合工程</description>
     <modules>
         <module>forgex-common</module>
         <module>forgex-admin</module>
+        <module>forgex-business</module>
     </modules>
 </project>

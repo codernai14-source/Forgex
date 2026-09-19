@@ -12,6 +12,8 @@
 > **执行状态（2026-09-19，ZCode 接续 Codex 会话）**：Task 1-3 已提交推送（4a32e083 / 7c95ec48 / ea22cc52 / 8a94e143）。
 > Task 4-6 已全部实施并通过验证（全量编译、40 模块边界校验、公共层独立构建+117 项测试、8 服务 JAR 打包、
 > 独立样例依赖隔离与真实启动、doc-freshness 0 错误）；提交因 ZCode 端 Mimosa Git 门禁对存量前端 i18n 误报强制拦截而暂存待推。
+> 后续补充：`Forgex_Basic`（含 `Forgex_Basic_Api`）按业务归属迁至 `forgex-business/forgex-business-basic`，
+> 新增 `forgex-business` 聚合并入根 Reactor，交付路径与架构文档同步，artifactId 不变。
 
 **Spec:** The approved architecture in the conversation immediately preceding this plan: `forgex-common` is independently publishable; `forgex-admin-*` contains platform governance services and API contracts; business services can start independently and call platform services through explicit API dependencies.
 
@@ -50,9 +52,6 @@ Forgex_MOM/Forgex_Backend/
 │   ├── forgex-admin-sys/
 │   │   ├── Forgex_Sys_Api/
 │   │   └── Forgex_Sys/
-│   ├── forgex-admin-basic/
-│   │   ├── Forgex_Basic_Api/
-│   │   └── Forgex_Basic/
 │   ├── forgex-admin-job/
 │   │   ├── Forgex_Job_Api/
 │   │   └── Forgex_Job/
@@ -67,11 +66,14 @@ Forgex_MOM/Forgex_Backend/
 │   └── forgex-admin-gateway/
 │       └── Forgex_Gateway/
 ├── forgex-business/
-│   └── README.md                          # extension boundary and example
+│   ├── forgex-business-basic/             # platform-shipped business service (moved from admin)
+│   │   ├── Forgex_Basic_Api/
+│   │   └── Forgex_Basic/
+│   └── company-order-service/             # standalone enterprise sample (outside the reactor)
 └── scripts/
 ```
 
-The existing `Forgex_Basic` remains in the admin aggregate in the first migration because it is currently shipped as a platform service and is referenced by the release manifest. Its long-term business classification is documented and can be moved later without changing its artifactId.
+`Forgex_Basic` first migrated under `forgex-admin` for manifest compatibility, then moved to `forgex-business/forgex-business-basic` as the platform-shipped business-domain reference; its artifactId never changed.
 
 ### Task 1: Freeze Baseline and Add the Plan
 

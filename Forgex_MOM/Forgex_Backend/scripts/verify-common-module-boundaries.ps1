@@ -28,7 +28,7 @@ foreach ($file in Get-ChildItem -LiteralPath $backendRoot -Recurse -Filter pom.x
 
 $commonIds = @($modules.Keys | Where-Object { $modules[$_].Root.StartsWith((Join-Path $backendRoot 'forgex-common'), [StringComparison]::OrdinalIgnoreCase) })
 $serviceIds = @('Forgex_Auth','Forgex_Sys','Forgex_Basic','Forgex_Job','Forgex_Workflow','Forgex_Integration','Forgex_Report','Forgex_Gateway')
-foreach ($required in @('forgex-common','forgex-common-parent','forgex-common-bom','forgex-common-starter','forgex-admin','forgex-admin-client','forgex-admin-runtime') + $serviceIds) {
+foreach ($required in @('forgex-common','forgex-common-parent','forgex-common-bom','forgex-common-starter','forgex-admin','forgex-admin-client','forgex-admin-runtime','forgex-business','forgex-business-basic') + $serviceIds) {
     if (-not $modules.ContainsKey($required)) { $errors.Add("Missing module: $required") }
 }
 

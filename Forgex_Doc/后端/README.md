@@ -11,7 +11,7 @@
 
 后端采用 **Spring Boot 3 + Spring Cloud Alibaba** 多服务架构：统一经 **API 网关**暴露对外接口，下游按领域拆分为认证、系统平台、工作流、报表、基础业务扩展、集成平台、任务调度等微服务；**租户、用户、语言**等请求级上下文由公共模块（`Forgex_Common_Core` 等）统一承载并在各服务复用。原单体 `Forgex_Common` 已拆为 Contract/Core/Web/Data/Crypto/Excel/Infra + Domain_Contract + 各服务 `*_Api`。
 
-2026-09 架构升级后，模块按企业边界物理分组：`forgex-common/`（可独立发布的公共基础 + `forgex-common-parent`/`forgex-common-bom`/`forgex-common-starter`）、`forgex-admin/`（平台治理服务与 API，另含 `forgex-admin-runtime` 平台库表运行时、`forgex-admin-client` 平台 Feign 适配）、`forgex-business/`（企业业务服务扩展区）。企业二开服务只需 BOM + Starter + 按需 `*_Api` 即可独立启动并调用平台接口，详见 [Common 模块化拆分与二开指南](./公共能力/Common模块化拆分与二开指南.md)。
+2026-09 架构升级后，模块按企业边界物理分组：`forgex-common/`（可独立发布的公共基础 + `forgex-common-parent`/`forgex-common-bom`/`forgex-common-starter`）、`forgex-admin/`（平台治理服务与 API，另含 `forgex-admin-runtime` 平台库表运行时、`forgex-admin-client` 平台 Feign 适配）、`forgex-business/`（业务服务分组：平台内置基础数据 `Forgex_Basic` 与企业二开扩展区）。企业二开服务只需 BOM + Starter + 按需 `*_Api` 即可独立启动并调用平台接口，详见 [Common 模块化拆分与二开指南](./公共能力/Common模块化拆分与二开指南.md)。
 
 - **仓库结构、分层原则、与前端/移动端协作**：见 [项目架构设计文档](../开发规范/架构设计/项目架构设计文档.md)（含后端 §四、前端 §五）。
 - **各服务端口与职责速查**：见本文 [第六节 后端服务列表](#六后端服务列表)。
@@ -310,7 +310,7 @@
 | Forgex_Workflow | 9005 | 工作流引擎、审批流程 |
 | Forgex_Report | 9006 | 报表中心、UReport2、JimuReport |
 
-另有不可独立启动的库模块：`forgex-common/` 分组下的 `Forgex_Common_*`、`Forgex_Domain_Contract`、`forgex-common-starter`（兼容聚合 `Forgex_Common` 仅迁移期保留），`forgex-admin/` 分组下的各 `Forgex_*_Api`、平台运行时 `forgex-admin-runtime`、平台客户端 `forgex-admin-client`。企业业务服务扩展区见 `Forgex_MOM/Forgex_Backend/forgex-business/README.md`。
+另有不可独立启动的库模块：`forgex-common/` 分组下的 `Forgex_Common_*`、`Forgex_Domain_Contract`、`forgex-common-starter`（兼容聚合 `Forgex_Common` 仅迁移期保留），`forgex-admin/` 分组下的各平台 `*_Api`、运行时 `forgex-admin-runtime`、客户端 `forgex-admin-client`，`forgex-business/` 分组下的 `Forgex_Basic_Api`。业务服务分组与企业二开接入见 `Forgex_MOM/Forgex_Backend/forgex-business/README.md`。
 
 ## 七、说明
 

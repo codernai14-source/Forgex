@@ -9,19 +9,11 @@
         <version>1.0.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
-    <artifactId>forgex-admin</artifactId>
+    <artifactId>forgex-business</artifactId>
     <packaging>pom</packaging>
-    <name>forgex-admin</name>
-    <description>Forgex platform governance services</description>
+    <name>forgex-business</name>
+    <description>业务服务分组：平台内置基础数据服务与企业二开扩展区</description>
     <modules>
-        <module>forgex-admin-client</module>
-        <module>forgex-admin-runtime</module>
-        <module>forgex-admin-auth</module>
-        <module>forgex-admin-sys</module>
-        <module>forgex-admin-job</module>
-        <module>forgex-admin-workflow</module>
-        <module>forgex-admin-integration</module>
-        <module>forgex-admin-report</module>
-        <module>forgex-admin-gateway</module>
+        <module>forgex-business-basic</module>
     </modules>
 </project>
