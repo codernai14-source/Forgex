@@ -64,9 +64,6 @@ server:
     context-path: /sys
 
 forgex:
-  siem:
-    host: ${FORGEX_SIEM_HOST:}
-    port: ${FORGEX_SIEM_PORT:514}
   license:
     scheduler-enabled: ${FORGEX_LICENSE_SCHEDULER_ENABLED:true}
     refresh-interval-ms: ${FORGEX_LICENSE_REFRESH_INTERVAL_MS:900000}
