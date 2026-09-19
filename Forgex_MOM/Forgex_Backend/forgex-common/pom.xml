@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.forgex</groupId>
+        <artifactId>Forgex_Backend</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>forgex-common</artifactId>
+    <packaging>pom</packaging>
+    <name>forgex-common</name>
+    <description>Forgex publishable common foundation and compatibility aggregates</description>
+
+    <modules>
+        <module>forgex-common-bom</module>
+        <module>Forgex_Common_Contract</module>
+        <module>Forgex_Common_Core</module>
+        <module>Forgex_Domain_Contract</module>
+        <module>Forgex_Common_Web</module>
+        <module>Forgex_Common_Data</module>
+        <module>Forgex_Common_Crypto</module>
+        <module>Forgex_Common_Excel</module>
+        <module>Forgex_Common_Infra</module>
+        <module>Forgex_Common</module>
+    </modules>
+</project>

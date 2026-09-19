@@ -7,6 +7,7 @@
         <groupId>com.forgex</groupId>
         <artifactId>Forgex_Backend</artifactId>
         <version>1.0.0</version>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
     <artifactId>Forgex_Common</artifactId>
     <name>Forgex_Common</name>

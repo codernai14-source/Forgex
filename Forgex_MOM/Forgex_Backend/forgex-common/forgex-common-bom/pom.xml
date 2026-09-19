@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.forgex</groupId>
+        <artifactId>Forgex_Backend</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>forgex-common-bom</artifactId>
+    <packaging>pom</packaging>
+    <name>forgex-common-bom</name>
+    <description>Dependency management for the publishable Forgex common foundation</description>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.forgex</groupId>
+                <artifactId>Forgex_Common_Contract</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.forgex</groupId>
+                <artifactId>Forgex_Common_Core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.forgex</groupId>
+                <artifactId>Forgex_Domain_Contract</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.forgex</groupId>
+                <artifactId>Forgex_Common_Web</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.forgex</groupId>
+                <artifactId>Forgex_Common_Data</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.forgex</groupId>
+                <artifactId>Forgex_Common_Crypto</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.forgex</groupId>
+                <artifactId>Forgex_Common_Excel</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.forgex</groupId>
+                <artifactId>Forgex_Common_Infra</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+</project>
