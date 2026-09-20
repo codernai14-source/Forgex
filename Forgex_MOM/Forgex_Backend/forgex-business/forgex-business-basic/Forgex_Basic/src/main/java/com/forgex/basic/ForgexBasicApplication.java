@@ -18,6 +18,7 @@ import com.forgex.common.api.feign.AuthPermClient;
 import com.forgex.common.api.feign.CalendarReminderFeignClient;
 import com.forgex.common.api.feign.IntegrationInternalEmployeeFeignClient;
 import com.forgex.common.api.feign.IntegrationInternalMaterialFeignClient;
+import com.forgex.common.api.feign.IntegrationInternalCustomerFeignClient;
 import com.forgex.common.api.feign.IntegrationInternalSupplierFeignClient;
 import com.forgex.common.api.feign.SysTenantFeignClient;
 import com.forgex.common.api.feign.WorkflowExecutionFeignClient;
@@ -50,6 +51,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
         CalendarReminderFeignClient.class,
         SysTenantFeignClient.class,
         WorkflowExecutionFeignClient.class,
+        IntegrationInternalCustomerFeignClient.class,
         IntegrationInternalEmployeeFeignClient.class,
         IntegrationInternalMaterialFeignClient.class,
         IntegrationInternalSupplierFeignClient.class,

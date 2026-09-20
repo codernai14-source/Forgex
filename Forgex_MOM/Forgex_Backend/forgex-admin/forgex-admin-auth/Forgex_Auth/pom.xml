@@ -120,6 +120,12 @@
             <artifactId>Forgex_Common_Infra</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- 平台认证需要配置、字典等数据库运行时实现；公共模块只提供接口契约。 -->
+        <dependency>
+            <groupId>com.forgex</groupId>
+            <artifactId>forgex-admin-runtime</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

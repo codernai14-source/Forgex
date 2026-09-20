@@ -1,6 +1,7 @@
 package com.forgex.integration;
 
 import com.forgex.common.api.feign.AuthPermClient;
+import com.forgex.common.api.feign.IntegrationCustomerSyncFeignClient;
 import com.forgex.common.api.feign.IntegrationEmployeeSyncFeignClient;
 import com.forgex.common.api.feign.IntegrationMaterialSyncFeignClient;
 import com.forgex.common.api.feign.IntegrationSupplierSyncFeignClient;
@@ -31,6 +32,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableAsync
 @EnableFeignClients(clients = {
         AuthPermClient.class,
+        IntegrationCustomerSyncFeignClient.class,
         IntegrationEmployeeSyncFeignClient.class,
         IntegrationUserSyncFeignClient.class,
         IntegrationSupplierSyncFeignClient.class,
