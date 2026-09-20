@@ -190,7 +190,9 @@ public class SysMessageController {
             if (dto.getReceiverUserId() != null) {
                 receiverUserIds = Collections.singletonList(dto.getReceiverUserId());
             } else {
-                return R.fail(CommonPrompt.PARAM_EMPTY);
+                // 未指定接收人时，交由模板配置解析接收人。
+                int count = templateMessageService.sendByTemplate(dto.getTemplateCode(), dto.getDataMap());
+                return R.ok(CommonPrompt.SEND_SUCCESS, count);
             }
         }
 
@@ -242,6 +244,17 @@ public class SysMessageController {
         return messageId != null 
             ? R.ok(CommonPrompt.SEND_SUCCESS, messageId) 
             : R.fail(CommonPrompt.OPERATION_FAILED);
+    }
+
+    /**
+     * 检查消息模板是否存在且已启用，供平台服务内部调用。
+     *
+     * @param templateCode 模板编码
+     * @return 模板可用状态
+     */
+    @GetMapping("/template-available")
+    public R<Boolean> isTemplateAvailable(@RequestParam("templateCode") String templateCode) {
+        return R.ok(templateMessageService.isTemplateAvailable(templateCode));
     }
     
     /**

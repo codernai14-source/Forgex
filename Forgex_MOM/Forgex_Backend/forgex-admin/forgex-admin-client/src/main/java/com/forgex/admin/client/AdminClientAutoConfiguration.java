@@ -5,6 +5,8 @@ import com.forgex.common.audit.OperationLogFeignClient;
 import com.forgex.common.audit.OperationLogRecorder;
 import com.forgex.common.audit.RemoteOperationLogRecorder;
 import com.forgex.common.feign.client.EncodeRuleFeignClient;
+import com.forgex.common.service.TemplateMessageService;
+import com.forgex.sys.api.feign.SysTemplateMessageFeignClient;
 import com.forgex.common.spi.EncodeRuleProvider;
 import com.forgex.common.spi.UserDirectory;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -18,7 +20,8 @@ import org.springframework.context.annotation.Bean;
 @AutoConfiguration
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @ConditionalOnProperty(prefix = "forgex.admin.client", name = "enabled", havingValue = "true", matchIfMissing = true)
-@EnableFeignClients(clients = {SysUserFeignClient.class, EncodeRuleFeignClient.class, OperationLogFeignClient.class})
+@EnableFeignClients(clients = {SysUserFeignClient.class, EncodeRuleFeignClient.class,
+        OperationLogFeignClient.class, SysTemplateMessageFeignClient.class})
 public class AdminClientAutoConfiguration {
     /** @param client 用户客户端 @return 用户目录适配器 */
     @Bean
@@ -39,5 +42,17 @@ public class AdminClientAutoConfiguration {
     @ConditionalOnMissingBean(OperationLogRecorder.class)
     public OperationLogRecorder remoteOperationLogRecorder(OperationLogFeignClient client) {
         return new RemoteOperationLogRecorder(client);
+    }
+
+    /**
+     * 注册系统消息远程适配器，使业务服务无需依赖平台 Sys 实现即可发送模板消息。
+     *
+     * @param client 系统消息客户端
+     * @return 模板消息服务
+     */
+    @Bean
+    @ConditionalOnMissingBean(TemplateMessageService.class)
+    public TemplateMessageService remoteTemplateMessageService(SysTemplateMessageFeignClient client) {
+        return new RemoteTemplateMessageService(client);
     }
 }

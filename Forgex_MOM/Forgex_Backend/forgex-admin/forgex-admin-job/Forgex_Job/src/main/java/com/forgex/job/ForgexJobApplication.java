@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.forgex.job;
 
+import com.forgex.common.api.feign.WorkflowExecutionFeignClient;
 import com.forgex.sys.api.feign.SysBackupJobFeignClient;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
@@ -51,7 +52,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  */
 @SpringBootApplication(scanBasePackages = {"com.forgex.job", "com.forgex.common"})
 @EnableDiscoveryClient
-@EnableFeignClients(clients = SysBackupJobFeignClient.class)
+@EnableFeignClients(clients = {SysBackupJobFeignClient.class, WorkflowExecutionFeignClient.class})
 @EnableAsync
 @EnableScheduling
 @MapperScan({"com.forgex.job.mapper", "com.forgex.common.mapper"})
