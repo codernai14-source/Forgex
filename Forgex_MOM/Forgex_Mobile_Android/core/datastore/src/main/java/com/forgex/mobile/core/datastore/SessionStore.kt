@@ -63,6 +63,12 @@ class SessionStore @Inject constructor(
     val i18nBundleLanguageTag: Flow<String?> = preferenceFlow(I18N_BUNDLE_LANGUAGE_TAG_KEY)
         .map { value -> value?.let(AppLanguage::normalize) }
 
+    /** C 端菜单聚合包 JSON 缓存（选租户后一次拉取的结果） */
+    val cMenuBundleJson: Flow<String?> = preferenceFlow(C_MENU_BUNDLE_JSON_KEY)
+
+    /** C 端菜单聚合包归属租户（防止跨租户复用旧缓存） */
+    val cMenuBundleTenantId: Flow<String?> = preferenceFlow(C_MENU_BUNDLE_TENANT_ID_KEY)
+
     val serverPort: Flow<Int?> = dataStore.data
         .catch {
             if (it is IOException) emit(emptyPreferences()) else throw it
@@ -168,11 +174,30 @@ class SessionStore @Inject constructor(
         }
     }
 
+    /**
+     * 缓存 C 端菜单聚合包 JSON，并记录归属租户。
+     */
+    suspend fun saveCMenuBundle(tenantId: String, bundleJson: String) {
+        dataStore.edit { preferences ->
+            preferences[C_MENU_BUNDLE_TENANT_ID_KEY] = tenantId
+            preferences[C_MENU_BUNDLE_JSON_KEY] = bundleJson
+        }
+    }
+
+    suspend fun clearCMenuBundle() {
+        dataStore.edit { preferences ->
+            preferences.remove(C_MENU_BUNDLE_TENANT_ID_KEY)
+            preferences.remove(C_MENU_BUNDLE_JSON_KEY)
+        }
+    }
+
     suspend fun clearSession() {
         dataStore.edit { preferences ->
             preferences.remove(TOKEN_KEY)
             preferences.remove(TENANT_ID_KEY)
             preferences.remove(ACCOUNT_KEY)
+            preferences.remove(C_MENU_BUNDLE_TENANT_ID_KEY)
+            preferences.remove(C_MENU_BUNDLE_JSON_KEY)
         }
     }
 
@@ -197,6 +222,8 @@ class SessionStore @Inject constructor(
         private val LAST_RESOLVED_LANGUAGE_TAG_KEY = stringPreferencesKey("last_resolved_language_tag")
         private val I18N_BUNDLE_LANGUAGE_TAG_KEY = stringPreferencesKey("i18n_bundle_language_tag")
         private val I18N_BUNDLE_JSON_KEY = stringPreferencesKey("i18n_bundle_json")
+        private val C_MENU_BUNDLE_JSON_KEY = stringPreferencesKey("c_menu_bundle_json")
+        private val C_MENU_BUNDLE_TENANT_ID_KEY = stringPreferencesKey("c_menu_bundle_tenant_id")
         private val SERVER_PORT_KEY = intPreferencesKey("server_port")
     }
 }

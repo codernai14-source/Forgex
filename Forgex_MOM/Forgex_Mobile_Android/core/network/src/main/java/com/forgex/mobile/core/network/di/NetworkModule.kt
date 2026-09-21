@@ -3,6 +3,7 @@
 import com.forgex.mobile.core.network.api.AuthApi
 import com.forgex.mobile.core.network.api.I18nApi
 import com.forgex.mobile.core.network.api.MessageApi
+import com.forgex.mobile.core.network.api.DictApi
 import com.forgex.mobile.core.network.api.MenuApi
 import com.forgex.mobile.core.network.api.WorkbenchApi
 import com.forgex.mobile.core.network.api.WorkflowApi
@@ -96,6 +97,10 @@ object NetworkModule {
     fun provideMessageApi(retrofit: Retrofit): MessageApi {
         return retrofit.create(MessageApi::class.java)
     }
+
+    @Provides
+    @Singleton
+    fun provideDictApi(retrofit: Retrofit): DictApi = retrofit.create(DictApi::class.java)
 
     @Provides
     @Singleton

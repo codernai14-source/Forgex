@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.content.IntentFilter
 import android.nfc.NdefMessage
+import android.nfc.NdefRecord
 import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.nfc.tech.Ndef
@@ -29,6 +30,13 @@ class FxNfcScanManager {
      */
     fun isNfcSupported(activity: Activity): Boolean {
         return NfcAdapter.getDefaultAdapter(activity) != null
+    }
+
+    /**
+     * 判断设备是否已打开 NFC。设备不支持 NFC 时返回 false。
+     */
+    fun isNfcEnabled(activity: Activity): Boolean {
+        return NfcAdapter.getDefaultAdapter(activity)?.isEnabled == true
     }
 
     /**
@@ -112,7 +120,7 @@ class FxNfcScanManager {
         val payloadFromNdef = readNdefMessages(intent)
             .flatMap { it.records.toList() }
             .mapNotNull { record ->
-                runCatching { decodeRecord(record.payload) }.getOrNull()
+                runCatching { FxNfcPayloadDecoder.decode(record) }.getOrNull()
             }
             .firstOrNull { it.isNotBlank() }
             .orEmpty()
@@ -125,7 +133,9 @@ class FxNfcScanManager {
             return runCatching {
                 ndef.connect()
                 ndef.ndefMessage?.records
-                    ?.mapNotNull { record -> decodeRecord(record.payload).takeIf { it.isNotBlank() } }
+                    ?.mapNotNull {
+                        FxNfcPayloadDecoder.decode(it).takeIf { value -> value.isNotBlank() }
+                    }
                     ?.firstOrNull()
                     .orEmpty()
             }.getOrDefault("").also {
@@ -138,24 +148,6 @@ class FxNfcScanManager {
             return tag.id.toHexString()
         }
         return ""
-    }
-
-    /**
-     * 解码 NFC 记录内容，优先按文本记录处理。
-     *
-     * @param payload NFC 记录原始字节数组
-     * @return 解码后的文本
-     */
-    private fun decodeRecord(payload: ByteArray): String {
-        if (payload.isEmpty()) {
-            return ""
-        }
-        return runCatching {
-            val languageCodeLength = payload.first().toInt() and 0x3F
-            String(payload, 1 + languageCodeLength, payload.size - 1 - languageCodeLength, Charsets.UTF_8)
-        }.getOrElse {
-            String(payload, Charsets.UTF_8)
-        }.trim()
     }
 
     /**

@@ -5,6 +5,7 @@ import com.forgex.mobile.feature.basic.navigation.BASIC_ROUTE
 import com.forgex.mobile.feature.home.HOME_ROUTE
 import com.forgex.mobile.feature.home.HomeMenuItem
 import com.forgex.mobile.feature.home.BASIC_INFO_TEST_ROUTE
+import com.forgex.mobile.feature.home.COMPONENT_SHOWCASE_ROUTE
 import com.forgex.mobile.feature.integration.navigation.INTEGRATION_ROUTE
 import com.forgex.mobile.feature.label.navigation.LABEL_ROUTE
 import com.forgex.mobile.feature.message.MESSAGE_READ_ROUTE
@@ -53,6 +54,7 @@ object MenuTargetResolver {
         "readmessagelist" to MESSAGE_READ_ROUTE,
         "profilescreen" to PROFILE_ROUTE,
         "basicinfotestscreen" to BASIC_INFO_TEST_ROUTE,
+        "componentshowcasescreen" to COMPONENT_SHOWCASE_ROUTE,
         "basicscreen" to BASIC_ROUTE,
         "reportscreen" to REPORT_ROUTE,
         "integrationscreen" to INTEGRATION_ROUTE,
@@ -161,6 +163,10 @@ object MenuTargetResolver {
 
         if (path.contains("basic/info-test") || path.contains("basicinfotest")) {
             return BASIC_INFO_TEST_ROUTE
+        }
+
+        if (path.contains("component/showcase") || path.contains("componentshowcase")) {
+            return COMPONENT_SHOWCASE_ROUTE
         }
 
         if (path.contains("feature/basic") || path.contains("/basic")) {

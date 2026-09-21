@@ -1,12 +1,18 @@
 ﻿package com.forgex.mobile
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
+import android.view.KeyEvent
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import com.forgex.mobile.core.device.FxKeyboardScanDispatcher
 import com.forgex.mobile.core.device.FxNfcScanManager
 import com.forgex.mobile.core.device.FxPdaScanCoordinator
+import com.forgex.mobile.core.device.FxScanFeedback
 import com.forgex.mobile.core.device.FxScannerManager
+import com.forgex.mobile.core.model.FxScanResult
+import com.forgex.mobile.core.model.FxScanSource
 import com.forgex.mobile.ui.ForgexMobileApp
 import com.forgex.mobile.ui.theme.ForgexMobileTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -15,7 +21,7 @@ import javax.inject.Inject
 /**
  * Android 主入口 Activity。
  *
- * 负责接管 PDA 广播与 NFC Intent，并将硬件扫描结果统一投递到扫描总线。
+ * 负责接管 PDA 广播、NFC Intent 与键盘扫码枪输入，并将硬件扫描结果统一投递到扫描总线。
  */
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -29,14 +35,38 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var pdaScanCoordinator: FxPdaScanCoordinator
 
+    @Inject
+    lateinit var scanFeedback: FxScanFeedback
+
+    private lateinit var keyboardScanDispatcher: FxKeyboardScanDispatcher
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        keyboardScanDispatcher = FxKeyboardScanDispatcher(onSubmit = { payload ->
+            submitHardwareScan(
+                FxScanResult(
+                    rawValue = payload,
+                    source = FxScanSource.HARDWARE_KEYBOARD,
+                    deviceBrand = Build.BRAND
+                )
+            )
+        })
         dispatchScanIntent(intent)
         setContent {
             ForgexMobileTheme {
                 ForgexMobileApp()
             }
         }
+    }
+
+    /**
+     * 旁路观察硬件按键，将键盘扫码枪的高速字符帧投递到扫描总线，不拦截任何按键。
+     */
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (this::keyboardScanDispatcher.isInitialized) {
+            keyboardScanDispatcher.offer(event.action, event.keyCode, event.unicodeChar)
+        }
+        return super.dispatchKeyEvent(event)
     }
 
     override fun onStart() {
@@ -78,6 +108,11 @@ class MainActivity : AppCompatActivity() {
      */
     private fun dispatchScanIntent(intent: Intent?) {
         val result = nfcScanManager.parseIntent(intent) ?: return
+        submitHardwareScan(result)
+    }
+
+    private fun submitHardwareScan(result: FxScanResult) {
         scannerManager.submit(result)
+        scanFeedback.onScanSuccess(FxScanFeedback.HARDWARE_SCAN_CONFIG)
     }
 }

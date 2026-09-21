@@ -78,6 +78,18 @@ hs_err_pid*
 
 # Plan/spec working documents (not product docs)
 /docs/superpowers/
+/Forgex_Doc/ROADMAP.md
+/weekly-report-*.md
+
+# Local assistant workspace (ZCode)
+/.zcode/
+/.zcodeignore
+
+# Local status dumps and debug APKs
+.tmp-build-audit.txt
+/*-report.txt
+/*-status.txt
+*.apk
 
 # Local runtime files
 **/run.args

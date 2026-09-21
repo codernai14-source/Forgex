@@ -5,19 +5,36 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
 import com.forgex.mobile.core.architecture.PagingUiState
 
 /**
@@ -72,11 +89,33 @@ fun <T> FxPagedList(
     modifier: Modifier = Modifier,
     emptyText: String,
     onRetry: (() -> Unit)? = null,
+    onRefresh: (() -> Unit)? = null,
+    onLoadMore: (() -> Unit)? = null,
     contentPadding: PaddingValues = PaddingValues(vertical = 0.dp),
     itemKey: ((T) -> Any)? = null,
     itemContent: @Composable (T) -> Unit
 ) {
     val errorMessage = state.error
+    val listState = rememberLazyListState()
+    var requestedForItemCount by remember { mutableIntStateOf(-1) }
+
+    LaunchedEffect(listState, state.list.size, state.hasMore, state.isLoadingMore, onLoadMore) {
+        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
+            .map { index -> index >= state.list.lastIndex && state.list.isNotEmpty() }
+            .distinctUntilChanged()
+            .filter { it }
+            .collect {
+                if (
+                    onLoadMore != null &&
+                    state.hasMore &&
+                    !state.isLoadingMore &&
+                    state.list.size != requestedForItemCount
+                ) {
+                    requestedForItemCount = state.list.size
+                    onLoadMore()
+                }
+            }
+    }
 
     when {
         state.isRefreshing && state.list.isEmpty() -> FxLoadingView(modifier = modifier)
@@ -92,8 +131,23 @@ fun <T> FxPagedList(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = contentPadding
             ) {
+                if (onRefresh != null) {
+                    item(key = "fx-refresh") {
+                        FxListRefreshAction(
+                            refreshing = state.isRefreshing,
+                            onRefresh = onRefresh
+                        )
+                    }
+                }
                 items(items = state.list, key = itemKey) { item ->
                     itemContent(item)
+                }
+                item(key = "fx-paging-footer") {
+                    FxPagingFooter(
+                        state = state,
+                        onLoadMore = onLoadMore,
+                        onRetry = onRetry
+                    )
                 }
             }
         }
@@ -103,11 +157,97 @@ fun <T> FxPagedList(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = contentPadding
             ) {
+                if (onRefresh != null) {
+                    item(key = "fx-refresh") {
+                        FxListRefreshAction(
+                            refreshing = state.isRefreshing,
+                            onRefresh = onRefresh
+                        )
+                    }
+                }
                 itemsIndexed(state.list) { _, item ->
                     itemContent(item)
                 }
+                item(key = "fx-paging-footer") {
+                    FxPagingFooter(
+                        state = state,
+                        onLoadMore = onLoadMore,
+                        onRetry = onRetry
+                    )
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun FxListRefreshAction(
+    refreshing: Boolean,
+    onRefresh: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.End,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (refreshing) {
+            CircularProgressIndicator(
+                modifier = Modifier.padding(12.dp),
+                strokeWidth = 2.dp
+            )
+        } else {
+            IconButton(onClick = onRefresh) {
+                Icon(Icons.Outlined.Refresh, contentDescription = "刷新")
+            }
+        }
+    }
+}
+
+@Composable
+private fun <T> FxPagingFooter(
+    state: PagingUiState<T>,
+    onLoadMore: (() -> Unit)?,
+    onRetry: (() -> Unit)?
+) {
+    val error = state.error
+    if (state.isLoadingMore) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            CircularProgressIndicator(strokeWidth = 2.dp)
+            Text(
+                text = "加载中",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(start = 8.dp)
+            )
+        }
+    } else if (!error.isNullOrBlank() && state.list.isNotEmpty()) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = error,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error
+            )
+            if (onRetry != null || onLoadMore != null) {
+                TextButton(onClick = { (onRetry ?: onLoadMore)?.invoke() }) {
+                    Text("重试")
+                }
+            }
+        }
+    } else if (!state.hasMore && state.list.isNotEmpty()) {
+        Text(
+            text = "没有更多了",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+        )
     }
 }
 

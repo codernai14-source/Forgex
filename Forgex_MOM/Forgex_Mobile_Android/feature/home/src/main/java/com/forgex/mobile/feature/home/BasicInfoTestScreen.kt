@@ -43,7 +43,8 @@ private data class DemoRow(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BasicInfoTestScreen(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onOpenComponentShowcase: (() -> Unit)? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
     var selectedOption by remember { mutableStateOf("选项 A") }
@@ -79,6 +80,11 @@ fun BasicInfoTestScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                if (onOpenComponentShowcase != null) {
+                    Button(onClick = onOpenComponentShowcase) {
+                        Text(stringResource(R.string.component_showcase_open))
+                    }
+                }
             }
         }
 

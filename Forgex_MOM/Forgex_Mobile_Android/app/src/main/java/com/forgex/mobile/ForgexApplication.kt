@@ -5,6 +5,7 @@ import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.forgex.mobile.core.network.i18n.AppLanguageManager
 import com.forgex.mobile.core.sync.SyncManager
+import dagger.Lazy
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -28,7 +29,7 @@ class ForgexApplication : Application(), Configuration.Provider {
     lateinit var appLanguageManager: AppLanguageManager
 
     @Inject
-    lateinit var syncManager: SyncManager
+    lateinit var syncManager: Lazy<SyncManager>
 
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
@@ -53,7 +54,7 @@ class ForgexApplication : Application(), Configuration.Provider {
         }
 
         // 离线同步初始化
-        syncManager.registerNetworkMonitor()
-        syncManager.schedulePeriodicSync()
+        syncManager.get().registerNetworkMonitor()
+        syncManager.get().schedulePeriodicSync()
     }
 }

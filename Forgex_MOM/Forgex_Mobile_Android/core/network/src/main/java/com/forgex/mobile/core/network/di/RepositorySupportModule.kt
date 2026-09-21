@@ -43,5 +43,5 @@ object RepositorySupportModule {
 
     @Provides
     @Singleton
-    fun provideUploadService(): UploadService = UploadService()
+    fun provideUploadService(fileApi: FileApi): UploadService = UploadService(fileApi)
 }

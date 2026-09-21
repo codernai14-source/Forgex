@@ -688,6 +688,29 @@ export async function injectDynamicRoutes(payload: any) {
     const normalized = raw.replace(/^\//, '').replace(/\//g, ':')
     return `dyn:${normalized}`
   }
+
+  const findFirstNavigableRelativePath = (menuItems: any[] = [], parentPath = ''): string => {
+    for (const item of menuItems) {
+      const itemPath = String(item?.path || '').replace(/^\/+|\/+$/g, '')
+      if (!itemPath) {
+        continue
+      }
+      const relativePath = parentPath ? `${parentPath}/${itemPath}` : itemPath
+      const itemType = String(item?.meta?.type || item?.type || '').toLowerCase()
+      if (itemType !== 'catalog') {
+        return relativePath
+      }
+      const childPath = findFirstNavigableRelativePath(
+        Array.isArray(item.children) ? item.children : [],
+        relativePath,
+      )
+      if (childPath) {
+        return childPath
+      }
+    }
+    return ''
+  }
+
   // 遍历路由数据，注册动态路由
   for (const routeItem of routesPayload) {
     const moduleCode = String(routeItem.path || '').replace(/^\/+|\/+$/g, '')
@@ -708,6 +731,22 @@ export async function injectDynamicRoutes(payload: any) {
         const menuType = c?.meta?.type || c?.type
 
         if (menuType === 'catalog') {
+          // 目录通常由菜单组件解析到首个子菜单，但也可能被标签页、收藏或旧链接直接访问。
+          // 为目录地址保留重定向，避免进入 WorkspaceNotFound。
+          const firstChildPath = findFirstNavigableRelativePath(c.children, relativePath)
+          if (firstChildPath) {
+            const catalogRouteName = buildDynamicRouteName(fullPath)
+            r.addRoute('Workspace', {
+              path: fullPath,
+              name: catalogRouteName,
+              redirect: `/${moduleCode}/${firstChildPath}`,
+              meta: {
+                ...c.meta,
+                module: moduleCode
+              }
+            })
+            injectedRouteNames.add(catalogRouteName)
+          }
           registerMenuRoutes(Array.isArray(c.children) ? c.children : [], relativePath)
           continue
         }

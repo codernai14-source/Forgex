@@ -22,6 +22,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.forgex.sys.domain.dto.SysCMenuDTO;
 import com.forgex.sys.domain.dto.SysCMenuQueryDTO;
 import com.forgex.sys.domain.entity.SysCMenu;
+import com.forgex.sys.domain.vo.CMenuBundleVO;
 import com.forgex.sys.domain.vo.CMenuTreeVO;
 
 import java.util.List;
@@ -182,5 +183,16 @@ public interface ISysCMenuService extends IService<SysCMenu> {
      * @return 是否处理成功
      */
     boolean toggleFavorite(Long userId, Long tenantId, Long cMenuId);
+
+    /** C 端菜单聚合包（授权模块整树 + 收藏，一次返回） */
+    /**
+     * 获取 C 端菜单聚合包。
+     *
+     * @param userId 用户 ID
+     * @param tenantId 租户 ID
+     * @param deviceType 设备类型（MOBILE/TABLET；空或非法值按 MOBILE 处理）
+     * @return 聚合包数据
+     */
+    CMenuBundleVO getCMenuBundle(Long userId, Long tenantId, String deviceType);
 }
 

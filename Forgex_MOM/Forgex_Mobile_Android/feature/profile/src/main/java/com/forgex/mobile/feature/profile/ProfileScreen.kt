@@ -22,6 +22,7 @@ import com.forgex.mobile.core.common.i18n.AppLanguage
 import com.forgex.mobile.core.common.i18n.LanguageMode
 import com.forgex.mobile.core.component.FxFormFooterBar
 import com.forgex.mobile.core.component.FxFormSection
+import com.forgex.mobile.core.component.FxListItem
 import com.forgex.mobile.core.component.FxPageScaffold
 import com.forgex.mobile.core.ui.R
 
@@ -34,7 +35,8 @@ const val PROFILE_ROUTE = "profile"
 fun ProfileScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: ProfileViewModel = hiltViewModel()
+    viewModel: ProfileViewModel = hiltViewModel(),
+    onOpenComponentShowcase: (() -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -95,6 +97,16 @@ fun ProfileScreen(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary
                 )
+            }
+
+            if (onOpenComponentShowcase != null) {
+                FxFormSection(title = stringResource(R.string.profile_dev_section)) {
+                    FxListItem(
+                        title = stringResource(R.string.profile_component_test_title),
+                        subtitle = stringResource(R.string.profile_component_test_subtitle),
+                        onClick = onOpenComponentShowcase
+                    )
+                }
             }
 
             FxFormFooterBar(

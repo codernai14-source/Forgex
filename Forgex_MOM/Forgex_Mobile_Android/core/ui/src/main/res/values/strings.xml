@@ -22,6 +22,12 @@
     <string name="scan_source_manual">手动输入</string>
     <string name="scan_hint_server">可直接手输，也可通过扫描枪或 NFC 标签回填地址信息</string>
     <string name="scan_hint_auth_account">账号支持手输，也支持扫描枪或 NFC 标签回填</string>
+    <string name="scan_camera_failed">摄像头扫码失败，请重试</string>
+    <string name="scan_camera_no_code">未识别到条码，请对准条码后重拍</string>
+    <string name="scan_camera_unavailable">无法启动相机，请检查相机权限或系统相机应用</string>
+    <string name="nfc_status_ready">NFC 已就绪，靠近标签即可读取</string>
+    <string name="nfc_status_disabled">NFC 未开启，点击前往系统设置开启</string>
+    <string name="nfc_status_unsupported">当前设备不支持 NFC</string>
     <string name="server_settings_scan_host">扫描主机</string>
     <string name="server_settings_scan_port">扫描端口</string>
 
@@ -42,6 +48,9 @@
     <string name="profile_language_changed">语言已切换，当前界面将刷新</string>
     <string name="profile_language_zh_cn">简体中文</string>
     <string name="profile_language_en_us">English</string>
+    <string name="profile_dev_section">开发与组件</string>
+    <string name="profile_component_test_title">组件测试页</string>
+    <string name="profile_component_test_subtitle">共享组件集中展示与交互试用</string>
 
     <string name="auth_login_welcome">欢迎使用 FORGEX</string>
     <string name="auth_server_current">当前服务器：%1$s</string>
@@ -53,7 +62,7 @@
     <string name="auth_click_logo_server">点击系统图标可切换服务器</string>
     <string name="auth_captcha_not_required">当前环境无需验证码</string>
     <string name="auth_public_key_ready">已启用 SM2 公钥预热，密码会加密后传输</string>
-    <string name="auth_public_key_missing">未获取到公钥，当前按联调模式发送密码</string>
+    <string name="auth_public_key_missing">未获取到登录加密公钥，请检查服务器地址是否正确后重试</string>
     <string name="auth_login_select_title">请选择登录方式</string>
     <string name="auth_login_select_subtitle">先选择入口，再完成登录</string>
     <string name="auth_login_method_account">账号登录</string>
@@ -162,4 +171,23 @@
 
     <string name="component_autocomplete_empty">未找到匹配项</string>
     <string name="placeholder_dash">--</string>
+
+    <string name="component_showcase_title">组件验收</string>
+    <string name="component_showcase_desc">共享组件集中展示页，覆盖字典、日期、图表、分页、扫码、表格与上传</string>
+    <string name="component_showcase_section_dict">字典标签与选择</string>
+    <string name="component_showcase_section_form">表单输入</string>
+    <string name="component_showcase_section_badge">状态徽标</string>
+    <string name="component_showcase_section_status">状态视图</string>
+    <string name="component_showcase_section_feedback">反馈与弹层</string>
+    <string name="component_showcase_section_datetime">日期时间选择</string>
+    <string name="component_showcase_section_chart">图表</string>
+    <string name="component_showcase_section_paging">分页列表</string>
+    <string name="component_showcase_section_scan">扫码与 NFC</string>
+    <string name="component_showcase_section_table">表格</string>
+    <string name="component_showcase_section_upload">附件上传与预览</string>
+    <string name="component_showcase_upload_pick">选择图片并上传</string>
+    <string name="component_showcase_upload_success">上传成功</string>
+    <string name="component_showcase_upload_failed">上传失败：%1$s</string>
+    <string name="component_showcase_dict_fallback">字典接口不可用，当前展示内置示例选项</string>
+    <string name="component_showcase_open">打开组件验收页</string>
 </resources>

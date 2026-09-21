@@ -17,6 +17,8 @@
 package com.forgex.mobile.core.network.api
 
 import com.forgex.mobile.core.common.model.ApiResponse
+import com.forgex.mobile.core.network.model.workbench.CMenuBundleRequest
+import com.forgex.mobile.core.network.model.workbench.CMenuBundleVO
 import com.forgex.mobile.core.network.model.workbench.CMenuVO
 import com.forgex.mobile.core.network.model.workbench.ToggleFavoriteRequest
 import com.forgex.mobile.core.network.model.workbench.WorkbenchMenusRequest
@@ -28,20 +30,24 @@ import retrofit2.http.POST
  */
 interface WorkbenchApi {
 
+    /** 获取 C 端菜单聚合包（授权模块整树 + 收藏，选租户后一次拉取） */
+    @POST("sys/app/c-menu/bundle")
+    suspend fun getCMenuBundle(@Body request: CMenuBundleRequest): ApiResponse<CMenuBundleVO>
+
     /** 获取工作台模块列表 */
-    @POST("app/c-menu/workbench/modules")
+    @POST("sys/app/c-menu/workbench/modules")
     suspend fun getWorkbenchModules(): ApiResponse<List<CMenuVO>>
 
     /** 获取指定模块下的菜单列表 */
-    @POST("app/c-menu/workbench/menus")
+    @POST("sys/app/c-menu/workbench/menus")
     suspend fun getWorkbenchMenus(@Body request: WorkbenchMenusRequest): ApiResponse<List<CMenuVO>>
 
     /** 获取用户收藏菜单列表 */
-    @POST("app/c-menu/favorites/list")
+    @POST("sys/app/c-menu/favorites/list")
     suspend fun getFavorites(): ApiResponse<List<CMenuVO>>
 
     /** 切换收藏状态 */
-    @POST("app/c-menu/favorites/toggle")
+    @POST("sys/app/c-menu/favorites/toggle")
     suspend fun toggleFavorite(@Body request: ToggleFavoriteRequest): ApiResponse<Boolean>
 }
 

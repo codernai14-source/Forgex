@@ -26,6 +26,7 @@ import com.forgex.sys.domain.dto.SysCMenuQueryDTO;
 import com.forgex.sys.domain.entity.SysCMenu;
 import com.forgex.sys.domain.entity.SysRoleCMenu;
 import com.forgex.sys.domain.entity.SysUserCMenuFavorite;
+import com.forgex.sys.domain.vo.CMenuBundleVO;
 import com.forgex.sys.domain.vo.CMenuTreeVO;
 import com.forgex.sys.mapper.SysCMenuMapper;
 import com.forgex.sys.mapper.SysRoleCMenuMapper;
@@ -60,6 +61,15 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class SysCMenuServiceImpl extends ServiceImpl<SysCMenuMapper, SysCMenu> implements ISysCMenuService {
+
+    /** 设备类型白名单（聚合包入参校验用） */
+    private static final Set<String> SUPPORTED_DEVICE_TYPES = Set.of("MOBILE", "TABLET");
+
+    /** 设备类型默认值（PDA/手机） */
+    private static final String DEFAULT_DEVICE_TYPE = "MOBILE";
+
+    /** 设备类型-通用（匹配所有设备） */
+    private static final String DEVICE_TYPE_ALL = "ALL";
 
     private final SysRoleCMenuMapper roleCMenuMapper;
     private final SysUserCMenuFavoriteMapper favoriteMapper;
@@ -312,19 +322,7 @@ public class SysCMenuServiceImpl extends ServiceImpl<SysCMenuMapper, SysCMenu> i
      */
     @Override
     public List<CMenuTreeVO> getUserFavorites(Long userId, Long tenantId) {
-        LambdaQueryWrapper<SysUserCMenuFavorite> fWrapper = new LambdaQueryWrapper<>();
-        fWrapper.eq(SysUserCMenuFavorite::getUserId, userId);
-        List<Long> favMenuIds = favoriteMapper.selectList(fWrapper).stream()
-                .map(SysUserCMenuFavorite::getCMenuId)
-                .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(favMenuIds)) return Collections.emptyList();
-
-        LambdaQueryWrapper<SysCMenu> wrapper = new LambdaQueryWrapper<>();
-        wrapper.in(SysCMenu::getId, favMenuIds)
-               .eq(SysCMenu::getStatus, true)
-               .orderByAsc(SysCMenu::getOrderNum);
-        applyMenuTenantScope(wrapper, tenantId);
-        return executeIgnoringTenant(() -> this.list(wrapper).stream().map(this::toTreeVO).collect(Collectors.toList()));
+        return queryFavorites(userId, tenantId, null);
     }
 
     /**
@@ -357,7 +355,86 @@ public class SysCMenuServiceImpl extends ServiceImpl<SysCMenuMapper, SysCMenu> i
         }
     }
 
+    /**
+     * 获取 C 端菜单聚合包（授权模块整树 + 收藏，一次返回）。
+     *
+     * @param userId 用户 ID
+     * @param tenantId 租户 ID
+     * @param deviceType 设备类型（MOBILE/TABLET；空或非法值按 MOBILE 处理）
+     * @return 聚合包数据
+     */
+    @Override
+    public CMenuBundleVO getCMenuBundle(Long userId, Long tenantId, String deviceType) {
+        // 1. 归一化设备类型：空/非法回退 MOBILE
+        String normalizedDeviceType = normalizeDeviceType(deviceType);
+        CMenuBundleVO bundle = new CMenuBundleVO();
+
+        // 2. 查询用户授权 C 端菜单 ID（用户→角色→sys_role_c_menu，含全局行/租户行叠加）
+        List<Long> menuIds = getUserCMenuIds(userId, tenantId);
+        if (CollectionUtils.isEmpty(menuIds)) {
+            bundle.setModules(Collections.emptyList());
+            bundle.setFavorites(queryFavorites(userId, tenantId, normalizedDeviceType));
+            return bundle;
+        }
+
+        // 3. 一次查出全部授权菜单，按设备类型过滤（device_type IN (入参, ALL)），组装整树（树根即模块）
+        LambdaQueryWrapper<SysCMenu> wrapper = new LambdaQueryWrapper<>();
+        wrapper.in(SysCMenu::getId, menuIds)
+               .eq(SysCMenu::getVisible, true)
+               .eq(SysCMenu::getStatus, true)
+               .in(SysCMenu::getDeviceType, normalizedDeviceType, DEVICE_TYPE_ALL);
+        applyMenuTenantScope(wrapper, tenantId);
+        wrapper.orderByAsc(SysCMenu::getOrderNum);
+        List<SysCMenu> menus = executeIgnoringTenant(() -> this.list(wrapper));
+        bundle.setModules(buildTree(menus, null));
+
+        // 4. 收藏列表（同设备类型过滤）
+        bundle.setFavorites(queryFavorites(userId, tenantId, normalizedDeviceType));
+        log.info("C 端菜单聚合包: userId={}, tenantId={}, deviceType={}, modules={}, favorites={}",
+                userId, tenantId, normalizedDeviceType,
+                bundle.getModules().size(), bundle.getFavorites().size());
+        return bundle;
+    }
+
     // ======================== 私有方法 ========================
+
+    /**
+     * 归一化设备类型：去空白转大写，非白名单值（含空）回退 MOBILE。
+     *
+     * @param deviceType 原始设备类型
+     * @return 白名单内的设备类型
+     */
+    private String normalizeDeviceType(String deviceType) {
+        String normalized = deviceType == null ? "" : deviceType.trim().toUpperCase();
+        return SUPPORTED_DEVICE_TYPES.contains(normalized) ? normalized : DEFAULT_DEVICE_TYPE;
+    }
+
+    /**
+     * 查询用户收藏菜单（可按设备类型过滤）。
+     *
+     * @param userId 用户 ID
+     * @param tenantId 租户 ID
+     * @param deviceType 设备类型；null 表示不过滤（兼容既有收藏接口行为）
+     * @return 收藏菜单列表
+     */
+    private List<CMenuTreeVO> queryFavorites(Long userId, Long tenantId, String deviceType) {
+        LambdaQueryWrapper<SysUserCMenuFavorite> fWrapper = new LambdaQueryWrapper<>();
+        fWrapper.eq(SysUserCMenuFavorite::getUserId, userId);
+        List<Long> favMenuIds = favoriteMapper.selectList(fWrapper).stream()
+                .map(SysUserCMenuFavorite::getCMenuId)
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(favMenuIds)) return Collections.emptyList();
+
+        LambdaQueryWrapper<SysCMenu> wrapper = new LambdaQueryWrapper<>();
+        wrapper.in(SysCMenu::getId, favMenuIds)
+               .eq(SysCMenu::getStatus, true);
+        if (deviceType != null) {
+            wrapper.in(SysCMenu::getDeviceType, deviceType, DEVICE_TYPE_ALL);
+        }
+        wrapper.orderByAsc(SysCMenu::getOrderNum);
+        applyMenuTenantScope(wrapper, tenantId);
+        return executeIgnoringTenant(() -> this.list(wrapper).stream().map(this::toTreeVO).collect(Collectors.toList()));
+    }
 
     private List<Long> getUserCMenuIds(Long userId, Long tenantId) {
         // 1. 查询用户角色

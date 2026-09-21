@@ -3,6 +3,7 @@ package com.forgex.mobile.core.sync.coordinator
 import android.content.Context
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
@@ -120,9 +121,9 @@ class SyncCoordinator @Inject constructor(
             )
             .build()
 
-        workManager.enqueueUniqueWork(
+        workManager.enqueueUniquePeriodicWork(
             SyncWorker.WORK_NAME_PERIODIC,
-            ExistingWorkPolicy.KEEP,
+            ExistingPeriodicWorkPolicy.KEEP,
             periodicRequest
         )
     }

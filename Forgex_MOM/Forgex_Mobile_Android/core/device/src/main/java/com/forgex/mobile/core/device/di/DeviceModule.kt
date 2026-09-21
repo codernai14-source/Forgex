@@ -2,6 +2,7 @@
 
 import android.content.Context
 import com.forgex.mobile.core.device.FxNfcScanManager
+import com.forgex.mobile.core.device.FxCameraScanManager
 import com.forgex.mobile.core.device.FxPdaScanCoordinator
 import com.forgex.mobile.core.device.FxScanFeedback
 import com.forgex.mobile.core.device.FxScannerActionRegistry
@@ -44,6 +45,12 @@ object DeviceModule {
         return FxNfcScanManager()
     }
 
+    @Provides
+    @Singleton
+    fun provideFxCameraScanManager(@ApplicationContext context: Context): FxCameraScanManager {
+        return FxCameraScanManager(context)
+    }
+
     /**
      * 提供 PDA 扫码广播 action 注册表。
      *
@@ -60,17 +67,20 @@ object DeviceModule {
      *
      * @param scannerManager 全局扫描结果分发管理器
      * @param scannerActionRegistry PDA 广播 action 注册表
+     * @param scanFeedback 扫码成功反馈
      * @return PDA 扫码广播协调器
      */
     @Provides
     @Singleton
     fun provideFxPdaScanCoordinator(
         scannerManager: FxScannerManager,
-        scannerActionRegistry: FxScannerActionRegistry
+        scannerActionRegistry: FxScannerActionRegistry,
+        scanFeedback: FxScanFeedback
     ): FxPdaScanCoordinator {
         return FxPdaScanCoordinator(
             scannerManager = scannerManager,
-            actionRegistry = scannerActionRegistry
+            actionRegistry = scannerActionRegistry,
+            scanFeedback = scanFeedback
         )
     }
 

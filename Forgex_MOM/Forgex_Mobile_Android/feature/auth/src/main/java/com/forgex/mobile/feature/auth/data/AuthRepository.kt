@@ -5,7 +5,7 @@ import com.forgex.mobile.core.network.model.auth.SysUserDTO
 import com.forgex.mobile.core.network.model.auth.LoginResult
 import com.forgex.mobile.core.network.model.auth.SystemBasicConfig
 import com.forgex.mobile.core.network.model.auth.TenantVO
-import com.forgex.mobile.core.network.model.menu.UserRoutesVO
+import com.forgex.mobile.core.network.model.workbench.CMenuBundleVO
 
 /**
  * 登录模块数据仓库接口。
@@ -45,7 +45,10 @@ interface AuthRepository {
         interactionCode: String
     ): AppResult<SysUserDTO>
 
-    suspend fun loadUserRoutes(account: String): AppResult<UserRoutesVO>
+    /**
+     * 选租户成功后预载 C 端菜单聚合包（授权模块整树 + 收藏）并写入本地缓存。
+     */
+    suspend fun preloadCMenuBundle(tenantId: String): AppResult<CMenuBundleVO>
 
     suspend fun logout(): AppResult<Boolean>
 }

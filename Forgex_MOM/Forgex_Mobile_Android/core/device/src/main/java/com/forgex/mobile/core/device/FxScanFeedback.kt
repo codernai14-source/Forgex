@@ -22,4 +22,12 @@ class FxScanFeedback(private val context: Context) {
             vibrator?.vibrate(VibrationEffect.createOneShot(60L, VibrationEffect.DEFAULT_AMPLITUDE))
         }
     }
+
+    companion object {
+        /** 硬件扫码（PDA/NFC/键盘/摄像头）成功后的默认反馈配置：短提示音 + 短震动。 */
+        val HARDWARE_SCAN_CONFIG = FxScannerConfig(
+            beepOnSuccess = true,
+            vibrateOnSuccess = true
+        )
+    }
 }

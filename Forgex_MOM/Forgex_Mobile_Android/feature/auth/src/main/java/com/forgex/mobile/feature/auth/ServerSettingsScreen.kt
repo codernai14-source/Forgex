@@ -1,5 +1,8 @@
 package com.forgex.mobile.feature.auth
 
+import android.app.Activity
+import android.content.Intent
+import android.provider.Settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,17 +14,26 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.forgex.mobile.core.component.FxFormFooterBar
 import com.forgex.mobile.core.component.FxFormSection
 import com.forgex.mobile.core.component.FxPageScaffold
+import com.forgex.mobile.core.component.FxToast
+import com.forgex.mobile.core.component.scanner.FxNfcStatusHint
 import com.forgex.mobile.core.component.scanner.FxScanActionBar
 import com.forgex.mobile.core.component.scanner.FxScanInputBox
 import com.forgex.mobile.core.device.FxScannerManager
@@ -40,7 +52,24 @@ fun ServerSettingsScreen(
     scannerBridgeViewModel: ServerSettingsScanViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
     val scannerManager = remember(scannerBridgeViewModel) { scannerBridgeViewModel.scannerManager }
+
+    var cameraScanNotice by remember { mutableStateOf<Int?>(null) }
+    val startCameraScan = rememberCameraScanLauncher(
+        cameraScanManager = scannerBridgeViewModel.cameraScanManager,
+        scanFeedback = scannerBridgeViewModel.scanFeedback,
+        onDecoded = { result -> scannerManager.submit(result) },
+        onNotify = { messageRes -> cameraScanNotice = messageRes }
+    )
+    cameraScanNotice?.let { messageRes ->
+        FxToast(
+            message = context.getString(messageRes),
+            onShown = { cameraScanNotice = null }
+        )
+    }
+
+    val nfcStatus = rememberNfcStatus(scannerBridgeViewModel.nfcScanManager)
 
     LaunchedEffect(viewModel) {
         viewModel.events.collectLatest { event ->
@@ -124,7 +153,17 @@ fun ServerSettingsScreen(
                 FxScanActionBar(
                     hint = stringResource(R.string.scan_hint_server),
                     enabled = !uiState.isSaving,
-                    onActionClick = {}
+                    onActionClick = startCameraScan
+                )
+
+                FxNfcStatusHint(
+                    supported = nfcStatus?.supported == true,
+                    enabled = nfcStatus?.enabled == true,
+                    onOpenSettings = {
+                        runCatching {
+                            context.startActivity(Intent(Settings.ACTION_NFC_SETTINGS))
+                        }
+                    }
                 )
             }
 
@@ -185,5 +224,43 @@ private fun routeServerScanResult(
  */
 @dagger.hilt.android.lifecycle.HiltViewModel
 class ServerSettingsScanViewModel @javax.inject.Inject constructor(
-    val scannerManager: FxScannerManager
+    val scannerManager: FxScannerManager,
+    val cameraScanManager: com.forgex.mobile.core.device.FxCameraScanManager,
+    val scanFeedback: com.forgex.mobile.core.device.FxScanFeedback,
+    val nfcScanManager: com.forgex.mobile.core.device.FxNfcScanManager
 ) : androidx.lifecycle.ViewModel()
+
+private data class NfcStatus(val supported: Boolean, val enabled: Boolean)
+
+/**
+ * 读取 NFC 支持与开关状态，并在每次回到前台时刷新（从系统设置返回后能立即更新）。
+ */
+@Composable
+private fun rememberNfcStatus(
+    nfcScanManager: com.forgex.mobile.core.device.FxNfcScanManager
+): NfcStatus? {
+    val activity = LocalContext.current as? Activity
+    var status by remember { mutableStateOf<NfcStatus?>(null) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    fun refresh() {
+        val host = activity ?: return
+        status = if (!nfcScanManager.isNfcSupported(host)) {
+            NfcStatus(supported = false, enabled = false)
+        } else {
+            NfcStatus(supported = true, enabled = nfcScanManager.isNfcEnabled(host))
+        }
+    }
+
+    DisposableEffect(lifecycleOwner, activity) {
+        refresh()
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                refresh()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+    return status
+}

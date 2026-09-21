@@ -41,6 +41,11 @@ fun FxScanInputBox(
 
     LaunchedEffect(latestScanResult?.timestamp) {
         val result = latestScanResult ?: return@LaunchedEffect
+        if (!enabled) {
+            // 禁用字段不应被外部设备结果回填，但仍消费结果避免页面重组后重复处理。
+            onScanConsumed?.invoke()
+            return@LaunchedEffect
+        }
         onValueChange(result.rawValue)
         sourceLabelRes = result.source.displayNameRes()
         onScanConsumed?.invoke()

@@ -19,6 +19,8 @@ package com.forgex.sys.controller;
 import cn.dev33.satoken.stp.StpUtil;
 import com.forgex.common.tenant.TenantContext;
 import com.forgex.common.web.R;
+import com.forgex.sys.domain.param.CMenuBundleParam;
+import com.forgex.sys.domain.vo.CMenuBundleVO;
 import com.forgex.sys.domain.vo.CMenuTreeVO;
 import com.forgex.sys.service.ISysCMenuService;
 import com.forgex.sys.service.ISysUserService;
@@ -49,6 +51,24 @@ public class AppCMenuController {
 
     private final ISysCMenuService cMenuService;
     private final ISysUserService sysUserService;
+
+    /**
+     * 获取 C 端菜单聚合包（选租户后一次拉取）
+     * <p>
+     * 返回当前用户在当前租户下的全部授权模块（顶级菜单，携带完整 children 菜单树）
+     * 与收藏列表，替代"模块列表 + 按模块逐个查菜单"的二级加载。
+     * </p>
+     *
+     * @param param 查询参数（deviceType：MOBILE=手机/PDA, TABLET=Pad；空或非法按 MOBILE 处理）
+     * @return 聚合包数据
+     */
+    @PostMapping("/bundle")
+    public R<CMenuBundleVO> cMenuBundle(@RequestBody(required = false) CMenuBundleParam param) {
+        Long userId = resolveCurrentUserId();
+        Long tenantId = TenantContext.get();
+        String deviceType = param != null ? param.getDeviceType() : null;
+        return R.ok(cMenuService.getCMenuBundle(userId, tenantId, deviceType));
+    }
 
     /**
      * 获取工作台模块列表（顶级菜单/目录）

@@ -19,18 +19,23 @@ package com.forgex.mobile.feature.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.forgex.mobile.core.common.result.AppResult
+import com.forgex.mobile.core.datastore.SessionStore
+import com.forgex.mobile.core.network.workbench.CMenuBundleRepository
 import com.forgex.mobile.feature.home.data.WorkbenchRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @HiltViewModel
 class FavoritesViewModel @Inject constructor(
-    private val repository: WorkbenchRepository
+    private val repository: WorkbenchRepository,
+    private val cMenuBundleRepository: CMenuBundleRepository,
+    private val sessionStore: SessionStore
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(FavoritesUiState())
@@ -43,6 +48,18 @@ class FavoritesViewModel @Inject constructor(
     fun loadFavorites() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+
+            // 缓存优先：选租户后预载的聚合包内含收藏，命中则零网络渲染
+            val tenantId = sessionStore.tenantId.first()
+            val cached = tenantId?.takeIf { it.isNotBlank() }
+                ?.let { cMenuBundleRepository.readCachedBundle(it) }
+            if (cached != null) {
+                _uiState.update {
+                    it.copy(isLoading = false, favorites = cached.favorites, errorMessage = null)
+                }
+                return@launch
+            }
+
             when (val result = repository.loadFavorites()) {
                 is AppResult.Success -> {
                     _uiState.update {

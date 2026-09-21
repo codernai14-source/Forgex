@@ -15,6 +15,20 @@ data class PagingUiState<T>(
     val error: String? = null,
     val errorText: AppText? = null
 ) : UiState {
+    fun replace(pageData: FxPageData<T>): PagingUiState<T> = fromPage(pageData)
+
+    fun append(pageData: FxPageData<T>): PagingUiState<T> {
+        val merged = (list + pageData.records).distinctBy { it }
+        return copy(
+            list = merged,
+            isLoadingMore = false,
+            hasMore = pageData.current < pageData.pages,
+            total = pageData.total,
+            error = null,
+            errorText = null
+        )
+    }
+
     companion object {
         fun <T> fromPage(pageData: FxPageData<T>): PagingUiState<T> {
             val hasMore = pageData.current < pageData.pages

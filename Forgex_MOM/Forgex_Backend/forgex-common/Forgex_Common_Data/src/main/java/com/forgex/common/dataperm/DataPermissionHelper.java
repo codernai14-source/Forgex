@@ -14,6 +14,7 @@ limitations under the License.*/
 package com.forgex.common.dataperm;
 
 import com.forgex.common.tenant.UserContext;
+import com.forgex.common.tenant.TenantContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -49,12 +50,14 @@ public class DataPermissionHelper {
         private DataScope dataScope;
         private Set<Long> deptIds;
         private Long userId;
+        private Long tenantId;
         private long cacheTime;
         
         public DataPermissionInfo(DataScope dataScope, Set<Long> deptIds, Long userId) {
             this.dataScope = dataScope;
             this.deptIds = deptIds;
             this.userId = userId;
+            this.tenantId = TenantContext.get();
             this.cacheTime = System.currentTimeMillis();
         }
         
@@ -73,6 +76,11 @@ public class DataPermissionHelper {
         public Long getUserId() {
             return userId;
         }
+
+        /** @return 权限所属租户 ID */
+        public Long getTenantId() {
+            return tenantId;
+        }
     }
     
     /**
@@ -88,7 +96,7 @@ public class DataPermissionHelper {
         
         // 从缓存获取
         DataPermissionInfo info = CACHE.get(userId);
-        if (info != null && !info.isExpired()) {
+        if (info != null && !info.isExpired() && Objects.equals(info.getTenantId(), TenantContext.get())) {
             return info;
         }
         

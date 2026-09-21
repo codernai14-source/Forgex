@@ -37,6 +37,8 @@ import com.forgex.mobile.feature.home.HOME_ROUTE
 import com.forgex.mobile.feature.home.HomeScreen
 import com.forgex.mobile.feature.home.BASIC_INFO_TEST_ROUTE
 import com.forgex.mobile.feature.home.BasicInfoTestScreen
+import com.forgex.mobile.feature.home.COMPONENT_SHOWCASE_ROUTE
+import com.forgex.mobile.feature.home.ComponentShowcaseScreen
 import com.forgex.mobile.feature.integration.navigation.integrationScreen
 import com.forgex.mobile.feature.label.navigation.labelScreen
 import com.forgex.mobile.feature.message.MESSAGE_READ_ROUTE
@@ -237,7 +239,14 @@ fun ForgexMobileApp() {
                     )
                 }
                 composable(BASIC_INFO_TEST_ROUTE) {
-                    BasicInfoTestScreen()
+                    BasicInfoTestScreen(
+                        onOpenComponentShowcase = {
+                            navController.navigate(COMPONENT_SHOWCASE_ROUTE) { launchSingleTop = true }
+                        }
+                    )
+                }
+                composable(COMPONENT_SHOWCASE_ROUTE) {
+                    ComponentShowcaseScreen()
                 }
                 basicScreen()
                 reportScreen()
@@ -291,7 +300,12 @@ fun ForgexMobileApp() {
                     )
                 }
                 composable(PROFILE_ROUTE) {
-                    ProfileScreen(onBack = { navController.popBackStack() })
+                    ProfileScreen(
+                        onBack = { navController.popBackStack() },
+                        onOpenComponentShowcase = {
+                            navController.navigate(COMPONENT_SHOWCASE_ROUTE) { launchSingleTop = true }
+                        }
+                    )
                 }
 
                 composable(

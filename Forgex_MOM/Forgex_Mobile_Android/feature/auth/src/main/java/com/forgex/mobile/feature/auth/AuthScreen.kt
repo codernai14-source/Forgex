@@ -49,7 +49,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -69,6 +71,7 @@ import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
+import com.forgex.mobile.core.component.FxToast
 import com.forgex.mobile.core.component.scanner.FxScanActionBar
 import com.forgex.mobile.core.component.scanner.FxScanInputBox
 import com.forgex.mobile.core.device.FxScannerManager
@@ -100,6 +103,21 @@ fun AuthScreen(
     val context = LocalContext.current
     val i18nBundle = LocalI18nBundle.current
     val scannerManager = remember(scanBridgeViewModel) { scanBridgeViewModel.scannerManager }
+    var cameraScanNotice by remember { mutableStateOf<Int?>(null) }
+    val startCameraScan = rememberCameraScanLauncher(
+        cameraScanManager = scanBridgeViewModel.cameraScanManager,
+        scanFeedback = scanBridgeViewModel.scanFeedback,
+        onDecoded = { result ->
+            scannerManager.submit(result)
+        },
+        onNotify = { messageRes -> cameraScanNotice = messageRes }
+    )
+    cameraScanNotice?.let { messageRes ->
+        FxToast(
+            message = context.getString(messageRes),
+            onShown = { cameraScanNotice = null }
+        )
+    }
 
     LaunchedEffect(viewModel) {
         viewModel.events.collectLatest { event ->
@@ -192,7 +210,8 @@ fun AuthScreen(
                         onVerifySlider = viewModel::verifySliderCaptcha,
                         onRefreshCaptcha = { viewModel.refreshCaptcha(silent = false) },
                         onSubmit = viewModel::submitLogin,
-                        onAccountScanConsumed = viewModel::consumeAccountScanResult
+                        onAccountScanConsumed = viewModel::consumeAccountScanResult,
+                        onCameraScan = startCameraScan
                     )
                 }
             } else {
@@ -433,7 +452,8 @@ private fun LoginCard(
     onVerifySlider: () -> Unit,
     onRefreshCaptcha: () -> Unit,
     onSubmit: () -> Unit,
-    onAccountScanConsumed: () -> Unit
+    onAccountScanConsumed: () -> Unit,
+    onCameraScan: () -> Unit = {}
 ) {
     val title = uiState.loginTitle.ifBlank {
         i18nString("auth.login.method.account", R.string.auth_login_method_account)
@@ -495,7 +515,7 @@ private fun LoginCard(
             FxScanActionBar(
                 hint = i18nString("scan.hint.auth.account", R.string.scan_hint_auth_account),
                 enabled = !uiState.isLoading,
-                onActionClick = {}
+                onActionClick = onCameraScan
             )
 
             OutlinedTextField(
@@ -1121,11 +1141,13 @@ private fun isLikelyBase64(raw: String): Boolean {
 }
 
 /**
- * 扫描总线桥接 ViewModel，向登录页面暴露全局扫描管理器。
+ * 扫描总线桥接 ViewModel，向登录页面暴露全局扫描管理器与摄像头扫码能力。
  */
 @dagger.hilt.android.lifecycle.HiltViewModel
 class AuthScanBridgeViewModel @javax.inject.Inject constructor(
-    val scannerManager: FxScannerManager
+    val scannerManager: FxScannerManager,
+    val cameraScanManager: com.forgex.mobile.core.device.FxCameraScanManager,
+    val scanFeedback: com.forgex.mobile.core.device.FxScanFeedback
 ) : androidx.lifecycle.ViewModel()
 
 @Composable

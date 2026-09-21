@@ -54,3 +54,24 @@ data class WorkbenchMenusRequest(
 data class ToggleFavoriteRequest(
     val cMenuId: Long
 )
+
+/**
+ * C 端菜单聚合包查询请求（选租户后一次拉取）。
+ */
+data class CMenuBundleRequest(
+    val deviceType: String = DEVICE_TYPE_MOBILE
+)
+
+/**
+ * C 端菜单聚合包视图对象：授权模块整树 + 用户收藏。
+ */
+data class CMenuBundleVO(
+    val modules: List<CMenuVO> = emptyList(),
+    val favorites: List<CMenuVO> = emptyList()
+)
+
+/** 设备类型：手机/PDA */
+const val DEVICE_TYPE_MOBILE = "MOBILE"
+
+/** 设备类型：Pad */
+const val DEVICE_TYPE_TABLET = "TABLET"

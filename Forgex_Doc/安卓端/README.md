@@ -82,7 +82,7 @@
 
 1. `/auth/login` — 账号密码登录
 2. `/auth/chooseTenant` — 多租户选择
-3. `/sys/menu/routes` — 菜单与路由拉取
+3. `/sys/app/c-menu/bundle` — C 端菜单聚合包（授权模块整树 + 收藏，选租户后一次拉取并缓存）
 
 默认通过网关 `/api` 前缀访问后端能力，说明移动端与 Web 管理端共享统一网关入口和权限链路。
 
@@ -102,6 +102,7 @@
 |---|---|
 | [网络层与统一结果](./网络层与统一结果.md) | Retrofit 封装、OkHttp 拦截器、`R<T>` 模型对齐、错误处理 |
 | [DataStore 会话持久化](./DataStore%20会话持久化.md) | Token / Tenant 存储、Preferences DataStore；加密仍未实现 |
+| [授权菜单与动态加载](./授权菜单与动态加载.md) | 选租户后菜单聚合包一次拉取、缓存策略、菜单动态化边界与管理端配置 |
 | [Compose 页面容器](./Compose%20页面容器.md) | MOBILE / TABLET 设备识别、通用页面容器、主题 Token |
 | [导航与模块规范](./导航与模块规范.md) | Navigation Compose、feature 模块边界、路由表约定 |
 | [离线能力](./离线能力.md) | Room 本地库 + WorkManager 同步队列框架说明 |

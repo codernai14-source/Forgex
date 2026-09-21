@@ -1,6 +1,7 @@
 package com.forgex.common.api.feign;
 
 import com.forgex.common.api.dto.SysDictValueRequest;
+import com.forgex.common.api.dto.SysDataScopeDTO;
 import com.forgex.common.api.dto.SysEmployeeReferenceDTO;
 import com.forgex.common.api.dto.SysEmployeeReferenceRequest;
 import com.forgex.common.api.dto.SysEmployeeUserRequest;
@@ -18,6 +19,15 @@ import java.util.List;
  */
 @FeignClient(name = "forgex-sys", contextId = "sysBasicSupportFeignClient", path = "/sys/internal/basic-support")
 public interface SysBasicSupportFeignClient {
+
+    /**
+     * 加载当前登录用户的数据权限，服务端核对用户与租户会话。
+     *
+     * @param userId 当前用户 ID
+     * @return 当前租户的数据权限快照
+     */
+    @PostMapping("/data-scope")
+    R<SysDataScopeDTO> dataScope(@RequestBody Long userId);
 
     /**
      * 在平台内原子创建或更新用户及租户绑定，可按人员业务标识重复调用。

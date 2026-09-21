@@ -1,6 +1,7 @@
 package com.forgex.sys.controller.internal;
 
 import com.forgex.common.api.dto.SysDictValueRequest;
+import com.forgex.common.api.dto.SysDataScopeDTO;
 import com.forgex.common.api.dto.SysEmployeeReferenceDTO;
 import com.forgex.common.api.dto.SysEmployeeReferenceRequest;
 import com.forgex.common.api.dto.SysEmployeeUserRequest;
@@ -8,6 +9,7 @@ import com.forgex.common.api.dto.SysEmployeeUserResult;
 import com.forgex.common.api.dto.SysModuleSummaryDTO;
 import com.forgex.common.web.R;
 import com.forgex.sys.service.platform.BasicPlatformReferenceService;
+import com.forgex.sys.service.platform.BasicDataScopeService;
 import com.forgex.sys.service.platform.EmployeeUserSyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,6 +29,17 @@ public class BasicPlatformController {
 
     private final EmployeeUserSyncService employeeUserSyncService;
     private final BasicPlatformReferenceService referenceService;
+    private final BasicDataScopeService dataScopeService;
+
+    /**
+     * 获取当前用户的数据权限快照。
+     * @param userId 当前用户 ID
+     * @return 权限快照
+     */
+    @PostMapping("/data-scope")
+    public R<SysDataScopeDTO> dataScope(@RequestBody Long userId) {
+        return R.ok(dataScopeService.load(userId));
+    }
 
     /**
      * 原子同步人员用户与租户绑定。

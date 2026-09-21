@@ -29,9 +29,20 @@ class FxScannerActionRegistry(
 
     companion object {
         private val defaultMappings = mapOf(
-            "honeywell" to listOf("com.honeywell.decode.intent.action"),
-            "seuic" to listOf("com.seuic.scanner.decode"),
-            "urovo" to listOf("android.intent.ACTION_DECODE_DATA")
+            "honeywell" to listOf(
+                "com.honeywell.decode.intent.action",
+                "com.honeywell.decode.intent.action.EDIT"
+            ),
+            "seuic" to listOf("com.seuic.scanner.decode", "com.seuic.scanner.intent.action"),
+            "urovo" to listOf("android.intent.ACTION_DECODE_DATA"),
+            "zebra" to listOf("com.symbol.datawedge.api.RESULT_ACTION"),
+            "symbol" to listOf("com.symbol.datawedge.api.RESULT_ACTION"),
+            "datalogic" to listOf("com.datalogic.decodewedge.decode_action"),
+            "newland" to listOf("nlscan.action.SCANNER_RESULT"),
+            "chainway" to listOf("com.android.server.scannerservice.broadcast"),
+            "pointmobile" to listOf("com.pointmobile.decode.action"),
+            "bluebird" to listOf("kr.co.bluebird.android.action.BARCODE"),
+            "cipherlab" to listOf("com.cipherlab.barcodebaseapi.BARCODE")
         )
 
         private val fallbackActions = defaultMappings.values.flatten().distinct()

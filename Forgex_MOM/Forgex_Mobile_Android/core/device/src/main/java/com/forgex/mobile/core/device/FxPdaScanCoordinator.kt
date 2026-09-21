@@ -13,10 +13,12 @@ import androidx.core.content.ContextCompat
  *
  * @param scannerManager 全局扫描结果分发管理器
  * @param actionRegistry PDA 广播 action 注册表
+ * @param scanFeedback 扫码成功反馈，为空时不做提示
  */
 class FxPdaScanCoordinator(
     private val scannerManager: FxScannerManager,
-    private val actionRegistry: FxScannerActionRegistry
+    private val actionRegistry: FxScannerActionRegistry,
+    private val scanFeedback: FxScanFeedback? = null
 ) {
     private var receiver: FxPdaScanReceiver? = null
     private var registeredActions: List<String> = emptyList()
@@ -40,6 +42,7 @@ class FxPdaScanCoordinator(
         val applicationContext = context.applicationContext
         val scanReceiver = FxPdaScanReceiver { result ->
             scannerManager.submit(result)
+            scanFeedback?.onScanSuccess(FxScanFeedback.HARDWARE_SCAN_CONFIG)
         }
         val intentFilter = IntentFilter().apply {
             actions.forEach(::addAction)

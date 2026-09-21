@@ -57,7 +57,7 @@ fun WorkbenchScreen(
     ) {
         WorkbenchErrorBanner(
             errorMessage = uiState.errorMessage,
-            onRetry = viewModel::loadModules
+            onRetry = viewModel::refresh
         )
 
         when {

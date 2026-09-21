@@ -96,6 +96,10 @@ class FxPdaScanReceiver(
             is CharSequence -> extra.toString()
             is Number -> extra.toString()
             is Array<*> -> extra.firstNotNullOfOrNull(::decodeExtra)
+            is Bundle -> extra.keySet()
+                .asSequence()
+                .mapNotNull { nestedKey -> decodeExtra(extra.get(nestedKey)) }
+                .firstOrNull()
             is Boolean -> return null
             else -> extra.toString().takeUnless { it.startsWith("[B@") }
         }
@@ -120,6 +124,13 @@ class FxPdaScanReceiver(
         private val preferredExtraKeys = listOf(
             "data",
             "data_string",
+            "com.symbol.datawedge.data_string",
+            "com.symbol.datawedge.decode_data",
+            "com.honeywell.scantodata",
+            "com.honeywell.decode.data",
+            "com.seuic.scanner.data",
+            "com.urovo.decode.data",
+            "scanner_data",
             "scannerdata",
             "scanData",
             "scan_data",

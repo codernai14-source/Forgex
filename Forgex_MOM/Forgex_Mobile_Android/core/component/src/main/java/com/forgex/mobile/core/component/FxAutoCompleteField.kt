@@ -110,6 +110,11 @@ fun <T> FxAutoCompleteField(
         if (result.source !in acceptedExternalSources) {
             return@LaunchedEffect
         }
+        if (!enabled || readOnly) {
+            // 禁用或只读字段不回填外部设备结果，但仍消费结果避免重复处理。
+            onExternalValueConsumed?.invoke()
+            return@LaunchedEffect
+        }
         onValueChange(result.rawValue)
         expanded = true
         onSearch?.invoke()

@@ -20,6 +20,29 @@ data class FxPageData<T>(
 )
 
 /**
+ * 字典选项协议。value 用于提交，label 用于展示，tagColor 可选用于状态标签。
+ */
+data class FxDictionaryOption(
+    val value: String,
+    val label: String,
+    val tagColor: String? = null,
+    val disabled: Boolean = false
+)
+
+/**
+ * 字典值解析器，统一处理空值和后端未返回标签的降级展示。
+ */
+class FxDictionaryResolver(private val options: List<FxDictionaryOption>) {
+    private val byValue = options.associateBy { it.value }
+
+    fun find(value: String?): FxDictionaryOption? = value?.let(byValue::get)
+
+    fun label(value: String?, fallback: String = "-"): String {
+        return find(value)?.label ?: value?.takeIf { it.isNotBlank() } ?: fallback
+    }
+}
+
+/**
  * 表格列基础协议。
  */
 data class FxTableColumn(

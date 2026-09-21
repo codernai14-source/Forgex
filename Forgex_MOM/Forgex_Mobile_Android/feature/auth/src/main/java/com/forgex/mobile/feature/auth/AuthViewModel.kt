@@ -131,10 +131,20 @@ class AuthViewModel @Inject constructor(
 
     private fun observeServerEndpoint() {
         viewModelScope.launch {
+            var initialEndpoint = true
             sessionStore.serverEndpoint.collectLatest { endpoint ->
                 _uiState.update {
                     it.copy(serverOrigin = resolveServerOrigin(endpoint))
                 }
+                if (initialEndpoint) {
+                    // 首个值是当前地址，初始化时已完成预热
+                    initialEndpoint = false
+                    return@collectLatest
+                }
+                // 服务器地址切换后，登录依赖的公钥、验证码和系统配置都按新服务器重新拉取
+                preloadSystemBasicConfig()
+                refreshCaptchaModeAndData(silent = true)
+                preloadPublicKey()
             }
         }
     }
@@ -618,6 +628,35 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null, errorText = null) }
 
+            // 公钥缺失（如预热时服务器不可达）时先现场补拉一次，仍拿不到则报错而不是明文发送
+            var loginPublicKey = snapshot.publicKey.takeIf { it.isNotBlank() }
+            if (loginPublicKey == null) {
+                when (val keyResult = authRepository.loadPublicKey()) {
+                    is AppResult.Success -> {
+                        loginPublicKey = keyResult.data.takeIf { it.isNotBlank() }
+                        _uiState.update {
+                            it.copy(
+                                publicKeyLoaded = loginPublicKey != null,
+                                publicKey = keyResult.data
+                            )
+                        }
+                    }
+
+                    else -> Unit
+                }
+                if (loginPublicKey == null) {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = null,
+                            errorText = AppText.Resource(R.string.auth_public_key_missing)
+                        )
+                    }
+                    emitErrorMessage(AppText.Resource(R.string.auth_public_key_missing), null)
+                    return@launch
+                }
+            }
+
             val captcha = when (snapshot.captchaMode) {
                 CaptchaMode.IMAGE -> snapshot.captcha
                 CaptchaMode.SLIDER -> snapshot.sliderToken
@@ -634,7 +673,7 @@ class AuthViewModel @Inject constructor(
                     password = snapshot.password,
                     captcha = captcha,
                     captchaId = captchaId,
-                    publicKey = snapshot.publicKey.takeIf { it.isNotBlank() }
+                    publicKey = loginPublicKey
                 )
             ) {
                 is AppResult.Success -> {
@@ -730,7 +769,10 @@ class AuthViewModel @Inject constructor(
                 )
             ) {
                 is AppResult.Success -> {
-                    authRepository.loadUserRoutes(snapshot.account)
+                    // 选租户成功后预载 C 端菜单聚合包（授权模块整树 + 收藏），
+                    // 失败不阻塞进入主界面，工作台初始化时会兜底刷新
+                    val effectiveTenantId = chooseResult.data.tenantId?.toString() ?: tenantId
+                    authRepository.preloadCMenuBundle(effectiveTenantId)
                     _uiState.update { it.copy(isLoading = false, interactionCode = "") }
                     _events.emit(AuthEvent.LoginCompleted)
                 }

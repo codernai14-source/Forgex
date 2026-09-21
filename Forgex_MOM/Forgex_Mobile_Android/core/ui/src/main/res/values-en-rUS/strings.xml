@@ -22,6 +22,12 @@
     <string name="scan_source_manual">Manual input</string>
     <string name="scan_hint_server">You can enter manually, or fill values by barcode scanner or NFC tag.</string>
     <string name="scan_hint_auth_account">The account field supports manual entry, barcode scanner, and NFC tag input.</string>
+    <string name="scan_camera_failed">Camera scan failed, please retry</string>
+    <string name="scan_camera_no_code">No barcode recognized, please aim at the code and retry</string>
+    <string name="scan_camera_unavailable">Unable to start the camera, check camera permission or the system camera app</string>
+    <string name="nfc_status_ready">NFC is ready, hold your device close to a tag</string>
+    <string name="nfc_status_disabled">NFC is off, tap to enable it in system settings</string>
+    <string name="nfc_status_unsupported">NFC is not supported on this device</string>
     <string name="server_settings_scan_host">Scan host</string>
     <string name="server_settings_scan_port">Scan port</string>
 
@@ -42,6 +48,9 @@
     <string name="profile_language_changed">Language switched. The current screen will refresh.</string>
     <string name="profile_language_zh_cn">Simplified Chinese</string>
     <string name="profile_language_en_us">English</string>
+    <string name="profile_dev_section">Development and components</string>
+    <string name="profile_component_test_title">Component test page</string>
+    <string name="profile_component_test_subtitle">Shared component gallery with live interaction</string>
 
     <string name="auth_login_welcome">Welcome to FORGEX</string>
     <string name="auth_server_current">Current server: %1$s</string>
@@ -53,7 +62,7 @@
     <string name="auth_click_logo_server">Tap the system icon to switch server</string>
     <string name="auth_captcha_not_required">No captcha is required in the current environment</string>
     <string name="auth_public_key_ready">SM2 public key warm-up is enabled. Passwords will be encrypted before sending.</string>
-    <string name="auth_public_key_missing">Public key is unavailable. Password will be sent in debug mode.</string>
+    <string name="auth_public_key_missing">Login encryption public key is unavailable. Check the server address and retry.</string>
     <string name="auth_login_select_title">Choose a login method</string>
     <string name="auth_login_select_subtitle">Select an entry first, then complete sign in</string>
     <string name="auth_login_method_account">Account login</string>
@@ -161,4 +170,23 @@
 
     <string name="component_autocomplete_empty">No matches found</string>
     <string name="placeholder_dash">--</string>
+
+    <string name="component_showcase_title">Component Showcase</string>
+    <string name="component_showcase_desc">Shared component gallery covering dictionary, date-time, charts, paging, scanning, table and upload</string>
+    <string name="component_showcase_section_dict">Dictionary tag and select</string>
+    <string name="component_showcase_section_form">Form inputs</string>
+    <string name="component_showcase_section_badge">Status badges</string>
+    <string name="component_showcase_section_status">Status views</string>
+    <string name="component_showcase_section_feedback">Feedback and dialogs</string>
+    <string name="component_showcase_section_datetime">Date and time pickers</string>
+    <string name="component_showcase_section_chart">Charts</string>
+    <string name="component_showcase_section_paging">Paged list</string>
+    <string name="component_showcase_section_scan">Scanning and NFC</string>
+    <string name="component_showcase_section_table">Table</string>
+    <string name="component_showcase_section_upload">Attachment upload and preview</string>
+    <string name="component_showcase_upload_pick">Pick an image and upload</string>
+    <string name="component_showcase_upload_success">Uploaded successfully</string>
+    <string name="component_showcase_upload_failed">Upload failed: %1$s</string>
+    <string name="component_showcase_dict_fallback">Dictionary API is unavailable, built-in sample options are shown</string>
+    <string name="component_showcase_open">Open component showcase</string>
 </resources>

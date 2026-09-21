@@ -11,4 +11,5 @@ dependencies {
     implementation(project(":core:model"))
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.kotlinx.coroutines.android)
+    testImplementation(libs.junit)
 }
